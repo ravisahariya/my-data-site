@@ -139,24 +139,4 @@ function downloadExcel(){
   let data=JSON.parse(localStorage.getItem("myData"))||[];
   let csv="Name,Mobile,Note,Time\n";
   data.forEach(d=>{
-    csv+=`${d.name},${d.mobile},${d.note},${d.time}\n`;
-  });
-  let a=document.createElement("a");
-  a.href="data:text/csv;charset=utf-8,"+encodeURIComponent(csv);
-  a.download="data.csv";
-  a.click();
-}
-
-function downloadPDF(){
-  let win=window.open("");
-  win.document.write("<h2>My Data</h2>");
-  JSON.parse(localStorage.getItem("myData")||"[]")
-  .forEach(d=>{
-    win.document.write(`<p><b>${d.name}</b><br>${d.mobile}<br>${d.note}<br>${d.time}</p><hr>`);
-  });
-  win.print();
-}
-</script>
-
-</body>
-</html>
+    csv+=`${d.
