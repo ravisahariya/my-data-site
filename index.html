@@ -2,68 +2,96 @@
 <html lang="hi">
 <head>
   <meta charset="UTF-8">
-  <title>My Data Page</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My Private Data Site</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
 
   <style>
-    body {
+    body{
       font-family: Arial;
-      background: #f2f2f2;
-      padding: 20px;
+      background:#f2f2f2;
+      padding:20px;
     }
-    .box {
-      background: white;
-      padding: 15px;
-      border-radius: 8px;
-      max-width: 400px;
-      margin: auto;
+    .box{
+      background:#fff;
+      padding:15px;
+      border-radius:8px;
+      max-width:400px;
+      margin:auto;
     }
-    input, textarea, button {
-      width: 100%;
-      margin-top: 8px;
-      padding: 8px;
-      font-size: 16px;
+    input, textarea, button{
+      width:100%;
+      margin-top:10px;
+      padding:10px;
+      font-size:16px;
     }
-    button {
-      background: #007bff;
-      color: white;
-      border: none;
-      border-radius: 5px;
+    button{
+      background:#007bff;
+      color:white;
+      border:none;
+      border-radius:5px;
     }
-    .data {
-      margin-top: 15px;
-      background: #eef;
-      padding: 10px;
-      border-radius: 5px;
-    }
+    hr{margin:15px 0;}
   </style>
 </head>
 
 <body>
 
 <div class="box">
-  <h2>Data Entry Page</h2>
+  <h2>My Data Page</h2>
 
-  <input id="name" placeholder="Naam likho">
-  <input id="mobile" placeholder="Mobile number">
-  <textarea id="note" placeholder="Kuch likho"></textarea>
+  <input type="text" id="name" placeholder="Naam likho">
+  <input type="number" id="mobile" placeholder="Mobile number">
+  <textarea id="note" placeholder="Note likho"></textarea>
 
-  <button onclick="saveData()">Save</button>
+  <button onclick="saveData()">Save Data</button>
 
-  <div class="data" id="output"></div>
+  <hr>
+  <h3>Saved Data</h3>
+  <div id="output"></div>
 </div>
 
 <script>
-  function saveData() {
-    let name = document.getElementById("name").value;
-    let mobile = document.getElementById("mobile").value;
-    let note = document.getElementById("note").value;
+function saveData() {
+  let name = document.getElementById("name").value;
+  let mobile = document.getElementById("mobile").value;
+  let note = document.getElementById("note").value;
 
-    document.getElementById("output").innerHTML =
-      "<b>Naam:</b> " + name + "<br>" +
-      "<b>Mobile:</b> " + mobile + "<br>" +
-      "<b>Note:</b> " + note;
+  if(name === "" || mobile === "") {
+    alert("Naam aur Mobile zaroori hai");
+    return;
   }
+
+  let data = JSON.parse(localStorage.getItem("myData")) || [];
+  data.push({name, mobile, note});
+
+  localStorage.setItem("myData", JSON.stringify(data));
+
+  document.getElementById("name").value = "";
+  document.getElementById("mobile").value = "";
+  document.getElementById("note").value = "";
+
+  showData();
+}
+
+function showData() {
+  let data = JSON.parse(localStorage.getItem("myData")) || [];
+  let html = "";
+
+  data.forEach((item, i) => {
+    html += `
+      <div>
+        <b>${i+1}. ${item.name}</b><br>
+        📞 ${item.mobile}<br>
+        📝 ${item.note}
+        <hr>
+      </div>
+    `;
+  });
+
+  document.getElementById("output").innerHTML = html;
+}
+
+window.onload = showData;
 </script>
 
 </body>
