@@ -1,9 +1,70 @@
 <!DOCTYPE html>
-<html>
+<html lang="hi">
 <head>
-  <title>Second Page</title>
+  <meta charset="UTF-8">
+  <title>My Data Page</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <style>
+    body {
+      font-family: Arial;
+      background: #f2f2f2;
+      padding: 20px;
+    }
+    .box {
+      background: white;
+      padding: 15px;
+      border-radius: 8px;
+      max-width: 400px;
+      margin: auto;
+    }
+    input, textarea, button {
+      width: 100%;
+      margin-top: 8px;
+      padding: 8px;
+      font-size: 16px;
+    }
+    button {
+      background: #007bff;
+      color: white;
+      border: none;
+      border-radius: 5px;
+    }
+    .data {
+      margin-top: 15px;
+      background: #eef;
+      padding: 10px;
+      border-radius: 5px;
+    }
+  </style>
 </head>
+
 <body>
-  <h2>Yeh naya page hai</h2>
+
+<div class="box">
+  <h2>Data Entry Page</h2>
+
+  <input id="name" placeholder="Naam likho">
+  <input id="mobile" placeholder="Mobile number">
+  <textarea id="note" placeholder="Kuch likho"></textarea>
+
+  <button onclick="saveData()">Save</button>
+
+  <div class="data" id="output"></div>
+</div>
+
+<script>
+  function saveData() {
+    let name = document.getElementById("name").value;
+    let mobile = document.getElementById("mobile").value;
+    let note = document.getElementById("note").value;
+
+    document.getElementById("output").innerHTML =
+      "<b>Naam:</b> " + name + "<br>" +
+      "<b>Mobile:</b> " + mobile + "<br>" +
+      "<b>Note:</b> " + note;
+  }
+</script>
+
 </body>
 </html>
