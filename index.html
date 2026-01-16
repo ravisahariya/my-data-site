@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Private Data Manager</title>
+<title>My Data Page</title>
 
 <style>
 body{
@@ -12,58 +12,73 @@ body{
 }
 .box{
   background:#fff;
-  padding:20px;
-  max-width:420px;
+  padding:15px;
+  max-width:450px;
   margin:20px auto;
   border-radius:8px;
 }
-input, textarea, button{
+input, select, textarea, button{
   width:100%;
   margin:6px 0;
-  padding:10px;
-  font-size:16px;
+  padding:8px;
+  font-size:14px;
 }
 button{
   background:#007bff;
-  color:white;
+  color:#fff;
   border:none;
   border-radius:5px;
 }
-button.red{ background:#dc3545; }
-button.green{ background:#28a745; }
-.hidden{ display:none; }
+.green{background:#28a745;}
+.red{background:#dc3545;}
 .data-box{
-  border:1px solid #ccc;
-  padding:10px;
-  margin:6px 0;
-  border-radius:5px;
+  border:1px solid #ddd;
+  padding:8px;
+  margin:8px 0;
+  border-radius:6px;
 }
-small{ color:gray; }
+small{color:gray;}
+img{max-width:80px;display:block;margin:5px 0;}
 </style>
 </head>
 
 <body>
 
-<!-- LOGIN -->
-<div class="box" id="loginBox">
-<h3>🔐 Login</h3>
-<input id="loginUser" placeholder="Username">
-<input id="loginPass" type="password" placeholder="Password">
-<button onclick="login()">Login</button>
-</div>
-
-<!-- APP -->
-<div class="box hidden" id="appBox">
+<div class="box">
 <h3>📒 My Data Page</h3>
 
-<input id="name" placeholder="Naam">
-<input id="mobile" placeholder="Mobile Number">
-<textarea id="note" placeholder="Note"></textarea>
+<input id="name" placeholder="नाम">
+<select id="gender">
+  <option value="">लिंग</option>
+  <option>पुरुष</option>
+  <option>महिला</option>
+</select>
+<input id="father" placeholder="पिता का नाम">
+<input id="mobile" placeholder="मोबाइल नंबर">
+<textarea id="address" placeholder="पता"></textarea>
 
-<button onclick="saveData()">Save Data</button>
+<label>फोटो:</label>
+<input type="file" id="photo">
+
+<label>लोगो:</label>
+<input type="file" id="logo">
+
+<label>तारीख:</label>
+<input type="date" id="date">
+
+<label>समय:</label>
+<input type="time" id="time">
+
+<label>आने का समय:</label>
+<input type="time" id="inTime">
+
+<label>जाने का समय:</label>
+<input type="time" id="outTime">
+
+<button onclick="saveData()">Submit</button>
 <button class="green" onclick="downloadExcel()">Download Excel</button>
 <button class="green" onclick="downloadPDF()">Download PDF</button>
-<button class="red" onclick="logout()">Logout</button>
+<button class="red" onclick="clearAll()">Clear All</button>
 
 <hr>
 <h4>📂 Saved Data</h4>
@@ -71,77 +86,28 @@ small{ color:gray; }
 </div>
 
 <script>
-const USER="admin";
-const PASS="1234";
+let editIndex = null;
 
-function login(){
-  let u=loginUser.value;
-  let p=loginPass.value;
-  if(u===USER && p===PASS){
-    loginBox.classList.add("hidden");
-    appBox.classList.remove("hidden");
-    showData();
-  }else alert("Wrong Login");
+function getData(){
+  return JSON.parse(localStorage.getItem("myData")) || [];
 }
 
-function logout(){
-  location.reload();
+function saveFile(file, cb){
+  if(!file) return cb("");
+  let r = new FileReader();
+  r.onload = ()=>cb(r.result);
+  r.readAsDataURL(file);
 }
 
 function saveData(){
-  let name=name.value;
-  let mobile=mobile.value;
-  let note=note.value;
-  if(name==""||mobile==""){ alert("Naam aur Mobile zaroori"); return; }
+  let data = getData();
 
-  let data=JSON.parse(localStorage.getItem("myData"))||[];
-  data.push({
-    name,mobile,note,
-    time:new Date().toLocaleString()
-  });
-  localStorage.setItem("myData",JSON.stringify(data));
-  showData();
-  document.querySelectorAll("input,textarea").forEach(i=>i.value="");
-}
-
-function showData(){
-  let data=JSON.parse(localStorage.getItem("myData"))||[];
-  output.innerHTML="";
-  data.forEach((d,i)=>{
-    output.innerHTML+=`
-    <div class="data-box">
-      <b>${i+1}. ${d.name}</b><br>
-      📞 ${d.mobile}<br>
-      📝 ${d.note}<br>
-      <small>⏰ ${d.time}</small><br><br>
-      <button onclick="editData(${i})">Edit</button>
-      <button class="red" onclick="deleteData(${i})">Delete</button>
-    </div>`;
-  });
-}
-
-function deleteData(i){
-  let data=JSON.parse(localStorage.getItem("myData"));
-  data.splice(i,1);
-  localStorage.setItem("myData",JSON.stringify(data));
-  showData();
-}
-
-function editData(i){
-  let data=JSON.parse(localStorage.getItem("myData"));
-  name.value=data[i].name;
-  mobile.value=data[i].mobile;
-  note.value=data[i].note;
-  deleteData(i);
-}
-
-function downloadExcel(){
-  let data=JSON.parse(localStorage.getItem("myData"))||[];
-  let csv="Name,Mobile,Note,Time\n";
-  data.forEach(d=>{
-    csv+=`${d.
-
-
-
-
-  
+  let obj = {
+    name: name.value,
+    gender: gender.value,
+    father: father.value,
+    mobile: mobile.value,
+    address: address.value,
+    date: date.value,
+    time: time.value,
+    inTime
