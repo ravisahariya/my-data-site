@@ -12,40 +12,42 @@ body{
 }
 .box{
   background:#fff;
+  max-width:480px;
+  margin:15px auto;
   padding:15px;
-  max-width:450px;
-  margin:20px auto;
   border-radius:8px;
 }
 input, select, textarea, button{
   width:100%;
-  margin:6px 0;
   padding:8px;
-  font-size:14px;
+  margin:6px 0;
 }
 button{
-  background:#007bff;
-  color:#fff;
   border:none;
+  color:#fff;
   border-radius:5px;
 }
+.blue{background:#007bff;}
 .green{background:#28a745;}
 .red{background:#dc3545;}
 .data-box{
-  border:1px solid #ddd;
+  border:1px solid #ccc;
   padding:8px;
   margin:8px 0;
   border-radius:6px;
 }
-small{color:gray;}
-img{max-width:80px;display:block;margin:5px 0;}
+img{
+  max-width:80px;
+  display:block;
+  margin:5px 0;
+}
 </style>
 </head>
 
 <body>
 
 <div class="box">
-<h3>📒 My Data Page</h3>
+<h3>📁 My Data Page</h3>
 
 <input id="name" placeholder="नाम">
 <select id="gender">
@@ -58,10 +60,10 @@ img{max-width:80px;display:block;margin:5px 0;}
 <textarea id="address" placeholder="पता"></textarea>
 
 <label>फोटो:</label>
-<input type="file" id="photo">
+<input type="file" id="photo" accept="image/*">
 
 <label>लोगो:</label>
-<input type="file" id="logo">
+<input type="file" id="logo" accept="image/*">
 
 <label>तारीख:</label>
 <input type="date" id="date">
@@ -75,7 +77,7 @@ img{max-width:80px;display:block;margin:5px 0;}
 <label>जाने का समय:</label>
 <input type="time" id="outTime">
 
-<button onclick="saveData()">Submit</button>
+<button class="blue" onclick="saveData()">Submit</button>
 <button class="green" onclick="downloadExcel()">Download Excel</button>
 <button class="green" onclick="downloadPDF()">Download PDF</button>
 <button class="red" onclick="clearAll()">Clear All</button>
@@ -86,29 +88,106 @@ img{max-width:80px;display:block;margin:5px 0;}
 </div>
 
 <script>
-let editIndex = null;
-
-function getData(){
-  return JSON.parse(localStorage.getItem("myData")) || [];
-}
-
-function saveFile(file, cb){
-  if(!file) return cb("");
-  let r = new FileReader();
-  r.onload = ()=>cb(r.result);
-  r.readAsDataURL(file);
-}
+let editIndex = -1;
 
 function saveData(){
-  let data = getData();
+  let data = JSON.parse(localStorage.getItem("myData")) || [];
 
   let obj = {
-    name: name.value,
-    gender: gender.value,
-    father: father.value,
-    mobile: mobile.value,
-    address: address.value,
-    date: date.value,
-    time: time.value,
-    inTime
-  
+    name:name.value,
+    gender:gender.value,
+    father:father.value,
+    mobile:mobile.value,
+    address:address.value,
+    date:date.value,
+    time:time.value,
+    inTime:inTime.value,
+    outTime:outTime.value,
+    photo:"",
+    logo:""
+  };
+
+  if(photo.files[0]){
+    let r = new FileReader();
+    r.onload = ()=>{ obj.photo=r.result; finish(obj,data); };
+    r.readAsDataURL(photo.files[0]);
+  }else if(logo.files[0]){
+    let r = new FileReader();
+    r.onload = ()=>{ obj.logo=r.result; finish(obj,data); };
+    r.readAsDataURL(logo.files[0]);
+  }else{
+    finish(obj,data);
+  }
+}
+
+function finish(obj,data){
+  if(editIndex>-1){
+    data[editIndex]=obj;
+    editIndex=-1;
+  }else{
+    data.push(obj);
+  }
+  localStorage.setItem("myData",JSON.stringify(data));
+  clearForm();
+  showData();
+}
+
+function showData(){
+  let data = JSON.parse(localStorage.getItem("myData")) || [];
+  let out="";
+  data.forEach((d,i)=>{
+    out+=`
+    <div class="data-box">
+    <b>${i+1}. ${d.name}</b><br>
+    ${d.gender}<br>
+    पिता: ${d.father}<br>
+    📞 ${d.mobile}<br>
+    📍 ${d.address}<br>
+    📅 ${d.date} ⏰ ${d.time}<br>
+    आने: ${d.inTime} | जाने: ${d.outTime}<br>
+    ${d.photo?`<img src="${d.photo}">`:""}
+    ${d.logo?`<img src="${d.logo}">`:""}
+    <button class="blue" onclick="editData(${i})">Edit</button>
+    <button class="red" onclick="deleteData(${i})">Delete</button>
+    </div>`;
+  });
+  output.innerHTML=out;
+}
+
+function editData(i){
+  let d = JSON.parse(localStorage.getItem("myData"))[i];
+  name.value=d.name;
+  gender.value=d.gender;
+  father.value=d.father;
+  mobile.value=d.mobile;
+  address.value=d.address;
+  date.value=d.date;
+  time.value=d.time;
+  inTime.value=d.inTime;
+  outTime.value=d.outTime;
+  editIndex=i;
+}
+
+function deleteData(i){
+  let data = JSON.parse(localStorage.getItem("myData"));
+  data.splice(i,1);
+  localStorage.setItem("myData",JSON.stringify(data));
+  showData();
+}
+
+function clearForm(){
+  document.querySelectorAll("input,textarea,select").forEach(e=>e.value="");
+}
+
+function clearAll(){
+  if(confirm("पूरा data delete करें?")){
+    localStorage.removeItem("myData");
+    showData();
+  }
+}
+
+function downloadExcel(){
+  let data = JSON.parse(localStorage.getItem("myData"))||[];
+  let csv="नाम,लिंग,पिता,मोबाइल,पता,तारीख,समय,आने,जाने\n";
+  data.forEach(d=>{
+    csv+=`${d.name},
