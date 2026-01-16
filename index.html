@@ -1,97 +1,161 @@
 <!DOCTYPE html>
 <html lang="hi">
 <head>
-  <meta charset="UTF-8">
-  <title>My Private Data Site</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Private Data Manager</title>
 
-  <style>
-    body{
-      font-family: Arial;
-      background:#f2f2f2;
-      padding:20px;
-    }
-    .box{
-      background:#fff;
-      padding:15px;
-      border-radius:8px;
-      max-width:400px;
-      margin:auto;
-    }
-    input, textarea, button{
-      width:100%;
-      margin-top:10px;
-      padding:10px;
-      font-size:16px;
-    }
-    button{
-      background:#007bff;
-      color:white;
-      border:none;
-      border-radius:5px;
-    }
-    hr{margin:15px 0;}
-  </style>
+<style>
+body{
+  font-family: Arial;
+  background:#f2f2f2;
+}
+.box{
+  background:#fff;
+  padding:20px;
+  max-width:420px;
+  margin:20px auto;
+  border-radius:8px;
+}
+input, textarea, button{
+  width:100%;
+  margin:6px 0;
+  padding:10px;
+  font-size:16px;
+}
+button{
+  background:#007bff;
+  color:white;
+  border:none;
+  border-radius:5px;
+}
+button.red{ background:#dc3545; }
+button.green{ background:#28a745; }
+.hidden{ display:none; }
+.data-box{
+  border:1px solid #ccc;
+  padding:10px;
+  margin:6px 0;
+  border-radius:5px;
+}
+small{ color:gray; }
+</style>
 </head>
 
 <body>
 
-<div class="box">
-  <h2>My Data Page</h2>
+<!-- LOGIN -->
+<div class="box" id="loginBox">
+<h3>🔐 Login</h3>
+<input id="loginUser" placeholder="Username">
+<input id="loginPass" type="password" placeholder="Password">
+<button onclick="login()">Login</button>
+</div>
 
-  <input type="text" id="name" placeholder="Naam likho">
-  <input type="number" id="mobile" placeholder="Mobile number">
-  <textarea id="note" placeholder="Note likho"></textarea>
+<!-- APP -->
+<div class="box hidden" id="appBox">
+<h3>📒 My Data Page</h3>
 
-  <button onclick="saveData()">Save Data</button>
+<input id="name" placeholder="Naam">
+<input id="mobile" placeholder="Mobile Number">
+<textarea id="note" placeholder="Note"></textarea>
 
-  <hr>
-  <h3>Saved Data</h3>
-  <div id="output"></div>
+<button onclick="saveData()">Save Data</button>
+<button class="green" onclick="downloadExcel()">Download Excel</button>
+<button class="green" onclick="downloadPDF()">Download PDF</button>
+<button class="red" onclick="logout()">Logout</button>
+
+<hr>
+<h4>📂 Saved Data</h4>
+<div id="output"></div>
 </div>
 
 <script>
-function saveData() {
-  let name = document.getElementById("name").value;
-  let mobile = document.getElementById("mobile").value;
-  let note = document.getElementById("note").value;
+const USER="admin";
+const PASS="1234";
 
-  if(name === "" || mobile === "") {
-    alert("Naam aur Mobile zaroori hai");
-    return;
-  }
+function login(){
+  let u=loginUser.value;
+  let p=loginPass.value;
+  if(u===USER && p===PASS){
+    loginBox.classList.add("hidden");
+    appBox.classList.remove("hidden");
+    showData();
+  }else alert("Wrong Login");
+}
 
-  let data = JSON.parse(localStorage.getItem("myData")) || [];
-  data.push({name, mobile, note});
+function logout(){
+  location.reload();
+}
 
-  localStorage.setItem("myData", JSON.stringify(data));
+function saveData(){
+  let name=name.value;
+  let mobile=mobile.value;
+  let note=note.value;
+  if(name==""||mobile==""){ alert("Naam aur Mobile zaroori"); return; }
 
-  document.getElementById("name").value = "";
-  document.getElementById("mobile").value = "";
-  document.getElementById("note").value = "";
+  let data=JSON.parse(localStorage.getItem("myData"))||[];
+  data.push({
+    name,mobile,note,
+    time:new Date().toLocaleString()
+  });
+  localStorage.setItem("myData",JSON.stringify(data));
+  showData();
+  document.querySelectorAll("input,textarea").forEach(i=>i.value="");
+}
 
+function showData(){
+  let data=JSON.parse(localStorage.getItem("myData"))||[];
+  output.innerHTML="";
+  data.forEach((d,i)=>{
+    output.innerHTML+=`
+    <div class="data-box">
+      <b>${i+1}. ${d.name}</b><br>
+      📞 ${d.mobile}<br>
+      📝 ${d.note}<br>
+      <small>⏰ ${d.time}</small><br><br>
+      <button onclick="editData(${i})">Edit</button>
+      <button class="red" onclick="deleteData(${i})">Delete</button>
+    </div>`;
+  });
+}
+
+function deleteData(i){
+  let data=JSON.parse(localStorage.getItem("myData"));
+  data.splice(i,1);
+  localStorage.setItem("myData",JSON.stringify(data));
   showData();
 }
 
-function showData() {
-  let data = JSON.parse(localStorage.getItem("myData")) || [];
-  let html = "";
-
-  data.forEach((item, i) => {
-    html += `
-      <div>
-        <b>${i+1}. ${item.name}</b><br>
-        📞 ${item.mobile}<br>
-        📝 ${item.note}
-        <hr>
-      </div>
-    `;
-  });
-
-  document.getElementById("output").innerHTML = html;
+function editData(i){
+  let data=JSON.parse(localStorage.getItem("myData"));
+  name.value=data[i].name;
+  mobile.value=data[i].mobile;
+  note.value=data[i].note;
+  deleteData(i);
 }
 
-window.onload = showData;
+function downloadExcel(){
+  let data=JSON.parse(localStorage.getItem("myData"))||[];
+  let csv="Name,Mobile,Note,Time\n";
+  data.forEach(d=>{
+    csv+=`${d.name},${d.mobile},${d.note},${d.time}\n`;
+  });
+  let a=document.createElement("a");
+  a.href="data:text/csv;charset=utf-8,"+encodeURIComponent(csv);
+  a.download="data.csv";
+  a.click();
+}
+
+function downloadPDF(){
+  let win=window.open("");
+  win.document.write("<h2>My Data</h2>");
+  JSON.parse(localStorage.getItem("myData")||"[]")
+  .forEach(d=>{
+    win.document.write(`<p><b>${d.name}</b><br>${d.mobile}<br>${d.note}<br>${d.time}</p><hr>`);
+  });
+  win.print();
+}
 </script>
 
 </body>
