@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Private Data Site</title>
+
+  <!-- Firebase SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+
+  <style>
+    body { font-family: Arial; background:#f2f2f2; padding:20px; }
+    .box { background:#fff; padding:20px; border-radius:8px; max-width:400px; margin:auto; }
+    input, textarea, button {
+      width:100%; margin:6px 0; padding:10px; font-size:16px;
+    }
+    button { background:#007bff; color:#fff; border:none; border-radius:5px; }
+    button.logout { background:#dc3545; }
+    #app { display:none; }
+  </style>
+</head>
+
+<body>
+
+<div class="box" id="loginBox">
+  <h3>🔐 Admin Login</h3>
+  <input type="email" id="email" placeholder="Email">
+  <input type="password" id="password" placeholder="Password">
+  <button onclick="login()">Login</button>
+</div>
+
+<div class="box" id="app">
+  <h3>📝 Data Add करें</h3>
+  <textarea id="dataText" placeholder="जो भी data लिखना है यहाँ लिखो"></textarea>
+  <button onclick="saveData()">Save Data</button>
+  <button class="logout" onclick="logout()">Logout</button>
+
+  <h3>📂 Saved Data</h3>
+  <div id="dataList"></div>
+</div>
+
+<script>
+  // 🔥 Firebase config (YAHAN APNA CONFIG DAALNA HAI)
+  const firebaseConfig = {
+    apiKey: "PASTE_YOUR_API_KEY",
+    authDomain: "PASTE_YOUR_AUTH_DOMAIN",
+    projectId: "PASTE_YOUR_PROJECT_ID",
+  };
+
+  firebase.initializeApp(firebaseConfig);
+  const auth = firebase.auth();
+  const db = firebase.firestore();
+
+  auth.onAuthStateChanged(user => {
+    if (user) {
+      document.getElementById("loginBox").style.display = "none";
+      document.getElementById("app").style.display = "block";
+      loadData();
+    } else {
+      document.getElementById("loginBox").style.display = "block";
+      document.getElementById("app").style.display = "none";
+    }
+  });
+
+  function login() {
+    auth.signInWithEmailAndPassword(
+      document.getElementById("email").value,
+      document.getElementById("password").value
+    ).catch(alert);
+  }
+
+  function logout() {
+    auth.signOut();
+  }
+
+  function saveData() {
+    const text = document.getElementById("dataText").value;
+    if (!text) return alert("Data likho");
+
+    db.collection("records").add({
+      text: text,
+      time: new Date()
+    }).then(() => {
+      document.getElementById("dataText").value = "";
+      loadData();
+    });
+  }
+
+  function loadData() {
+    db.collection("records").orderBy("time","desc").onSnapshot(snap => {
+      let html = "";
+      snap.forEach(doc => {
+        html += `<p>• ${doc.data().text}</p>`;
+      });
+      document.getElementById("dataList").innerHTML = html;
+    });
+  }
+</script>
+
+</body>
+</html>
