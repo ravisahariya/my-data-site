@@ -3,160 +3,67 @@
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Admin Login</title>
-
 <style>
-body{
-  font-family:Arial;
-  background:#eef2ff;
-  margin:0;
-}
-.box{
-  max-width:360px;
-  margin:110px auto;
-  background:#fff;
-  padding:20px;
-  border-radius:12px;
-  text-align:center;
-}
-input,button{
-  width:100%;
-  padding:10px;
-  margin-top:10px;
-  font-size:16px;
-}
-button{
-  background:#1976d2;
-  color:#fff;
-  border:none;
-  border-radius:6px;
-}
-.settings-icon{
-  position:fixed;
-  top:12px;
-  right:12px;
-  width:40px;
-  height:40px;
-  background:#2ecc71;
-  color:#fff;
-  border-radius:50%;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  font-size:22px;
-  cursor:pointer;
-}
-.settings-bg{
-  display:none;
-  position:fixed;
-  top:0;left:0;
-  width:100%;height:100%;
-  background:rgba(0,0,0,.5);
-}
-.settings-box{
-  background:#fff;
-  max-width:340px;
-  margin:90px auto;
-  padding:20px;
-  border-radius:12px;
-  text-align:center;
-}
-.pass-row{
-  display:flex;
-  gap:8px;
-  align-items:center;
-  margin-top:10px;
-}
-.pass-row input{flex:1}
-.eye{cursor:pointer;font-size:18px}
-.green{background:#2ecc71}
-.red{background:#e53935}
+body{font-family:Arial;background:#eef2ff;margin:0}
+.box{max-width:360px;margin:110px auto;background:#fff;padding:20px;border-radius:12px;text-align:center}
+input,button{width:100%;padding:10px;margin-top:10px;font-size:16px}
+button{background:#1976d2;color:#fff;border:none;border-radius:6px}
+.settings{position:fixed;top:12px;right:12px;width:40px;height:40px;border-radius:50%;
+background:#2ecc71;color:#fff;display:flex;align-items:center;justify-content:center;
+font-size:22px;cursor:pointer}
+.bg{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.5)}
+.panel{background:#fff;max-width:340px;margin:90px auto;padding:20px;border-radius:12px}
+.row{display:flex;gap:8px;align-items:center}
+.row input{flex:1}
+.eye{cursor:pointer}
+.green{background:#2ecc71}.red{background:#e53935}
 </style>
 </head>
-
 <body>
 
-<!-- SETTINGS ICON -->
-<div class="settings-icon" onclick="openSettings()">⚙️</div>
+<div class="settings" onclick="openSet()">⚙️</div>
 
-<!-- LOGIN PAGE -->
 <div class="box">
-  <img src="https://cdn-icons-png.flaticon.com/512/4140/4140048.png"
-       style="width:70px;margin-bottom:8px">
+  <img src="https://cdn-icons-png.flaticon.com/512/4140/4140048.png" style="width:70px">
   <h2>Admin Login</h2>
-
-  <div class="pass-row">
-    <input type="password" id="loginPass" placeholder="Password">
-    <span class="eye" onclick="toggleLogin()">👁️</span>
+  <div class="row">
+    <input type="password" id="lp" placeholder="Password">
+    <span class="eye" onclick="tg()">👁️</span>
   </div>
-
   <button onclick="login()">Login</button>
 </div>
 
-<!-- SETTINGS POPUP (NO OTP) -->
-<div class="settings-bg" id="settingsBg">
-  <div class="settings-box">
+<div class="bg" id="bg">
+  <div class="panel">
     <h3>Admin Settings</h3>
-
-    <input type="password" id="oldPass" placeholder="Old Password">
-
-    <div class="pass-row">
-      <input type="password" id="newPass" placeholder="New Password">
-      <span class="eye" onclick="toggleNew()">👁️</span>
+    <input type="password" id="op" placeholder="Old Password">
+    <div class="row">
+      <input type="password" id="np" placeholder="New Password">
+      <span class="eye" onclick="tg2()">👁️</span>
     </div>
-
-    <button class="green" onclick="changePassword()">Save Password</button>
-    <button class="red" onclick="closeSettings()">Close</button>
+    <button class="green" onclick="chg()">Save Password</button>
+    <button class="red" onclick="cls()">Close</button>
   </div>
 </div>
 
 <script>
-/* Default admin password */
-if(!localStorage.adminPass){
-  localStorage.adminPass = "7024";
-}
+if(!localStorage.adminPass){ localStorage.adminPass="7024"; }
 
-/* Login */
 function login(){
-  if(loginPass.value === localStorage.adminPass){
-    localStorage.login = "yes";
-    alert("Login Successful");
-    location.href = "page2.html";
-  }else{
-    alert("Wrong Password");
-  }
+  if(lp.value===localStorage.adminPass){
+    localStorage.login="yes";
+    location.href="page2.html";
+  }else alert("Wrong Password");
 }
-
-/* Show / hide password */
-function toggleLogin(){
-  loginPass.type = loginPass.type === "password" ? "text" : "password";
-}
-function toggleNew(){
-  newPass.type = newPass.type === "password" ? "text" : "password";
-}
-
-/* Settings open/close */
-function openSettings(){
-  settingsBg.style.display = "block";
-}
-function closeSettings(){
-  settingsBg.style.display = "none";
-}
-
-/* Change password (NO OTP) */
-function changePassword(){
-  if(oldPass.value !== localStorage.adminPass){
-    alert("Old password wrong");
-    return;
-  }
-  if(newPass.value.length < 4){
-    alert("Password minimum 4 digit");
-    return;
-  }
-  localStorage.adminPass = newPass.value;
-  alert("Password changed successfully");
-  closeSettings();
+function tg(){ lp.type = lp.type==="password"?"text":"password"; }
+function tg2(){ np.type = np.type==="password"?"text":"password"; }
+function openSet(){ bg.style.display="block"; }
+function cls(){ bg.style.display="none"; }
+function chg(){
+  if(op.value!==localStorage.adminPass) return alert("Old password wrong");
+  if(np.value.length<4) return alert("Min 4 digit");
+  localStorage.adminPass=np.value; alert("Password changed"); cls();
 }
 </script>
-
 </body>
 </html>
