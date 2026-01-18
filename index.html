@@ -1,117 +1,57 @@
 <!DOCTYPE html>
-<html lang="hi">
+<html>
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>DATE DAY NIGHT POST</title>
-
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Admin Login</title>
 <style>
 body{
   font-family: Arial;
   background:#f2f2f2;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  height:100vh;
 }
 .box{
   background:#fff;
-  max-width:420px;
-  margin:20px auto;
-  padding:15px;
-  border-radius:8px;
+  padding:20px;
+  width:300px;
+  border-radius:10px;
+  box-shadow:0 0 10px #999;
 }
-input, select, button{
+input,button{
   width:100%;
-  padding:8px;
-  margin:6px 0;
+  padding:10px;
+  margin-top:10px;
 }
 button{
   background:#007bff;
-  color:white;
+  color:#fff;
   border:none;
-  border-radius:5px;
-}
-.red{background:#dc3545;}
-.green{background:#28a745;}
-.data-box{
-  border:1px solid #ccc;
-  padding:8px;
-  margin:6px 0;
   border-radius:5px;
 }
 </style>
 </head>
-
 <body>
 
 <div class="box">
-<h3>📅 DATE DAY NIGHT POST</h3>
-
-<input type="date" id="date">
-
-<select id="shift">
-  <option value="">Shift चुनें</option>
-  <option value="DAY">DAY</option>
-  <option value="NIGHT">NIGHT</option>
-</select>
-
-<input id="post" placeholder="POST लिखें">
-
-<button onclick="saveData()">Submit</button>
-<button class="red" onclick="clearAll()">Clear All</button>
-
-<hr>
-<h4>📂 Saved Data</h4>
-<div id="output"></div>
+<h3>🔐 Admin Login</h3>
+<input type="text" id="user" placeholder="Username">
+<input type="password" id="pass" placeholder="Password">
+<button onclick="login()">Login</button>
 </div>
 
 <script>
-function saveData(){
-  let date = date.value;
-  let shift = document.getElementById("shift").value;
-  let post = document.getElementById("post").value;
-
-  if(date=="" || shift=="" || post==""){
-    alert("सब field भरना जरूरी है");
-    return;
-  }
-
-  let data = JSON.parse(localStorage.getItem("dnpData")) || [];
-  data.push({date,shift,post});
-  localStorage.setItem("dnpData",JSON.stringify(data));
-
-  post.value="";
-  showData();
-}
-
-function showData(){
-  let data = JSON.parse(localStorage.getItem("dnpData")) || [];
-  let out="";
-  data.forEach((d,i)=>{
-    out+=`
-    <div class="data-box">
-      <b>${i+1}</b><br>
-      📅 ${d.date}<br>
-      ⏰ ${d.shift}<br>
-      🏢 ${d.post}<br>
-      <button onclick="deleteData(${i})" class="red">Delete</button>
-    </div>`;
-  });
-  output.innerHTML=out;
-}
-
-function deleteData(i){
-  let data = JSON.parse(localStorage.getItem("dnpData"));
-  data.splice(i,1);
-  localStorage.setItem("dnpData",JSON.stringify(data));
-  showData();
-}
-
-function clearAll(){
-  if(confirm("सारा data delete करें?")){
-    localStorage.removeItem("dnpData");
-    showData();
+function login(){
+  let u=document.getElementById("user").value;
+  let p=document.getElementById("pass").value;
+  if(u==="admin" && p==="1234"){
+    localStorage.setItem("login","yes");
+    location.href="page2.html";
+  }else{
+    alert("Wrong login");
   }
 }
-
-showData();
 </script>
 
 </body>
