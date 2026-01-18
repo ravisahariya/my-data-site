@@ -1,9 +1,83 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Second Page</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Registration</title>
+<style>
+body{font-family:Arial;background:#eef;}
+.box{
+ background:#fff;
+ margin:10px;
+ padding:15px;
+ border-radius:10px;
+}
+input,select,button{
+ width:100%;
+ padding:8px;
+ margin-top:6px;
+}
+table{width:100%;border-collapse:collapse;margin-top:10px;}
+td,th{border:1px solid #aaa;padding:5px;text-align:center;}
+</style>
 </head>
 <body>
-  <h2>Yeh naya page hai</h2>
+
+<script>
+if(localStorage.getItem("login")!=="yes"){
+ location.href="index.html";
+}
+</script>
+
+<div class="box">
+<button onclick="logout()">Logout</button>
+
+<h3>Registration Form</h3>
+<input type="date" id="date">
+<select id="shift">
+<option>Day</option>
+<option>Night</option>
+</select>
+<input placeholder="Post" id="post">
+<input placeholder="Signature" id="sign">
+<button onclick="save()">Save</button>
+
+<table id="tbl">
+<tr><th>Date</th><th>Shift</th><th>Post</th><th>Sign</th></tr>
+</table>
+</div>
+
+<script>
+let data=JSON.parse(localStorage.getItem("data")||"[]");
+show();
+
+function save(){
+ data.push({
+  d:date.value,
+  s:shift.value,
+  p:post.value,
+  g:sign.value
+ });
+ localStorage.setItem("data",JSON.stringify(data));
+ show();
+}
+
+function show(){
+ let t=document.getElementById("tbl");
+ t.innerHTML="<tr><th>Date</th><th>Shift</th><th>Post</th><th>Sign</th></tr>";
+ data.forEach(r=>{
+  t.innerHTML+=`<tr>
+  <td>${r.d}</td>
+  <td>${r.s}</td>
+  <td>${r.p}</td>
+  <td>${r.g}</td></tr>`;
+ });
+}
+
+function logout(){
+ localStorage.removeItem("login");
+ location.href="index.html";
+}
+</script>
+
 </body>
 </html>
