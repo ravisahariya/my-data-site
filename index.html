@@ -4,53 +4,63 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Admin Login</title>
 <style>
-body{
-  font-family: Arial;
-  background:#f2f2f2;
-  display:flex;
-  justify-content:center;
-  align-items:center;
-  height:100vh;
-}
-.box{
-  background:#fff;
-  padding:20px;
-  width:300px;
-  border-radius:10px;
-  box-shadow:0 0 10px #999;
-}
-input,button{
-  width:100%;
-  padding:10px;
-  margin-top:10px;
-}
-button{
-  background:#007bff;
-  color:#fff;
-  border:none;
-  border-radius:5px;
-}
+body{font-family:Arial;background:#f2f2f2}
+.box{max-width:360px;margin:80px auto;background:#fff;padding:20px;border-radius:10px}
+input,select,button{width:100%;padding:10px;margin-top:10px}
+button{background:#007bff;color:#fff;border:none}
+.green{background:#28a745}
+.red{background:red}
 </style>
 </head>
 <body>
 
 <div class="box">
-<h3>🔐 Admin Login</h3>
-<input type="text" id="user" placeholder="Username">
-<input type="password" id="pass" placeholder="Password">
+<h2>Admin Login</h2>
+
+<select id="admin"></select>
+<input id="pwd" type="password" placeholder="Password (7024)">
 <button onclick="login()">Login</button>
+
+<hr>
+
+<input id="newAdmin" placeholder="Add Admin">
+<button class="green" onclick="addAdmin()">Add</button>
+<button class="red" onclick="delAdmin()">Delete</button>
+
+<p id="msg" style="color:red"></p>
 </div>
 
 <script>
+let admins=JSON.parse(localStorage.getItem("admins"))||["admin"];
+localStorage.setItem("admins",JSON.stringify(admins));
+
+function load(){
+admin.innerHTML="";
+admins.forEach(a=>{
+let o=document.createElement("option");
+o.value=a;o.text=a;admin.appendChild(o);
+});
+}
+load();
+
+function addAdmin(){
+if(newAdmin.value && !admins.includes(newAdmin.value)){
+admins.push(newAdmin.value);
+localStorage.setItem("admins",JSON.stringify(admins));
+newAdmin.value="";load();
+}}
+function delAdmin(){
+if(admin.value!=="admin"){
+admins=admins.filter(a=>a!==admin.value);
+localStorage.setItem("admins",JSON.stringify(admins));
+load();
+}}
 function login(){
-  let u=document.getElementById("user").value;
-  let p=document.getElementById("pass").value;
-  if(u==="admin" && p==="1234"){
-    localStorage.setItem("login","yes");
-    location.href="page2.html";
-  }else{
-    alert("Wrong login");
-  }
+if(pwd.value==="7024"){
+localStorage.setItem("login","yes");
+localStorage.setItem("currentAdmin",admin.value);
+location.replace("page2.html");
+}else msg.innerText="Wrong Password";
 }
 </script>
 
