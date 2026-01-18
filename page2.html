@@ -1,83 +1,167 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+<meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Registration</title>
+<title>Digital Register</title>
+
 <style>
-body{font-family:Arial;background:#eef;}
-.box{
- background:#fff;
- margin:10px;
- padding:15px;
- border-radius:10px;
+body{
+  font-family: Arial;
+  background:#f2f4ff;
 }
-input,select,button{
- width:100%;
- padding:8px;
- margin-top:6px;
+.container{
+  background:#fff;
+  max-width:900px;
+  margin:auto;
+  padding:15px;
+  border-radius:10px;
 }
-table{width:100%;border-collapse:collapse;margin-top:10px;}
-td,th{border:1px solid #aaa;padding:5px;text-align:center;}
+button{padding:10px;border:none;border-radius:6px;margin-top:5px}
+.logout{background:red;color:white;width:100%}
+.save{background:#007bff;color:white;width:100%}
+.edit{background:#ffc107}
+.del{background:#dc3545;color:white}
+.download{background:#28a745;color:white;width:100%}
+table{width:100%;border-collapse:collapse;margin-top:10px}
+th,td{border:1px solid #999;padding:5px;text-align:center}
+select,input{width:100%;padding:8px;margin-top:5px}
+.count{font-weight:bold;margin-top:10px}
 </style>
 </head>
+
 <body>
+<div class="container">
 
-<script>
-if(localStorage.getItem("login")!=="yes"){
- location.href="index.html";
-}
-</script>
+<button class="logout" onclick="logout()">Logout</button>
 
-<div class="box">
-<button onclick="logout()">Logout</button>
+<h3>Digital Register</h3>
 
-<h3>Registration Form</h3>
+<label>Month</label>
+<input type="month" id="month" onchange="loadData()">
+
+<label>Date</label>
 <input type="date" id="date">
-<select id="shift">
-<option>Day</option>
-<option>Night</option>
-</select>
-<input placeholder="Post" id="post">
-<input placeholder="Signature" id="sign">
-<button onclick="save()">Save</button>
 
-<table id="tbl">
-<tr><th>Date</th><th>Shift</th><th>Post</th><th>Sign</th></tr>
+<label>Shift</label>
+<select id="shift">
+  <option>Day</option>
+  <option>Night</option>
+</select>
+
+<label>Post</label>
+<select id="post"></select>
+<input placeholder="Add Post" id="newPost">
+<button onclick="addPost()">Add Post</button>
+
+<label>Signature</label>
+<select id="sign"></select>
+<input placeholder="Add Signature" id="newSign">
+<button onclick="addSign()">Add Signature</button>
+
+<label>Row Font Color</label>
+<input type="color" id="color" value="#000000">
+
+<button class="save" onclick="save()">Save</button>
+
+<div class="count" id="count"></div>
+
+<table>
+<thead>
+<tr>
+<th>Date</th><th>Shift</th><th>Post</th><th>Sign</th><th>Edit</th><th>Del</th>
+</tr>
+</thead>
+<tbody id="data"></tbody>
 </table>
+
+<button class="download" onclick="downloadCSV()">Download CSV</button>
+
 </div>
 
 <script>
-let data=JSON.parse(localStorage.getItem("data")||"[]");
-show();
+let posts=JSON.parse(localStorage.getItem("posts")||'["ETP","ACL"]');
+let signs=JSON.parse(localStorage.getItem("signs")||'["Ravi"]');
+
+function fill(){
+post.innerHTML=posts.map(p=>`<option>${p}</option>`).join('');
+sign.innerHTML=signs.map(s=>`<option>${s}</option>`).join('');
+}
+fill();
+
+function addPost(){if(newPost.value){posts.push(newPost.value);localStorage.setItem("posts",JSON.stringify(posts));fill();newPost.value="";}}
+function addSign(){if(newSign.value){signs.push(newSign.value);localStorage.setItem("signs",JSON.stringify(signs));fill();newSign.value="";}}
+
+function key(){return "data-"+month.value;}
+function loadData(){show();}
 
 function save(){
- data.push({
-  d:date.value,
-  s:shift.value,
-  p:post.value,
-  g:sign.value
- });
- localStorage.setItem("data",JSON.stringify(data));
- show();
+let d=JSON.parse(localStorage.getItem(key())||"[]");
+d.push({
+date:date.value,
+shift:shift.value,
+post:post.value,
+sign:sign.value,
+color:color.value
+});
+localStorage.setItem(key(),JSON.stringify(d));
+show();
 }
 
 function show(){
- let t=document.getElementById("tbl");
- t.innerHTML="<tr><th>Date</th><th>Shift</th><th>Post</th><th>Sign</th></tr>";
- data.forEach(r=>{
-  t.innerHTML+=`<tr>
-  <td>${r.d}</td>
-  <td>${r.s}</td>
-  <td>${r.p}</td>
-  <td>${r.g}</td></tr>`;
- });
+let d=JSON.parse(localStorage.getItem(key())||"[]");
+let day=0,night=0;
+data.innerHTML="";
+d.forEach((r,i)=>{
+if(r.shift=="Day")day++; else night++;
+data.innerHTML+=`
+<tr style="color:${r.color}">
+<td>${r.date}</td>
+<td>${r.shift}</td>
+<td>${r.post}</td>
+<td>${r.sign}</td>
+<td><button class="edit" onclick="editRow(${i})">Edit</button></td>
+<td><button class="del" onclick="delRow(${i})">X</button></td>
+</tr>`;
+});
+count.innerText=`Day: ${day} | Night: ${night}`;
+}
+
+function editRow(i){
+let d=JSON.parse(localStorage.getItem(key()));
+date.value=d[i].date;
+shift.value=d[i].shift;
+post.value=d[i].post;
+sign.value=d[i].sign;
+color.value=d[i].color;
+d.splice(i,1);
+localStorage.setItem(key(),JSON.stringify(d));
+show();
+}
+
+function delRow(i){
+let d=JSON.parse(localStorage.getItem(key()));
+d.splice(i,1);
+localStorage.setItem(key(),JSON.stringify(d));
+show();
+}
+
+function downloadCSV(){
+let d=JSON.parse(localStorage.getItem(key())||"[]");
+let csv="Date,Shift,Post,Sign\n";
+d.forEach(r=>csv+=`${r.date},${r.shift},${r.post},${r.sign}\n`);
+let a=document.createElement("a");
+a.href="data:text/csv;charset=utf-8,"+encodeURI(csv);
+a.download="register.csv";
+a.click();
 }
 
 function logout(){
- localStorage.removeItem("login");
- location.href="index.html";
+localStorage.removeItem("login");
+location.href="index.html";
 }
-</script>
 
+show();
+</script>
 </body>
 </html>
