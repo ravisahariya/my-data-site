@@ -1,32 +1,35 @@
 <!DOCTYPE html>
 <html>
 <head>
-<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Digital Register</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <style>
 body{font-family:Arial;background:#eef}
-.box{background:#fff;margin:10px;padding:15px;border-radius:10px}
-input,select,button{width:100%;padding:8px;margin-top:6px}
-.logout{background:red;color:#fff}
-.save{background:#007bff;color:#fff}
-.add{background:green;color:#fff}
+.box{max-width:500px;margin:auto;background:#fff;padding:15px;border-radius:10px}
+input,select,button{width:100%;padding:8px;margin:5px 0}
 table{width:100%;border-collapse:collapse;margin-top:10px}
 td,th{border:1px solid #aaa;padding:5px;text-align:center}
+.save{background:#1976d2;color:#fff}
+.logout{background:#e53935;color:#fff}
+.edit{background:#ffc107}
+.del{background:#e53935;color:#fff}
 </style>
 </head>
+
 <body>
 
 <script>
-if(localStorage.getItem("login")!=="yes"){
-location.replace("index.html");
-}
+if(localStorage.getItem("login")!=="yes")location.replace("index.html");
 </script>
 
 <div class="box">
-<button class="logout" onclick="logout()">Logout</button>
-<h3>Admin: <span id="a"></span></h3>
 
-<input type="month" id="month">
+<button class="logout" onclick="logout()">Logout</button>
+
+<h3>Digital Register</h3>
+
+<select id="month" onchange="show()"></select>
+
 <input type="date" id="date">
 
 <select id="shift">
@@ -36,91 +39,90 @@ location.replace("index.html");
 
 <select id="post"></select>
 <input id="newPost" placeholder="Add Post">
-<button class="add" onclick="addPost()">Add Post</button>
+<button onclick="addPost()">Add Post</button>
 
 <select id="sign"></select>
 <input id="newSign" placeholder="Add Signature">
-<button class="add" onclick="addSign()">Add Signature</button>
+<button onclick="addSign()">Add Signature</button>
 
-<label>Row Font Color</label>
-<input type="color" id="color" value="#000000">
+<input type="color" id="color">
 
 <button class="save" onclick="save()">Save</button>
+
 <p id="count"></p>
 
 <table>
 <thead>
-<tr>
-<th>Date</th><th>Shift</th><th>Post</th><th>Sign</th><th>Edit</th>
-</tr>
+<tr><th>Date</th><th>Shift</th><th>Post</th><th>Sign</th><th>Edit</th><th>Del</th></tr>
 </thead>
-<tbody id="data"></tbody>
+<tbody id="tb"></tbody>
 </table>
 
 <button onclick="download()">Download CSV</button>
+
 </div>
 
 <script>
-document.getElementById("a").innerText=localStorage.getItem("currentAdmin");
-
-let editIndex=null;
-let posts=JSON.parse(localStorage.getItem("posts")||'["ETP"]');
+let posts=JSON.parse(localStorage.getItem("posts")||'["ETP","ACL"]');
 let signs=JSON.parse(localStorage.getItem("signs")||'["Ravi"]');
 
-function fill(){
+function loadSel(){
 post.innerHTML=posts.map(p=>`<option>${p}</option>`).join("");
 sign.innerHTML=signs.map(s=>`<option>${s}</option>`).join("");
 }
-fill();
+loadSel();
 
-function addPost(){if(newPost.value){posts.push(newPost.value);localStorage.setItem("posts",JSON.stringify(posts));newPost.value="";fill();}}
-function addSign(){if(newSign.value){signs.push(newSign.value);localStorage.setItem("signs",JSON.stringify(signs));newSign.value="";fill();}}
+function addPost(){posts.push(newPost.value);localStorage.setItem("posts",JSON.stringify(posts));loadSel();}
+function addSign(){signs.push(newSign.value);localStorage.setItem("signs",JSON.stringify(signs));loadSel();}
 
-function key(){return "data-"+month.value}
+function key(){return "DATA_"+month.value;}
 
 function save(){
 let d=JSON.parse(localStorage.getItem(key())||"[]");
-let obj={date:date.value,shift:shift.value,post:post.value,sign:sign.value,color:color.value};
-
-if(editIndex!==null){d[editIndex]=obj;editIndex=null;}
-else d.push(obj);
-
-d.sort((a,b)=>new Date(a.date)-new Date(b.date));
+d.push({dt:date.value,sh:shift.value,p:post.value,s:sign.value,c:color.value});
 localStorage.setItem(key(),JSON.stringify(d));
 show();
 }
 
 function show(){
-fill();
 let d=JSON.parse(localStorage.getItem(key())||"[]");
+tb.innerHTML="";
 let day=0,night=0;
-data.innerHTML="";
-d.forEach((r,i)=>{
-if(r.shift==="Day")day++;else night++;
-let disp=new Date(r.date).toLocaleDateString("en-GB");
-data.innerHTML+=`
-<tr style="color:${r.color}">
-<td>${disp}</td><td>${r.shift}</td><td>${r.post}</td><td>${r.sign}</td>
-<td><button onclick="editRow(${i})">Edit</button></td>
+d.sort((a,b)=>new Date(a.dt)-new Date(b.dt));
+d.forEach((x,i)=>{
+if(x.sh=="Day")day++; else night++;
+tb.innerHTML+=`
+<tr style="color:${x.c}">
+<td>${x.dt}</td><td>${x.sh}</td><td>${x.p}</td><td>${x.s}</td>
+<td><button class="edit" onclick="edit(${i})">Edit</button></td>
+<td><button class="del" onclick="del(${i})">X</button></td>
 </tr>`;
 });
-count.innerText=`Day: ${day} | Night: ${night} | Total: ${d.length}`;
+count.innerText=`Day: ${day} | Night: ${night}`;
 }
 
-function editRow(i){
+function edit(i){
 let d=JSON.parse(localStorage.getItem(key()));
-let r=d[i];
-date.value=r.date;shift.value=r.shift;post.value=r.post;sign.value=r.sign;color.value=r.color;
-editIndex=i;
+let x=d[i];
+date.value=x.dt; shift.value=x.sh; post.value=x.p; sign.value=x.s; color.value=x.c;
+d.splice(i,1);
+localStorage.setItem(key(),JSON.stringify(d));
+}
+
+function del(i){
+let d=JSON.parse(localStorage.getItem(key()));
+d.splice(i,1);
+localStorage.setItem(key(),JSON.stringify(d));
+show();
 }
 
 function download(){
 let d=JSON.parse(localStorage.getItem(key())||"[]");
 let csv="Date,Shift,Post,Sign\n";
-d.forEach(r=>csv+=`${r.date},${r.shift},${r.post},${r.sign}\n`);
+d.forEach(x=>csv+=`${x.dt},${x.sh},${x.p},${x.s}\n`);
 let a=document.createElement("a");
-a.href="data:text/csv;charset=utf-8,"+encodeURIComponent(csv);
-a.download=month.value+".csv";
+a.href=URL.createObjectURL(new Blob([csv]));
+a.download="data.csv";
 a.click();
 }
 
@@ -129,8 +131,14 @@ localStorage.removeItem("login");
 location.replace("index.html");
 }
 
-month.value=new Date().toISOString().slice(0,7);
+(function init(){
+let m=new Date();
+for(let i=0;i<12;i++){
+let mm=new Date(m.getFullYear(),m.getMonth()+i,1);
+month.innerHTML+=`<option value="${mm.getFullYear()}-${String(mm.getMonth()+1).padStart(2,'0')}">${mm.toLocaleString('default',{month:'long'})} ${mm.getFullYear()}</option>`;
+}
 show();
+})();
 </script>
 
 </body>
