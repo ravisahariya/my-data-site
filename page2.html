@@ -1,144 +1,193 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>Digital Register</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Digital Register</title>
+
 <style>
-body{font-family:Arial;background:#eef}
-.box{max-width:500px;margin:auto;background:#fff;padding:15px;border-radius:10px}
+body{font-family:Arial;background:#eef;margin:0}
+.form-box{
+  position:sticky;top:0;z-index:10;
+  background:#eef;padding:10px
+}
+.box{background:#fff;padding:15px;border-radius:10px}
 input,select,button{width:100%;padding:8px;margin:5px 0}
-table{width:100%;border-collapse:collapse;margin-top:10px}
-td,th{border:1px solid #aaa;padding:5px;text-align:center}
 .save{background:#1976d2;color:#fff}
 .logout{background:#e53935;color:#fff}
-.edit{background:#ffc107}
-.del{background:#e53935;color:#fff}
+.add{background:#2ecc71;color:#fff}
+.table-box{max-height:320px;overflow-y:auto;margin-top:10px}
+table{width:100%;border-collapse:collapse}
+td,th{border:1px solid #aaa;padding:5px;text-align:center}
 </style>
 </head>
 
 <body>
 
 <script>
-if(localStorage.getItem("login")!=="yes")location.replace("index.html");
+if(localStorage.getItem("login")!=="yes"){
+  location.replace("index.html");
+}
 </script>
 
+<div class="form-box">
 <div class="box">
 
 <button class="logout" onclick="logout()">Logout</button>
 
-<h3>Digital Register</h3>
-
-<select id="month" onchange="show()"></select>
+<input type="month" id="month">
 
 <input type="date" id="date">
 
 <select id="shift">
-<option>Day</option>
-<option>Night</option>
+  <option>Day</option>
+  <option>Night</option>
 </select>
 
 <select id="post"></select>
 <input id="newPost" placeholder="Add Post">
-<button onclick="addPost()">Add Post</button>
+<button class="add" onclick="addPost()">Add Post</button>
 
 <select id="sign"></select>
 <input id="newSign" placeholder="Add Signature">
-<button onclick="addSign()">Add Signature</button>
+<button class="add" onclick="addSign()">Add Signature</button>
 
-<input type="color" id="color">
+<label>Row Font Color</label>
+<input type="color" id="color" value="#000000">
 
 <button class="save" onclick="save()">Save</button>
 
 <p id="count"></p>
+</div>
+</div>
 
+<div class="table-box">
 <table>
 <thead>
-<tr><th>Date</th><th>Shift</th><th>Post</th><th>Sign</th><th>Edit</th><th>Del</th></tr>
+<tr>
+<th>Date</th><th>Shift</th><th>Post</th><th>Sign</th><th>Edit</th><th>Del</th>
+</tr>
 </thead>
 <tbody id="tb"></tbody>
 </table>
+</div>
 
 <button onclick="download()">Download CSV</button>
 
-</div>
-
 <script>
-let posts=JSON.parse(localStorage.getItem("posts")||'["ETP","ACL"]');
+let editIndex=null;
+let posts=JSON.parse(localStorage.getItem("posts")||'["ETP"]');
 let signs=JSON.parse(localStorage.getItem("signs")||'["Ravi"]');
 
 function loadSel(){
-post.innerHTML=posts.map(p=>`<option>${p}</option>`).join("");
-sign.innerHTML=signs.map(s=>`<option>${s}</option>`).join("");
+  post.innerHTML=posts.map(p=>`<option>${p}</option>`).join("");
+  sign.innerHTML=signs.map(s=>`<option>${s}</option>`).join("");
 }
 loadSel();
 
-function addPost(){posts.push(newPost.value);localStorage.setItem("posts",JSON.stringify(posts));loadSel();}
-function addSign(){signs.push(newSign.value);localStorage.setItem("signs",JSON.stringify(signs));loadSel();}
+function addPost(){
+  if(newPost.value){
+    posts.push(newPost.value);
+    localStorage.setItem("posts",JSON.stringify(posts));
+    newPost.value="";loadSel();
+  }
+}
+function addSign(){
+  if(newSign.value){
+    signs.push(newSign.value);
+    localStorage.setItem("signs",JSON.stringify(signs));
+    newSign.value="";loadSel();
+  }
+}
 
 function key(){return "DATA_"+month.value;}
 
 function save(){
-let d=JSON.parse(localStorage.getItem(key())||"[]");
-d.push({dt:date.value,sh:shift.value,p:post.value,s:sign.value,c:color.value});
-localStorage.setItem(key(),JSON.stringify(d));
-show();
+  if(!date.value){alert("Date select kare");return;}
+  if(month.value!==date.value.slice(0,7)){
+    alert("Selected month ke bahar date allowed nahi");
+    return;
+  }
+
+  let d=JSON.parse(localStorage.getItem(key())||"[]");
+  let obj={dt:date.value,sh:shift.value,p:post.value,s:sign.value,c:color.value};
+
+  if(editIndex!==null){
+    d[editIndex]=obj;
+    editIndex=null;
+  }else{
+    d.push(obj);
+  }
+
+  d.sort((a,b)=>new Date(a.dt)-new Date(b.dt));
+  localStorage.setItem(key(),JSON.stringify(d));
+  show();
+}
+
+function formatDate(d){
+  let x=new Date(d);
+  return String(x.getDate()).padStart(2,"0")+"/"+
+         String(x.getMonth()+1).padStart(2,"0")+"/"+
+         x.getFullYear();
 }
 
 function show(){
-let d=JSON.parse(localStorage.getItem(key())||"[]");
-tb.innerHTML="";
-let day=0,night=0;
-d.sort((a,b)=>new Date(a.dt)-new Date(b.dt));
-d.forEach((x,i)=>{
-if(x.sh=="Day")day++; else night++;
-tb.innerHTML+=`
-<tr style="color:${x.c}">
-<td>${x.dt}</td><td>${x.sh}</td><td>${x.p}</td><td>${x.s}</td>
-<td><button class="edit" onclick="edit(${i})">Edit</button></td>
-<td><button class="del" onclick="del(${i})">X</button></td>
-</tr>`;
-});
-count.innerText=`Day: ${day} | Night: ${night}`;
+  let d=JSON.parse(localStorage.getItem(key())||"[]");
+  tb.innerHTML="";
+  let day=0,night=0;
+
+  d.forEach((x,i)=>{
+    if(x.sh==="Day")day++; else night++;
+    tb.innerHTML+=`
+    <tr style="color:${x.c}">
+      <td>${formatDate(x.dt)}</td>
+      <td>${x.sh}</td>
+      <td>${x.p}</td>
+      <td>${x.s}</td>
+      <td><button onclick="edit(${i})">Edit</button></td>
+      <td><button style="background:red;color:#fff"
+          onclick="delRow(${i})">X</button></td>
+    </tr>`;
+  });
+
+  count.innerHTML=`Day: ${day} | Night: ${night} | Total: ${day+night}`;
 }
 
 function edit(i){
-let d=JSON.parse(localStorage.getItem(key()));
-let x=d[i];
-date.value=x.dt; shift.value=x.sh; post.value=x.p; sign.value=x.s; color.value=x.c;
-d.splice(i,1);
-localStorage.setItem(key(),JSON.stringify(d));
+  let d=JSON.parse(localStorage.getItem(key()));
+  let x=d[i];
+  date.value=x.dt;shift.value=x.sh;
+  post.value=x.p;sign.value=x.s;color.value=x.c;
+  editIndex=i;
 }
 
-function del(i){
-let d=JSON.parse(localStorage.getItem(key()));
-d.splice(i,1);
-localStorage.setItem(key(),JSON.stringify(d));
-show();
+function delRow(i){
+  if(confirm("Delete karna hai?")){
+    let d=JSON.parse(localStorage.getItem(key()));
+    d.splice(i,1);
+    localStorage.setItem(key(),JSON.stringify(d));
+    show();
+  }
 }
 
 function download(){
-let d=JSON.parse(localStorage.getItem(key())||"[]");
-let csv="Date,Shift,Post,Sign\n";
-d.forEach(x=>csv+=`${x.dt},${x.sh},${x.p},${x.s}\n`);
-let a=document.createElement("a");
-a.href=URL.createObjectURL(new Blob([csv]));
-a.download="data.csv";
-a.click();
+  let d=JSON.parse(localStorage.getItem(key())||"[]");
+  let csv="Date,Shift,Post,Sign\n";
+  d.forEach(x=>csv+=`${x.dt},${x.sh},${x.p},${x.s}\n`);
+  let a=document.createElement("a");
+  a.href=URL.createObjectURL(new Blob([csv]));
+  a.download=month.value+".csv";
+  a.click();
 }
 
 function logout(){
-localStorage.removeItem("login");
-location.replace("index.html");
+  if(confirm("Logout karna hai?")){
+    localStorage.removeItem("login");
+    location.replace("index.html");
+  }
 }
 
-(function init(){
-let m=new Date();
-for(let i=0;i<12;i++){
-let mm=new Date(m.getFullYear(),m.getMonth()+i,1);
-month.innerHTML+=`<option value="${mm.getFullYear()}-${String(mm.getMonth()+1).padStart(2,'0')}">${mm.toLocaleString('default',{month:'long'})} ${mm.getFullYear()}</option>`;
-}
+month.value=new Date().toISOString().slice(0,7);
 show();
-})();
 </script>
 
 </body>
