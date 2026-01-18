@@ -3,55 +3,20 @@
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Login</title>
-
 <style>
-body{font-family:Arial;background:#f2f2f2;margin:0}
-.box{max-width:380px;margin:90px auto;background:#fff;padding:20px;border-radius:10px}
+body{font-family:Arial;background:#f2f2f2}
+.box{max-width:380px;margin:100px auto;background:#fff;padding:20px;border-radius:10px}
 select,input,button{width:100%;padding:10px;margin:8px 0}
 button{background:#2ecc71;color:#fff;border:none;font-size:16px}
-option:first-child{font-weight:bold}
-
-/* Settings */
-.settings-icon{
-  position:fixed;top:12px;right:12px;
-  width:40px;height:40px;border-radius:50%;
-  background:#2ecc71;color:#fff;
-  display:flex;align-items:center;justify-content:center;
-  font-size:20px;cursor:pointer;z-index:1000;
-}
-.settings-panel{
-  position:fixed;top:60px;right:12px;
-  width:220px;background:#fff;border-radius:10px;
-  box-shadow:0 4px 12px rgba(0,0,0,.2);
-  padding:12px;display:none;z-index:1000;
-}
-.settings-panel button{
-  width:100%;margin-top:8px;
-  background:#444;color:#fff;border:none;
-  padding:8px;border-radius:6px;
-}
-#linkMsg{color:green;text-align:center;font-size:14px}
 </style>
 </head>
-
 <body>
 
-<!-- Settings Icon -->
-<div class="settings-icon" onclick="toggleSettings()">⚙️</div>
-
-<!-- Settings Panel -->
-<div class="settings-panel" id="settingsPanel">
-  <h4 style="text-align:center;margin:0">Settings</h4>
-  <button onclick="openSite()">🌐 Open Site</button>
-  <button onclick="copyLink()">📋 Copy Site Link</button>
-  <p id="linkMsg"></p>
-</div>
-
 <div class="box">
-<h2 style="text-align:center">Login</h2>
+<h3 style="text-align:center">Admin Login</h3>
 
 <select id="uid">
-  <option value="">Admin</option>
+<option value="">Admin</option>
 </select>
 
 <input type="password" id="pwd" placeholder="Password">
@@ -60,27 +25,11 @@ option:first-child{font-weight:bold}
 </div>
 
 <script>
-const SITE_LINK="https://ravisahariya.github.io/my-data-site/";
-
-function toggleSettings(){
-  let p=document.getElementById("settingsPanel");
-  p.style.display=p.style.display==="block"?"none":"block";
-}
-function openSite(){window.open(SITE_LINK,"_blank");}
-function copyLink(){
-  navigator.clipboard.writeText(SITE_LINK);
-  linkMsg.innerText="Link copied";
-}
-
 function login(){
-  if(pwd.value===""){
-    alert("Password bharen");
-    return;
-  }
   if(pwd.value==="7024"){
     alert("Login Successful");
     localStorage.setItem("login","yes");
-    location.replace("page2.html");
+    location.href="page2.html";
   }else{
     alert("Wrong Password");
   }
