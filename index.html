@@ -4,33 +4,71 @@
 <meta charset="UTF-8">
 <title>Admin Login</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
+
 <style>
-body{font-family:Arial;background:#eef}
-.box{max-width:380px;margin:100px auto;background:#fff;padding:20px;border-radius:10px;text-align:center}
-input,button{width:100%;padding:12px;margin-top:10px}
-button{background:#1976d2;color:#fff;border:none;border-radius:6px;font-weight:bold}
+body{
+  margin:0;
+  font-family:Arial, sans-serif;
+  background:#eef2f7;
+}
+.box{
+  max-width:360px;
+  margin:100px auto;
+  background:#fff;
+  padding:20px;
+  border-radius:10px;
+  box-shadow:0 4px 10px rgba(0,0,0,0.1);
+  text-align:center;
+}
+h2{margin-bottom:20px}
+input,button{
+  width:100%;
+  padding:10px;
+  margin-top:10px;
+  font-size:16px;
+}
+button{
+  background:#1976d2;
+  color:#fff;
+  border:none;
+  border-radius:5px;
+}
+.error{
+  color:red;
+  margin-top:10px;
+  display:none;
+}
 </style>
 </head>
 
 <body>
+
 <div class="box">
   <h2>Admin Login</h2>
-  <input type="password" id="pass" placeholder="Password">
+  <input type="password" id="pass" placeholder="Enter Password">
   <button onclick="login()">Login</button>
+  <div class="error" id="err">Wrong Password</div>
 </div>
 
 <script>
-if(!localStorage.getItem("adminPass")){
-  localStorage.setItem("adminPass","7024");
-}
+/* ===== SIMPLE ADMIN LOGIN ===== */
+const ADMIN_PASSWORD = "1234";
+
 function login(){
-  if(pass.value===localStorage.getItem("adminPass")){
-    localStorage.setItem("login","yes");
-    location.href="index2.html";
+  const p = document.getElementById("pass").value;
+  if(p === ADMIN_PASSWORD){
+    localStorage.setItem("loggedIn","yes");
+    window.location.href = "page2.html";
   }else{
-    alert("Wrong Password");
+    document.getElementById("err").style.display="block";
   }
 }
+
+/* already logged in */
+if(localStorage.getItem("loggedIn")==="yes"){
+  window.location.href="page2.html";
+}
 </script>
+
 </body>
 </html>
