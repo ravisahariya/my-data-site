@@ -1,69 +1,213 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Admin Login</title>
+<meta charset="UTF-8">
+<title>Digital Register</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<link rel="manifest" href="manifest.json">
+
 <style>
-body{font-family:Arial;background:#eef2ff;margin:0}
-.box{max-width:360px;margin:110px auto;background:#fff;padding:20px;border-radius:12px;text-align:center}
-input,button{width:100%;padding:10px;margin-top:10px;font-size:16px}
-button{background:#1976d2;color:#fff;border:none;border-radius:6px}
-.settings{position:fixed;top:12px;right:12px;width:40px;height:40px;border-radius:50%;
-background:#2ecc71;color:#fff;display:flex;align-items:center;justify-content:center;
-font-size:22px;cursor:pointer}
-.bg{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.5)}
-.panel{background:#fff;max-width:340px;margin:90px auto;padding:20px;border-radius:12px}
-.row{display:flex;gap:8px;align-items:center}
-.row input{flex:1}
-.eye{cursor:pointer}
-.green{background:#2ecc71}.red{background:#e53935}
+body{font-family:Arial;background:#f4f6fb;margin:0}
+.card{max-width:420px;margin:10px auto;background:#fff;padding:12px;border-radius:8px}
+h2{text-align:center;margin:5px 0}
+select,input,button{width:100%;padding:8px;margin-top:6px}
+button{border:none;border-radius:5px;font-weight:bold}
+.btn-blue{background:#1976d2;color:#fff}
+.btn-red{background:#e53935;color:#fff}
+.btn-green{background:#2ecc71;color:#fff}
+table{width:100%;border-collapse:collapse;margin-top:10px}
+th,td{border:1px solid #aaa;padding:5px;text-align:center;font-size:13px}
+.edit{background:#fbc02d}
+.del{background:#e53935;color:#fff}
+.count{text-align:center;font-weight:bold;margin-top:5px}
+.logo{text-align:center}
+.logo img{width:70px}
+.settings{float:right;font-size:18px}
 </style>
 </head>
+
 <body>
 
-<div class="settings" onclick="openSet()">⚙️</div>
-
-<div class="box">
-  <img src="https://cdn-icons-png.flaticon.com/512/4140/4140048.png" style="width:70px">
-  <h2>Admin Login</h2>
-  <div class="row">
-    <input type="password" id="lp" placeholder="Password">
-    <span class="eye" onclick="tg()">👁️</span>
+<!-- LOGIN PAGE -->
+<div class="card" id="loginBox">
+  <div class="logo">
+    <img src="https://cdn-icons-png.flaticon.com/512/3135/3135715.png">
   </div>
-  <button onclick="login()">Login</button>
+
+  <h2>Login</h2>
+
+  <select id="loginId">
+    <option><b>Admin</b></option>
+  </select>
+
+  <input type="password" id="loginPass" placeholder="Password">
+
+  <button class="btn-blue" onclick="login()">Login</button>
 </div>
 
-<div class="bg" id="bg">
-  <div class="panel">
-    <h3>Admin Settings</h3>
-    <input type="password" id="op" placeholder="Old Password">
-    <div class="row">
-      <input type="password" id="np" placeholder="New Password">
-      <span class="eye" onclick="tg2()">👁️</span>
-    </div>
-    <button class="green" onclick="chg()">Save Password</button>
-    <button class="red" onclick="cls()">Close</button>
-  </div>
+<!-- MAIN APP -->
+<div class="card" id="appBox" style="display:none">
+
+<button class="btn-red" onclick="logout()">Logout</button>
+
+<h2>Digital Register <span class="settings">⚙️</span></h2>
+
+<label>Month</label>
+<select id="month"></select>
+
+<label>Date</label>
+<input type="date" id="date">
+
+<label>Shift</label>
+<select id="shift">
+  <option>Day</option>
+  <option>Night</option>
+</select>
+
+<label>Post</label>
+<select id="post"></select>
+<input id="newPost" placeholder="Add Post">
+<button class="btn-green" onclick="addPost()">Add Post</button>
+
+<label>Signature</label>
+<select id="sign">
+  <option>Ravi</option>
+</select>
+
+<label>Row Font Color</label>
+<input type="color" id="rowColor">
+
+<button class="btn-blue" onclick="save()">Save</button>
+
+<div class="count" id="count">Day:0 | Night:0 | Total:0</div>
+
+<table>
+<thead>
+<tr>
+<th>Date</th><th>Shift</th><th>Post</th><th>Sign</th><th>Edit</th><th>Del</th>
+</tr>
+</thead>
+<tbody id="tbody"></tbody>
+</table>
+
+<button class="btn-blue" onclick="download()">Download CSV</button>
+
 </div>
 
 <script>
-if(!localStorage.adminPass){ localStorage.adminPass="7024"; }
-
+/* LOGIN */
+if(localStorage.getItem("login")==="yes"){showApp()}
 function login(){
-  if(lp.value===localStorage.adminPass){
-    localStorage.login="yes";
-    location.href="page2.html";
+  if(loginPass.value==="7024"){
+    localStorage.setItem("login","yes");
+    showApp();
   }else alert("Wrong Password");
 }
-function tg(){ lp.type = lp.type==="password"?"text":"password"; }
-function tg2(){ np.type = np.type==="password"?"text":"password"; }
-function openSet(){ bg.style.display="block"; }
-function cls(){ bg.style.display="none"; }
-function chg(){
-  if(op.value!==localStorage.adminPass) return alert("Old password wrong");
-  if(np.value.length<4) return alert("Min 4 digit");
-  localStorage.adminPass=np.value; alert("Password changed"); cls();
+function logout(){
+  if(confirm("Logout?")){
+    localStorage.removeItem("login");
+    location.reload();
+  }
+}
+function showApp(){
+  loginBox.style.display="none";
+  appBox.style.display="block";
+}
+
+/* INIT */
+let data=JSON.parse(localStorage.getItem("data")||"[]");
+let posts=JSON.parse(localStorage.getItem("posts")||'["ETP","ABEER","ACL","COE"]');
+
+function init(){
+  month.innerHTML="";
+  for(let i=0;i<12;i++){
+    let d=new Date(2026,i,1);
+    month.innerHTML+=`<option value="${i}">${d.toLocaleString("hi",{month:"long",year:"numeric"})}</option>`;
+  }
+  renderPost();
+  render();
+}
+init();
+
+/* POSTS */
+function renderPost(){
+  post.innerHTML="";
+  posts.forEach(p=>post.innerHTML+=`<option>${p}</option>`);
+}
+function addPost(){
+  if(newPost.value){
+    posts.push(newPost.value);
+    localStorage.setItem("posts",JSON.stringify(posts));
+    newPost.value="";
+    renderPost();
+  }
+}
+
+/* SAVE */
+function save(){
+  data.push({
+    m:month.value,
+    d:date.value,
+    s:shift.value,
+    p:post.value,
+    g:sign.value,
+    c:rowColor.value||"#000"
+  });
+  localStorage.setItem("data",JSON.stringify(data));
+  render();
+}
+
+/* RENDER */
+function render(){
+  tbody.innerHTML="";
+  let day=0,night=0;
+  data
+  .filter(x=>x.m===month.value)
+  .sort((a,b)=>a.d.localeCompare(b.d))
+  .forEach((r,i)=>{
+    if(r.s==="Day")day++; else night++;
+    tbody.innerHTML+=`
+    <tr style="color:${r.c}">
+    <td>${r.d}</td><td>${r.s}</td><td>${r.p}</td><td>${r.g}</td>
+    <td><button class="edit" onclick="editRow(${i})">Edit</button></td>
+    <td><button class="del" onclick="delRow(${i})">X</button></td>
+    </tr>`;
+  });
+  count.innerText=`Day:${day} | Night:${night} | Total:${day+night}`;
+}
+
+/* EDIT */
+function editRow(i){
+  let r=data[i];
+  date.value=r.d;
+  shift.value=r.s;
+  post.value=r.p;
+  rowColor.value=r.c;
+  data.splice(i,1);
+  localStorage.setItem("data",JSON.stringify(data));
+  render();
+}
+
+/* DELETE */
+function delRow(i){
+  if(confirm("Delete this row?")){
+    data.splice(i,1);
+    localStorage.setItem("data",JSON.stringify(data));
+    render();
+  }
+}
+
+/* CSV */
+function download(){
+  let csv="Date,Shift,Post,Sign\n";
+  data.forEach(r=>csv+=`${r.d},${r.s},${r.p},${r.g}\n`);
+  let a=document.createElement("a");
+  a.href=URL.createObjectURL(new Blob([csv]));
+  a.download="register.csv";
+  a.click();
 }
 </script>
+
 </body>
 </html>
