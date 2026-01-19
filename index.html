@@ -1,226 +1,35 @@
 <!DOCTYPE html>
-<html lang="hi">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Digital Register & Attendance</title>
+<title>Admin Login</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
-
 <style>
-body{font-family:Arial;background:#eef;margin:0}
-.box{max-width:520px;margin:10px auto;background:#fff;padding:12px;border-radius:10px}
-h2{text-align:center;margin:5px}
-input,select,button{width:100%;padding:9px;margin-top:6px}
-button{border:none;border-radius:6px;font-weight:bold}
-.blue{background:#1976d2;color:#fff}
-.red{background:#e53935;color:#fff}
-.green{background:#2ecc71;color:#fff}
-table{width:100%;border-collapse:collapse;margin-top:10px}
-th,td{border:1px solid #ccc;padding:6px;text-align:center;font-size:13px}
-.edit{background:#fbc02d}
-.del{background:#e53935;color:#fff}
-.settings{float:right;cursor:pointer}
-.fixed{position:sticky;top:0;background:#fff;z-index:5}
-.scroll{max-height:300px;overflow:auto}
-.hidden{display:none}
+body{font-family:Arial;background:#eef}
+.box{max-width:380px;margin:100px auto;background:#fff;padding:20px;border-radius:10px;text-align:center}
+input,button{width:100%;padding:12px;margin-top:10px}
+button{background:#1976d2;color:#fff;border:none;border-radius:6px;font-weight:bold}
 </style>
 </head>
 
 <body>
-
-<!-- LOGIN -->
-<div class="box" id="loginBox">
-<h2>Admin Login</h2>
-<input type="password" id="loginPass" placeholder="Password">
-<button class="blue" onclick="login()">Login</button>
+<div class="box">
+  <h2>Admin Login</h2>
+  <input type="password" id="pass" placeholder="Password">
+  <button onclick="login()">Login</button>
 </div>
-
-<!-- APP -->
-<div class="box hidden" id="appBox">
-<span class="settings" onclick="openSettings()">⚙️</span>
-<h2>Register + Attendance</h2>
-
-<div class="fixed">
-<select id="month">
-<option>January 2026</option>
-<option>February 2026</option>
-<option>March 2026</option>
-</select>
-
-<input type="date" id="date">
-
-<select id="shift">
-<option>Day</option>
-<option>Night</option>
-</select>
-
-<select id="status">
-<option>Present</option>
-<option>Absent</option>
-</select>
-
-<select id="post"></select>
-<input id="newPost" placeholder="Add Post">
-<button class="green" onclick="addPost()">Add Post</button>
-
-<select id="sign">
-<option>Ravi</option>
-<option>Admin</option>
-</select>
-
-<label>Row Color</label>
-<input type="color" id="rowColor">
-
-<button class="blue" onclick="saveData()">Save</button>
-
-<b id="count">
-Day:0 | Night:0 | Present:0 | Absent:0 | Total:0
-</b>
-</div>
-
-<div class="scroll">
-<table>
-<thead>
-<tr>
-<th>Date</th><th>Shift</th><th>Status</th>
-<th>Post</th><th>Sign</th><th>Edit</th><th>Del</th>
-</tr>
-</thead>
-<tbody id="rows"></tbody>
-</table>
-</div>
-
-<button class="blue" onclick="downloadCSV()">Download CSV</button>
-<button class="red" onclick="logout()">Logout</button>
-</div>
-
-<!-- SETTINGS -->
-<div class="box hidden" id="settingsBox">
-<h2>Settings</h2>
-<input id="newPassword" placeholder="New Password">
-<button class="blue" onclick="changePassword()">Change Password</button>
-<button class="red" onclick="closeSettings()">Close</button>
-</div>
-
-<!-- FIREBASE -->
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 
 <script>
-/* 🔴 FIREBASE CONFIG (अपना डालें) */
-const firebaseConfig = {
- apiKey: "YOUR_API_KEY",
- authDomain: "YOUR_PROJECT.firebaseapp.com",
- projectId: "YOUR_PROJECT_ID"
-};
-firebase.initializeApp(firebaseConfig);
-const db = firebase.firestore();
-
-/* LOGIN */
-if(!localStorage.getItem("adminPass"))
- localStorage.setItem("adminPass","7024");
-
+if(!localStorage.getItem("adminPass")){
+  localStorage.setItem("adminPass","7024");
+}
 function login(){
- if(loginPass.value===localStorage.getItem("adminPass")){
-  loginBox.classList.add("hidden");
-  appBox.classList.remove("hidden");
-  load();
- } else alert("Wrong Password");
-}
-function logout(){location.reload()}
-
-/* SETTINGS */
-function openSettings(){settingsBox.classList.remove("hidden")}
-function closeSettings(){settingsBox.classList.add("hidden")}
-function changePassword(){
- if(newPassword.value.length<4) return alert("Min 4 chars");
- localStorage.setItem("adminPass",newPassword.value);
- alert("Password Changed");
- closeSettings();
-}
-
-/* POSTS */
-let posts=["ETP","ABEER","DENIEM"];
-function renderPosts(){
- post.innerHTML="";
- posts.forEach(p=>post.innerHTML+=`<option>${p}</option>`);
-}
-renderPosts();
-function addPost(){
- if(newPost.value){
-  posts.push(newPost.value);
-  newPost.value="";
-  renderPosts();
- }
-}
-
-/* CRUD */
-let editId=null;
-function saveData(){
- if(!date.value) return alert("Date required");
- const data={
-  month:month.value,
-  date:date.value,
-  shift:shift.value,
-  status:status.value,
-  post:post.value,
-  sign:sign.value,
-  color:rowColor.value
- };
- if(editId){
-  db.collection("attendance").doc(editId).update(data);
-  editId=null;
- } else {
-  db.collection("attendance").add(data);
- }
-}
-
-function load(){
- db.collection("attendance").onSnapshot(snap=>{
-  rows.innerHTML="";
-  let d=0,n=0,p=0,a=0;
-  snap.forEach(doc=>{
-   const r=doc.data();
-   if(r.month!==month.value) return;
-   r.shift==="Day"?d++:n++;
-   r.status==="Present"?p++:a++;
-   rows.innerHTML+=`
-   <tr style="color:${r.color||'#000'}">
-    <td>${r.date}</td>
-    <td>${r.shift}</td>
-    <td>${r.status}</td>
-    <td>${r.post}</td>
-    <td>${r.sign}</td>
-    <td><button class="edit"
-     onclick="editRow('${doc.id}','${r.date}','${r.shift}','${r.status}','${r.post}','${r.sign}','${r.color}')">Edit</button></td>
-    <td><button class="del" onclick="delRow('${doc.id}')">X</button></td>
-   </tr>`;
-  });
-  count.innerText=
-   `Day:${d} | Night:${n} | Present:${p} | Absent:${a} | Total:${p+a}`;
- });
-}
-
-function editRow(id,d,s,st,p,sg,c){
- editId=id;
- date.value=d; shift.value=s; status.value=st;
- post.value=p; sign.value=sg; rowColor.value=c;
-}
-function delRow(id){
- if(confirm("Delete?"))
-  db.collection("attendance").doc(id).delete();
-}
-
-/* CSV */
-function downloadCSV(){
- let csv="Date,Shift,Status,Post,Sign\n";
- document.querySelectorAll("#rows tr").forEach(r=>{
-  csv+=Array.from(r.children).slice(0,5)
-  .map(td=>td.innerText).join(",")+"\n";
- });
- const a=document.createElement("a");
- a.href=URL.createObjectURL(new Blob([csv]));
- a.download="attendance.csv";
- a.click();
+  if(pass.value===localStorage.getItem("adminPass")){
+    localStorage.setItem("login","yes");
+    location.href="index2.html";
+  }else{
+    alert("Wrong Password");
+  }
 }
 </script>
 </body>
