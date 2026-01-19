@@ -1,244 +1,114 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="hi">
 <head>
 <meta charset="UTF-8">
-<title>Register & Attendance</title>
+<title>Register + Attendance</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
 <style>
 body{font-family:Arial;background:#eef;margin:0}
-.box{max-width:540px;margin:10px auto;background:#fff;padding:12px;border-radius:10px}
-h2{text-align:center;margin:6px}
-input,select,button{width:100%;padding:9px;margin:5px 0}
-button{border:none;border-radius:6px;font-weight:bold}
-.blue{background:#1976d2;color:#fff}
-.green{background:#2ecc71;color:#fff}
-.red{background:#e53935;color:#fff}
-.yellow{background:#fbc02d}
-table{width:100%;border-collapse:collapse;font-size:13px}
+.box{max-width:520px;margin:10px auto;background:#fff;padding:12px;border-radius:10px}
+input,select,button{width:100%;padding:8px;margin-top:6px}
+button{border:none;color:#fff}
+.green{background:#2ecc71}
+.blue{background:#1976d2}
+.red{background:#e53935}
+table{width:100%;border-collapse:collapse;margin-top:10px;font-size:13px}
 th,td{border:1px solid #ccc;padding:5px;text-align:center}
-.scroll{max-height:300px;overflow:auto}
-.settings{float:right;cursor:pointer}
-.hidden{display:none}
-.fixed{position:sticky;top:0;background:#fff;z-index:5}
 </style>
 </head>
 
 <body>
 
-<script>
-/* 🔒 LOGIN PROTECTION */
-if(localStorage.getItem("loggedIn")!=="yes"){
-  location.href="index.html";
-}
-</script>
-
 <div class="box">
-<span class="settings" onclick="openSettings()">⚙️</span>
-<h2>Register + Attendance</h2>
+<h3>Register + Attendance</h3>
 
-<div class="fixed">
-  <select id="month" onchange="loadData()">
-    <option>January 2026</option>
-    <option>February 2026</option>
-    <option>March 2026</option>
-  </select>
+<select id="month">
+  <option>January 2026</option>
+  <option>February 2026</option>
+</select>
 
-  <input type="date" id="date">
+<input type="date" id="date">
 
-  <select id="shift">
-    <option>Day</option>
-    <option>Night</option>
-  </select>
+<select id="shift">
+  <option>Day</option>
+  <option>Night</option>
+</select>
 
-  <select id="status">
-    <option>Present</option>
-    <option>Absent</option>
-  </select>
+<select id="status">
+  <option>Present</option>
+  <option>Absent</option>
+</select>
 
-  <select id="post"></select>
-  <input id="newPost" placeholder="Add Post">
-  <button class="green" onclick="addPost()">Add Post</button>
+<input type="text" id="post" placeholder="Post (ETP etc)">
 
-  <select id="sign">
-    <option>Ravi</option>
-    <option>Admin</option>
-  </select>
+<select id="sign">
+  <option>Ravi</option>
+  <option>Admin</option>
+</select>
 
-  <label>Row Color</label>
-  <input type="color" id="rowColor">
+<input type="color" id="rowColor" value="#ffffff">
 
-  <button class="blue" onclick="saveData()">Save</button>
+<button class="blue" onclick="saveData()">Save</button>
 
-  <b id="count">
-    Day:0 | Night:0 | Present:0 | Absent:0 | Total:0
-  </b>
-</div>
-
-<div class="scroll">
 <table>
 <thead>
 <tr>
-<th>Date</th><th>Shift</th><th>Status</th>
-<th>Post</th><th>Sign</th><th>Edit</th><th>Del</th>
+<th>Date</th><th>Shift</th><th>Status</th><th>Post</th><th>Sign</th>
 </tr>
 </thead>
 <tbody id="rows"></tbody>
 </table>
-</div>
 
-<button class="blue" onclick="downloadCSV()">Download CSV</button>
 <button class="red" onclick="logout()">Logout</button>
-</div>
-
-<!-- SETTINGS -->
-<div class="box hidden" id="settingsBox">
-<h3>Password Change</h3>
-<input type="password" id="oldPass" placeholder="Old Password">
-<input type="password" id="newPass" placeholder="New Password">
-<button class="blue" onclick="changePassword()">Change</button>
-<button class="red" onclick="closeSettings()">Close</button>
 </div>
 
 <!-- 🔥 FIREBASE -->
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, updateDoc }
-from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyD74zDXGTiNF7ME8gPpc-j0fC9TvtTAMac",
   authDomain: "privatedatasite-91aa0.firebaseapp.com",
-  projectId: "privatedatasite-91aa0"
+  projectId: "privatedatasite-91aa0",
 };
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-window.db=db;
-window.collection=collection;
-window.addDoc=addDoc;
-window.getDocs=getDocs;
-window.deleteDoc=deleteDoc;
-window.doc=doc;
-window.updateDoc=updateDoc;
-</script>
-
-<script>
-/* SETTINGS */
-function openSettings(){settingsBox.classList.remove("hidden")}
-function closeSettings(){settingsBox.classList.add("hidden")}
-function changePassword(){
-  if(oldPass.value!=="1234"){
-    alert("Old password wrong");return;
-  }
-  if(newPass.value.length<4){
-    alert("Min 4 chars");return;
-  }
-  localStorage.setItem("adminPass",newPass.value);
-  alert("Password changed");
-  closeSettings();
-}
-
-/* LOGOUT */
-function logout(){
-  localStorage.removeItem("loggedIn");
-  location.href="index.html";
-}
-
-/* POSTS */
-let posts=["ETP","ABEER","DENIEM"];
-function renderPosts(){
-  post.innerHTML="";
-  posts.forEach(p=>post.innerHTML+=`<option>${p}</option>`);
-}
-renderPosts();
-function addPost(){
-  if(newPost.value){
-    posts.push(newPost.value);
-    newPost.value="";
-    renderPosts();
-  }
-}
-
-/* CRUD */
-let editId=null;
-
-async function saveData(){
-  if(!date.value){alert("Date required");return;}
-  const data={
-    month:month.value,
-    date:date.value,
-    shift:shift.value,
-    status:status.value,
-    post:post.value,
-    sign:sign.value,
-    color:rowColor.value
+window.saveData = async function(){
+  const data = {
+    month: month.value,
+    date: date.value,
+    shift: shift.value,
+    status: status.value,
+    post: post.value,
+    sign: sign.value,
+    rowColor: rowColor.value,
+    createdAt: serverTimestamp()
   };
-  if(editId){
-    await updateDoc(doc(db,"digital_register",editId),data);
-    editId=null;
-  }else{
-    await addDoc(collection(db,"digital_register"),data);
-  }
-  loadData();
-}
 
-async function loadData(){
-  rows.innerHTML="";
-  let d=0,n=0,p=0,a=0,t=0;
+  await addDoc(collection(db,"digital_register"), data);
 
-  const snap=await getDocs(collection(db,"digital_register"));
-  snap.forEach(x=>{
-    const r=x.data();
-    if(r.month!==month.value) return;
-    t++;
-    r.shift==="Day"?d++:n++;
-    r.status==="Present"?p++:a++;
-    rows.innerHTML+=`
-    <tr style="color:${r.color}">
-      <td>${r.date}</td>
-      <td>${r.shift}</td>
-      <td>${r.status}</td>
-      <td>${r.post}</td>
-      <td>${r.sign}</td>
-      <td><button class="yellow" onclick="editRow('${x.id}','${r.date}','${r.shift}','${r.status}','${r.post}','${r.sign}','${r.color}')">Edit</button></td>
-      <td><button class="red" onclick="delRow('${x.id}')">X</button></td>
-    </tr>`;
-  });
+  // table me dikhane ke liye
+  const tr = document.createElement("tr");
+  tr.style.background = data.rowColor;
+  tr.innerHTML = `
+    <td>${data.date}</td>
+    <td>${data.shift}</td>
+    <td>${data.status}</td>
+    <td>${data.post}</td>
+    <td>${data.sign}</td>
+  `;
+  rows.appendChild(tr);
 
-  count.innerText=
-   `Day:${d} | Night:${n} | Present:${p} | Absent:${a} | Total:${t}`;
-}
+  alert("Data Saved");
+};
 
-function editRow(id,dt,sh,st,p,s,c){
-  editId=id;
-  date.value=dt;
-  shift.value=sh;
-  status.value=st;
-  post.value=p;
-  sign.value=s;
-  rowColor.value=c;
-}
-
-async function delRow(id){
-  if(confirm("Delete?")){
-    await deleteDoc(doc(db,"digital_register",id));
-    loadData();
-  }
-}
-
-/* CSV */
-function downloadCSV(){
-  let csv="Date,Shift,Status,Post,Sign\n";
-  document.querySelectorAll("#rows tr").forEach(r=>{
-    csv+=[...r.children].slice(0,5).map(td=>td.innerText).join(",")+"\n";
-  });
-  let a=document.createElement("a");
-  a.href="data:text/csv;charset=utf-8,"+encodeURIComponent(csv);
-  a.download="attendance.csv";
-  a.click();
-}
+window.logout = function(){
+  location.href = "index.html";
+};
 </script>
 
 </body>
