@@ -2,158 +2,181 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Register + Attendance</title>
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AgriStack Login</title>
 
 <style>
 body{
-  font-family: Arial;
-  background:#eef2ff;
+  margin:0;
+  font-family: Arial, sans-serif;
+  background: linear-gradient(#0f5c3a,#0b3f29);
+  min-height:100vh;
+  display:flex;
+  align-items:center;
+  justify-content:center;
 }
-.box{
-  max-width:500px;
-  margin:20px auto;
+
+.login-box{
   background:#fff;
-  padding:15px;
+  width:95%;
+  max-width:380px;
   border-radius:10px;
+  padding:20px;
+  box-shadow:0 10px 30px rgba(0,0,0,.3);
 }
-select,input,button{
+
+.logo{
+  text-align:center;
+  margin-bottom:10px;
+}
+.logo img{
+  width:70px;
+}
+
+h2{
+  text-align:center;
+  margin:10px 0 15px;
+}
+
+.role{
+  display:flex;
+  border:1px solid #0f5c3a;
+  border-radius:6px;
+  overflow:hidden;
+  margin-bottom:15px;
+}
+.role button{
+  flex:1;
+  padding:8px;
+  border:none;
+  background:#fff;
+  cursor:pointer;
+}
+.role button.active{
+  background:#0f5c3a;
+  color:#fff;
+}
+
+input{
   width:100%;
   padding:10px;
-  margin:6px 0;
+  margin-bottom:10px;
+  border:1px solid #ccc;
+  border-radius:5px;
 }
-button{
-  background:#1976d2;
+
+.password{
+  position:relative;
+}
+.password span{
+  position:absolute;
+  right:10px;
+  top:10px;
+  cursor:pointer;
+}
+
+.captcha-box{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  margin-bottom:10px;
+}
+.captcha-img{
+  background:#eee;
+  padding:8px 12px;
+  font-weight:bold;
+  letter-spacing:2px;
+  user-select:none;
+}
+.refresh{
+  cursor:pointer;
+  font-size:18px;
+}
+
+button.login{
+  width:100%;
+  padding:10px;
+  background:#0f5c3a;
   color:#fff;
   border:none;
+  border-radius:5px;
   font-size:16px;
+  cursor:pointer;
+  opacity:.5;
 }
-table{
-  width:100%;
-  border-collapse:collapse;
-  margin-top:10px;
+button.login.active{
+  opacity:1;
 }
-th,td{
-  border:1px solid #ccc;
-  padding:6px;
+
+.forgot{
   text-align:center;
-}
-.logout{
-  background:#e53935;
+  margin-top:8px;
+  font-size:14px;
 }
 </style>
 </head>
 
 <body>
 
-<div class="box">
-<h2>Register + Attendance</h2>
+<div class="login-box">
+  <div class="logo">
+    <img src="https://upload.wikimedia.org/wikipedia/commons/5/55/Emblem_of_India.svg">
+  </div>
 
-<select id="month">
-<option>January 2026</option>
-<option>February 2026</option>
-</select>
+  <h2>AgriStack Login</h2>
 
-<input type="date" id="date">
+  <div class="role">
+    <button class="active" onclick="setRole(this)">Official</button>
+    <button onclick="setRole(this)">Farmer</button>
+  </div>
 
-<select id="shift">
-<option>Day</option>
-<option>Night</option>
-</select>
+  <input type="text" placeholder="User ID / Mobile / Email">
 
-<select id="status">
-<option>Present</option>
-<option>Absent</option>
-</select>
+  <div class="password">
+    <input type="password" id="pass" placeholder="Password">
+    <span onclick="togglePass()">👁️</span>
+  </div>
 
-<input type="text" id="post" placeholder="Post (ETP etc)">
+  <div class="captcha-box">
+    <div class="captcha-img" id="captchaText"></div>
+    <div class="refresh" onclick="generateCaptcha()">🔄</div>
+  </div>
 
-<select id="sign">
-<option>Ravi</option>
-<option>Admin</option>
-</select>
+  <input type="text" id="captchaInput" placeholder="Enter Captcha" oninput="checkCaptcha()">
 
-<button onclick="saveData()">Save</button>
+  <button class="login" id="loginBtn">Log In</button>
 
-<table>
-<thead>
-<tr>
-<th>Date</th>
-<th>Shift</th>
-<th>Status</th>
-<th>Post</th>
-<th>Sign</th>
-</tr>
-</thead>
-<tbody id="rows"></tbody>
-</table>
-
-<button class="logout" onclick="logout()">Logout</button>
+  <div class="forgot">Forgot Password?</div>
 </div>
 
-<!-- 🔥 FIREBASE (WORKING) -->
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
-
 <script>
-const firebaseConfig = {
-  apiKey: "AIzaSyD74zDXGTiNF7ME8gPpc-j0fC9TvtTAMac",
-  authDomain: "privatedatasite-91aa0.firebaseapp.com",
-  projectId: "privatedatasite-91aa0",
-  storageBucket: "privatedatasite-91aa0.appspot.com",
-  messagingSenderId: "310957529517",
-  appId: "1:310957529517:web:dd1eb0d42daf18afa9a924"
-};
+let captcha="";
 
-firebase.initializeApp(firebaseConfig);
-const db = firebase.firestore();
+function generateCaptcha(){
+  captcha = Math.random().toString(36).substring(2,7);
+  document.getElementById("captchaText").innerText = captcha;
+  document.getElementById("captchaInput").value="";
+  document.getElementById("loginBtn").classList.remove("active");
+}
+generateCaptcha();
 
-/* SAVE DATA */
-function saveData(){
-  const data={
-    month:month.value,
-    date:date.value,
-    shift:shift.value,
-    status:status.value,
-    post:post.value,
-    sign:sign.value,
-    createdAt: firebase.firestore.FieldValue.serverTimestamp()
-  };
-
-  db.collection("digital_register").add(data)
-  .then(()=>{
-    alert("Data Save ho gaya ✅");
-    loadData();
-  })
-  .catch(e=>alert(e.message));
+function checkCaptcha(){
+  let val = document.getElementById("captchaInput").value;
+  if(val === captcha){
+    document.getElementById("loginBtn").classList.add("active");
+  }else{
+    document.getElementById("loginBtn").classList.remove("active");
+  }
 }
 
-/* LOAD DATA */
-function loadData(){
-  rows.innerHTML="";
-  db.collection("digital_register")
-  .orderBy("createdAt","desc")
-  .onSnapshot(snap=>{
-    rows.innerHTML="";
-    snap.forEach(doc=>{
-      const d=doc.data();
-      rows.innerHTML+=`
-      <tr>
-        <td>${d.date||""}</td>
-        <td>${d.shift}</td>
-        <td>${d.status}</td>
-        <td>${d.post}</td>
-        <td>${d.sign}</td>
-      </tr>`;
-    });
-  });
+function togglePass(){
+  let p = document.getElementById("pass");
+  p.type = p.type==="password" ? "text" : "password";
 }
 
-loadData();
-
-/* LOGOUT */
-function logout(){
-  alert("Logout (demo)");
+function setRole(btn){
+  document.querySelectorAll(".role button").forEach(b=>b.classList.remove("active"));
+  btn.classList.add("active");
 }
 </script>
 
