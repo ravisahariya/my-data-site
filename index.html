@@ -1,14 +1,14 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="hi">
 <head>
 <meta charset="UTF-8">
-<title>Digital Register</title>
+<title>Digital Register & Attendance</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
 <style>
-body{margin:0;font-family:Arial;background:#eef}
+body{font-family:Arial;background:#eef;margin:0}
 .box{max-width:520px;margin:10px auto;background:#fff;padding:12px;border-radius:10px}
-h2{text-align:center;margin:5px 0}
+h2{text-align:center;margin:5px}
 input,select,button{width:100%;padding:9px;margin-top:6px}
 button{border:none;border-radius:6px;font-weight:bold}
 .blue{background:#1976d2;color:#fff}
@@ -18,10 +18,10 @@ table{width:100%;border-collapse:collapse;margin-top:10px}
 th,td{border:1px solid #ccc;padding:6px;text-align:center;font-size:13px}
 .edit{background:#fbc02d}
 .del{background:#e53935;color:#fff}
-.top{display:flex;justify-content:space-between;align-items:center}
-.settings{cursor:pointer;font-size:20px}
-.hidden{display:none}
+.settings{float:right;cursor:pointer}
 .fixed{position:sticky;top:0;background:#fff;z-index:5}
+.scroll{max-height:300px;overflow:auto}
+.hidden{display:none}
 </style>
 </head>
 
@@ -29,206 +29,199 @@ th,td{border:1px solid #ccc;padding:6px;text-align:center;font-size:13px}
 
 <!-- LOGIN -->
 <div class="box" id="loginBox">
-  <h2>Admin Login</h2>
-  <input type="password" id="loginPass" placeholder="Password">
-  <button class="blue" onclick="login()">Login</button>
+<h2>Admin Login</h2>
+<input type="password" id="loginPass" placeholder="Password">
+<button class="blue" onclick="login()">Login</button>
 </div>
 
 <!-- APP -->
 <div class="box hidden" id="appBox">
-  <div class="top">
-    <button class="red" onclick="logout()">Logout</button>
-    <span class="settings" onclick="openSettings()">⚙️</span>
-  </div>
+<span class="settings" onclick="openSettings()">⚙️</span>
+<h2>Register + Attendance</h2>
 
-  <h2>Digital Register</h2>
+<div class="fixed">
+<select id="month">
+<option>January 2026</option>
+<option>February 2026</option>
+<option>March 2026</option>
+</select>
 
-  <div class="fixed">
-    <select id="month">
-      <option>January 2026</option>
-      <option>February 2026</option>
-      <option>March 2026</option>
-    </select>
+<input type="date" id="date">
 
-    <input type="date" id="date">
+<select id="shift">
+<option>Day</option>
+<option>Night</option>
+</select>
 
-    <select id="shift">
-      <option>Day</option>
-      <option>Night</option>
-    </select>
+<select id="status">
+<option>Present</option>
+<option>Absent</option>
+</select>
 
-    <select id="post"></select>
-    <input id="newPost" placeholder="Add Post">
-    <button class="green" onclick="addPost()">Add Post</button>
+<select id="post"></select>
+<input id="newPost" placeholder="Add Post">
+<button class="green" onclick="addPost()">Add Post</button>
 
-    <select id="sign">
-      <option>Ravi</option>
-    </select>
+<select id="sign">
+<option>Ravi</option>
+<option>Admin</option>
+</select>
 
-    <label>Row Color</label>
-    <input type="color" id="rowColor">
+<label>Row Color</label>
+<input type="color" id="rowColor">
 
-    <button class="blue" onclick="save()">Save</button>
+<button class="blue" onclick="saveData()">Save</button>
 
-    <b id="count">Day:0 | Night:0 | Total:0</b>
-  </div>
+<b id="count">
+Day:0 | Night:0 | Present:0 | Absent:0 | Total:0
+</b>
+</div>
 
-  <div style="max-height:320px;overflow:auto">
-    <table>
-      <thead>
-        <tr>
-          <th>Date</th><th>Shift</th><th>Post</th><th>Sign</th>
-          <th>Edit</th><th>Del</th>
-        </tr>
-      </thead>
-      <tbody id="rows"></tbody>
-    </table>
-  </div>
+<div class="scroll">
+<table>
+<thead>
+<tr>
+<th>Date</th><th>Shift</th><th>Status</th>
+<th>Post</th><th>Sign</th><th>Edit</th><th>Del</th>
+</tr>
+</thead>
+<tbody id="rows"></tbody>
+</table>
+</div>
 
-  <button class="blue" onclick="downloadCSV()">Download CSV</button>
+<button class="blue" onclick="downloadCSV()">Download CSV</button>
+<button class="red" onclick="logout()">Logout</button>
 </div>
 
 <!-- SETTINGS -->
 <div class="box hidden" id="settingsBox">
-  <h3>Settings</h3>
-  <input id="newPassword" placeholder="New Password">
-  <button class="blue" onclick="changePassword()">Change Password</button>
-  <button class="red" onclick="closeSettings()">Close</button>
+<h2>Settings</h2>
+<input id="newPassword" placeholder="New Password">
+<button class="blue" onclick="changePassword()">Change Password</button>
+<button class="red" onclick="closeSettings()">Close</button>
 </div>
 
 <!-- FIREBASE -->
-<script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import {
-  getFirestore, collection, addDoc, getDocs,
-  updateDoc, deleteDoc, doc, serverTimestamp
-} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 
-/* 🔴 अपने Firebase का config यहाँ डालें */
+<script>
+/* 🔴 FIREBASE CONFIG (अपना डालें) */
 const firebaseConfig = {
-  apiKey: "YOUR_API_KEY",
-  authDomain: "YOUR_PROJECT.firebaseapp.com",
-  projectId: "YOUR_PROJECT_ID"
+ apiKey: "YOUR_API_KEY",
+ authDomain: "YOUR_PROJECT.firebaseapp.com",
+ projectId: "YOUR_PROJECT_ID"
 };
-
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
 
 /* LOGIN */
-if(!localStorage.getItem("adminPass")) localStorage.setItem("adminPass","7024");
-if(localStorage.getItem("login")==="yes") showApp();
+if(!localStorage.getItem("adminPass"))
+ localStorage.setItem("adminPass","7024");
 
-window.login=function(){
-  if(loginPass.value===localStorage.getItem("adminPass")){
-    localStorage.setItem("login","yes");
-    showApp();
-  } else alert("Wrong Password");
-};
-
-window.logout=function(){
-  localStorage.removeItem("login");
-  location.reload();
-};
-
-function showApp(){
+function login(){
+ if(loginPass.value===localStorage.getItem("adminPass")){
   loginBox.classList.add("hidden");
   appBox.classList.remove("hidden");
   load();
+ } else alert("Wrong Password");
 }
+function logout(){location.reload()}
 
 /* SETTINGS */
-window.openSettings=()=>settingsBox.classList.remove("hidden");
-window.closeSettings=()=>settingsBox.classList.add("hidden");
-window.changePassword=()=>{
-  if(newPassword.value.length<4) return alert("Min 4 chars");
-  localStorage.setItem("adminPass",newPassword.value);
-  alert("Password Changed");
-  closeSettings();
-};
+function openSettings(){settingsBox.classList.remove("hidden")}
+function closeSettings(){settingsBox.classList.add("hidden")}
+function changePassword(){
+ if(newPassword.value.length<4) return alert("Min 4 chars");
+ localStorage.setItem("adminPass",newPassword.value);
+ alert("Password Changed");
+ closeSettings();
+}
 
 /* POSTS */
 let posts=["ETP","ABEER","DENIEM"];
 function renderPosts(){
-  post.innerHTML="";
-  posts.forEach(p=>post.innerHTML+=`<option>${p}</option>`);
+ post.innerHTML="";
+ posts.forEach(p=>post.innerHTML+=`<option>${p}</option>`);
 }
 renderPosts();
+function addPost(){
+ if(newPost.value){
+  posts.push(newPost.value);
+  newPost.value="";
+  renderPosts();
+ }
+}
 
-window.addPost=function(){
-  if(newPost.value){
-    posts.push(newPost.value);
-    newPost.value="";
-    renderPosts();
-  }
-};
-
-/* FIRESTORE CRUD */
+/* CRUD */
 let editId=null;
+function saveData(){
+ if(!date.value) return alert("Date required");
+ const data={
+  month:month.value,
+  date:date.value,
+  shift:shift.value,
+  status:status.value,
+  post:post.value,
+  sign:sign.value,
+  color:rowColor.value
+ };
+ if(editId){
+  db.collection("attendance").doc(editId).update(data);
+  editId=null;
+ } else {
+  db.collection("attendance").add(data);
+ }
+}
 
-window.save=async()=>{
-  const data={
-    month:month.value,
-    date:date.value,
-    shift:shift.value,
-    post:post.value,
-    sign:sign.value,
-    color:rowColor.value,
-    createdAt:serverTimestamp()
-  };
-  if(editId){
-    await updateDoc(doc(db,"digital_register",editId),data);
-    editId=null;
-  } else {
-    await addDoc(collection(db,"digital_register"),data);
-  }
-  load();
-};
-
-window.load=async()=>{
+function load(){
+ db.collection("attendance").onSnapshot(snap=>{
   rows.innerHTML="";
-  let d=0,n=0;
-  const snap=await getDocs(collection(db,"digital_register"));
-  snap.forEach(s=>{
-    const r=s.data();
-    if(r.month!==month.value) return;
-    r.shift==="Day"?d++:n++;
-    rows.innerHTML+=`
-    <tr style="color:${r.color||'#000'}">
-      <td>${r.date}</td>
-      <td>${r.shift}</td>
-      <td>${r.post}</td>
-      <td>${r.sign}</td>
-      <td><button class="edit" onclick="editRow('${s.id}','${r.date}','${r.shift}','${r.post}','${r.sign}','${r.color}')">Edit</button></td>
-      <td><button class="del" onclick="delRow('${s.id}')">X</button></td>
-    </tr>`;
+  let d=0,n=0,p=0,a=0;
+  snap.forEach(doc=>{
+   const r=doc.data();
+   if(r.month!==month.value) return;
+   r.shift==="Day"?d++:n++;
+   r.status==="Present"?p++:a++;
+   rows.innerHTML+=`
+   <tr style="color:${r.color||'#000'}">
+    <td>${r.date}</td>
+    <td>${r.shift}</td>
+    <td>${r.status}</td>
+    <td>${r.post}</td>
+    <td>${r.sign}</td>
+    <td><button class="edit"
+     onclick="editRow('${doc.id}','${r.date}','${r.shift}','${r.status}','${r.post}','${r.sign}','${r.color}')">Edit</button></td>
+    <td><button class="del" onclick="delRow('${doc.id}')">X</button></td>
+   </tr>`;
   });
-  count.innerText=`Day:${d} | Night:${n} | Total:${d+n}`;
-};
+  count.innerText=
+   `Day:${d} | Night:${n} | Present:${p} | Absent:${a} | Total:${p+a}`;
+ });
+}
 
-window.editRow=(id,d,s,p,g,c)=>{
-  editId=id;
-  date.value=d; shift.value=s; post.value=p; sign.value=g; rowColor.value=c;
-};
-
-window.delRow=async(id)=>{
-  if(confirm("Delete?")){
-    await deleteDoc(doc(db,"digital_register",id));
-    load();
-  }
-};
+function editRow(id,d,s,st,p,sg,c){
+ editId=id;
+ date.value=d; shift.value=s; status.value=st;
+ post.value=p; sign.value=sg; rowColor.value=c;
+}
+function delRow(id){
+ if(confirm("Delete?"))
+  db.collection("attendance").doc(id).delete();
+}
 
 /* CSV */
-window.downloadCSV=()=>{
-  let csv="Date,Shift,Post,Sign\n";
-  document.querySelectorAll("#rows tr").forEach(r=>{
-    csv+=Array.from(r.children).slice(0,4).map(td=>td.innerText).join(",")+"\n";
-  });
-  const a=document.createElement("a");
-  a.href=URL.createObjectURL(new Blob([csv]));
-  a.download="register.csv";
-  a.click();
-};
+function downloadCSV(){
+ let csv="Date,Shift,Status,Post,Sign\n";
+ document.querySelectorAll("#rows tr").forEach(r=>{
+  csv+=Array.from(r.children).slice(0,5)
+  .map(td=>td.innerText).join(",")+"\n";
+ });
+ const a=document.createElement("a");
+ a.href=URL.createObjectURL(new Blob([csv]));
+ a.download="attendance.csv";
+ a.click();
+}
 </script>
-
 </body>
 </html>
