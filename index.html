@@ -1,21 +1,234 @@
-// Import the functions you need from the SDKs you need
-import { initializeApp } from "firebase/app";
-import { getAnalytics } from "firebase/analytics";
-// TODO: Add SDKs for Firebase products that you want to use
-// https://firebase.google.com/docs/web/setup#available-libraries
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Digital Register</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
 
-// Your web app's Firebase configuration
-// For Firebase JS SDK v7.20.0 and later, measurementId is optional
+<style>
+body{margin:0;font-family:Arial;background:#eef}
+.box{max-width:520px;margin:10px auto;background:#fff;padding:12px;border-radius:10px}
+h2{text-align:center;margin:5px 0}
+input,select,button{width:100%;padding:9px;margin-top:6px}
+button{border:none;border-radius:6px;font-weight:bold}
+.blue{background:#1976d2;color:#fff}
+.red{background:#e53935;color:#fff}
+.green{background:#2ecc71;color:#fff}
+table{width:100%;border-collapse:collapse;margin-top:10px}
+th,td{border:1px solid #ccc;padding:6px;text-align:center;font-size:13px}
+.edit{background:#fbc02d}
+.del{background:#e53935;color:#fff}
+.top{display:flex;justify-content:space-between;align-items:center}
+.settings{cursor:pointer;font-size:20px}
+.hidden{display:none}
+.fixed{position:sticky;top:0;background:#fff;z-index:5}
+</style>
+</head>
+
+<body>
+
+<!-- LOGIN -->
+<div class="box" id="loginBox">
+  <h2>Admin Login</h2>
+  <input type="password" id="loginPass" placeholder="Password">
+  <button class="blue" onclick="login()">Login</button>
+</div>
+
+<!-- APP -->
+<div class="box hidden" id="appBox">
+  <div class="top">
+    <button class="red" onclick="logout()">Logout</button>
+    <span class="settings" onclick="openSettings()">⚙️</span>
+  </div>
+
+  <h2>Digital Register</h2>
+
+  <div class="fixed">
+    <select id="month">
+      <option>January 2026</option>
+      <option>February 2026</option>
+      <option>March 2026</option>
+    </select>
+
+    <input type="date" id="date">
+
+    <select id="shift">
+      <option>Day</option>
+      <option>Night</option>
+    </select>
+
+    <select id="post"></select>
+    <input id="newPost" placeholder="Add Post">
+    <button class="green" onclick="addPost()">Add Post</button>
+
+    <select id="sign">
+      <option>Ravi</option>
+    </select>
+
+    <label>Row Color</label>
+    <input type="color" id="rowColor">
+
+    <button class="blue" onclick="save()">Save</button>
+
+    <b id="count">Day:0 | Night:0 | Total:0</b>
+  </div>
+
+  <div style="max-height:320px;overflow:auto">
+    <table>
+      <thead>
+        <tr>
+          <th>Date</th><th>Shift</th><th>Post</th><th>Sign</th>
+          <th>Edit</th><th>Del</th>
+        </tr>
+      </thead>
+      <tbody id="rows"></tbody>
+    </table>
+  </div>
+
+  <button class="blue" onclick="downloadCSV()">Download CSV</button>
+</div>
+
+<!-- SETTINGS -->
+<div class="box hidden" id="settingsBox">
+  <h3>Settings</h3>
+  <input id="newPassword" placeholder="New Password">
+  <button class="blue" onclick="changePassword()">Change Password</button>
+  <button class="red" onclick="closeSettings()">Close</button>
+</div>
+
+<!-- FIREBASE -->
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import {
+  getFirestore, collection, addDoc, getDocs,
+  updateDoc, deleteDoc, doc, serverTimestamp
+} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+/* 🔴 अपने Firebase का config यहाँ डालें */
 const firebaseConfig = {
-  apiKey: "AIzaSyD74zDXGTiNF7ME8gPpc-j0fC9TvtTAMac",
-  authDomain: "privatedatasite-91aa0.firebaseapp.com",
-  projectId: "privatedatasite-91aa0",
-  storageBucket: "privatedatasite-91aa0.firebasestorage.app",
-  messagingSenderId: "310957529517",
-  appId: "1:310957529517:web:dd1eb0d42daf18afa9a924",
-  measurementId: "G-BVN4SPVPKP"
+  apiKey: "YOUR_API_KEY",
+  authDomain: "YOUR_PROJECT.firebaseapp.com",
+  projectId: "YOUR_PROJECT_ID"
 };
 
-// Initialize Firebase
 const app = initializeApp(firebaseConfig);
-const analytics = getAnalytics(app);
+const db = getFirestore(app);
+
+/* LOGIN */
+if(!localStorage.getItem("adminPass")) localStorage.setItem("adminPass","7024");
+if(localStorage.getItem("login")==="yes") showApp();
+
+window.login=function(){
+  if(loginPass.value===localStorage.getItem("adminPass")){
+    localStorage.setItem("login","yes");
+    showApp();
+  } else alert("Wrong Password");
+};
+
+window.logout=function(){
+  localStorage.removeItem("login");
+  location.reload();
+};
+
+function showApp(){
+  loginBox.classList.add("hidden");
+  appBox.classList.remove("hidden");
+  load();
+}
+
+/* SETTINGS */
+window.openSettings=()=>settingsBox.classList.remove("hidden");
+window.closeSettings=()=>settingsBox.classList.add("hidden");
+window.changePassword=()=>{
+  if(newPassword.value.length<4) return alert("Min 4 chars");
+  localStorage.setItem("adminPass",newPassword.value);
+  alert("Password Changed");
+  closeSettings();
+};
+
+/* POSTS */
+let posts=["ETP","ABEER","DENIEM"];
+function renderPosts(){
+  post.innerHTML="";
+  posts.forEach(p=>post.innerHTML+=`<option>${p}</option>`);
+}
+renderPosts();
+
+window.addPost=function(){
+  if(newPost.value){
+    posts.push(newPost.value);
+    newPost.value="";
+    renderPosts();
+  }
+};
+
+/* FIRESTORE CRUD */
+let editId=null;
+
+window.save=async()=>{
+  const data={
+    month:month.value,
+    date:date.value,
+    shift:shift.value,
+    post:post.value,
+    sign:sign.value,
+    color:rowColor.value,
+    createdAt:serverTimestamp()
+  };
+  if(editId){
+    await updateDoc(doc(db,"digital_register",editId),data);
+    editId=null;
+  } else {
+    await addDoc(collection(db,"digital_register"),data);
+  }
+  load();
+};
+
+window.load=async()=>{
+  rows.innerHTML="";
+  let d=0,n=0;
+  const snap=await getDocs(collection(db,"digital_register"));
+  snap.forEach(s=>{
+    const r=s.data();
+    if(r.month!==month.value) return;
+    r.shift==="Day"?d++:n++;
+    rows.innerHTML+=`
+    <tr style="color:${r.color||'#000'}">
+      <td>${r.date}</td>
+      <td>${r.shift}</td>
+      <td>${r.post}</td>
+      <td>${r.sign}</td>
+      <td><button class="edit" onclick="editRow('${s.id}','${r.date}','${r.shift}','${r.post}','${r.sign}','${r.color}')">Edit</button></td>
+      <td><button class="del" onclick="delRow('${s.id}')">X</button></td>
+    </tr>`;
+  });
+  count.innerText=`Day:${d} | Night:${n} | Total:${d+n}`;
+};
+
+window.editRow=(id,d,s,p,g,c)=>{
+  editId=id;
+  date.value=d; shift.value=s; post.value=p; sign.value=g; rowColor.value=c;
+};
+
+window.delRow=async(id)=>{
+  if(confirm("Delete?")){
+    await deleteDoc(doc(db,"digital_register",id));
+    load();
+  }
+};
+
+/* CSV */
+window.downloadCSV=()=>{
+  let csv="Date,Shift,Post,Sign\n";
+  document.querySelectorAll("#rows tr").forEach(r=>{
+    csv+=Array.from(r.children).slice(0,4).map(td=>td.innerText).join(",")+"\n";
+  });
+  const a=document.createElement("a");
+  a.href=URL.createObjectURL(new Blob([csv]));
+  a.download="register.csv";
+  a.click();
+};
+</script>
+
+</body>
+</html>
