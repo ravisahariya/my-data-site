@@ -1,35 +1,160 @@
 <!DOCTYPE html>
-<html lang="hi">
+<html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Admin Login</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <style>
-    body{font-family:Arial;background:#eef}
-    .box{max-width:360px;margin:80px auto;background:#fff;padding:20px;border-radius:8px}
-    input,button{width:100%;padding:10px;margin-top:10px}
-    button{background:#1976d2;color:#fff;border:none}
-  </style>
+<meta charset="UTF-8">
+<title>Register + Attendance</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<style>
+body{
+  font-family: Arial;
+  background:#eef2ff;
+}
+.box{
+  max-width:500px;
+  margin:20px auto;
+  background:#fff;
+  padding:15px;
+  border-radius:10px;
+}
+select,input,button{
+  width:100%;
+  padding:10px;
+  margin:6px 0;
+}
+button{
+  background:#1976d2;
+  color:#fff;
+  border:none;
+  font-size:16px;
+}
+table{
+  width:100%;
+  border-collapse:collapse;
+  margin-top:10px;
+}
+th,td{
+  border:1px solid #ccc;
+  padding:6px;
+  text-align:center;
+}
+.logout{
+  background:#e53935;
+}
+</style>
 </head>
+
 <body>
 
 <div class="box">
-  <h2>Admin Login</h2>
-  <input type="password" id="pass" placeholder="Password">
-  <button onclick="login()">Login</button>
+<h2>Register + Attendance</h2>
+
+<select id="month">
+<option>January 2026</option>
+<option>February 2026</option>
+</select>
+
+<input type="date" id="date">
+
+<select id="shift">
+<option>Day</option>
+<option>Night</option>
+</select>
+
+<select id="status">
+<option>Present</option>
+<option>Absent</option>
+</select>
+
+<input type="text" id="post" placeholder="Post (ETP etc)">
+
+<select id="sign">
+<option>Ravi</option>
+<option>Admin</option>
+</select>
+
+<button onclick="saveData()">Save</button>
+
+<table>
+<thead>
+<tr>
+<th>Date</th>
+<th>Shift</th>
+<th>Status</th>
+<th>Post</th>
+<th>Sign</th>
+</tr>
+</thead>
+<tbody id="rows"></tbody>
+</table>
+
+<button class="logout" onclick="logout()">Logout</button>
 </div>
 
-<script>
-  const PASSWORD = "1234";   // 🔴 apna password yahin badlo
+<!-- 🔥 FIREBASE (WORKING) -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 
-  function login(){
-    const p = document.getElementById("pass").value;
-    if(p === PASSWORD){
-      window.location.href = "page2.html";
-    }else{
-      alert("Wrong Password");
-    }
-  }
+<script>
+const firebaseConfig = {
+  apiKey: "AIzaSyD74zDXGTiNF7ME8gPpc-j0fC9TvtTAMac",
+  authDomain: "privatedatasite-91aa0.firebaseapp.com",
+  projectId: "privatedatasite-91aa0",
+  storageBucket: "privatedatasite-91aa0.appspot.com",
+  messagingSenderId: "310957529517",
+  appId: "1:310957529517:web:dd1eb0d42daf18afa9a924"
+};
+
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+
+/* SAVE DATA */
+function saveData(){
+  const data={
+    month:month.value,
+    date:date.value,
+    shift:shift.value,
+    status:status.value,
+    post:post.value,
+    sign:sign.value,
+    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+  };
+
+  db.collection("digital_register").add(data)
+  .then(()=>{
+    alert("Data Save ho gaya ✅");
+    loadData();
+  })
+  .catch(e=>alert(e.message));
+}
+
+/* LOAD DATA */
+function loadData(){
+  rows.innerHTML="";
+  db.collection("digital_register")
+  .orderBy("createdAt","desc")
+  .onSnapshot(snap=>{
+    rows.innerHTML="";
+    snap.forEach(doc=>{
+      const d=doc.data();
+      rows.innerHTML+=`
+      <tr>
+        <td>${d.date||""}</td>
+        <td>${d.shift}</td>
+        <td>${d.status}</td>
+        <td>${d.post}</td>
+        <td>${d.sign}</td>
+      </tr>`;
+    });
+  });
+}
+
+loadData();
+
+/* LOGOUT */
+function logout(){
+  alert("Logout (demo)");
+}
 </script>
 
 </body>
