@@ -2,34 +2,42 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Admin Register + Attendance</title>
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin Attendance</title>
 
 <style>
 body{
   margin:0;
-  font-family: Arial, sans-serif;
-  background:#0b4d2e;
+  font-family:Arial, sans-serif;
+  background:#0f5132;
+  color:#000;
 }
+.hidden{display:none;}
 .card{
-  max-width:430px;
-  margin:20px auto;
   background:#fff;
-  padding:15px;
-  border-radius:10px;
+  max-width:420px;
+  margin:40px auto;
+  padding:20px;
+  border-radius:12px;
+  position:relative;
 }
-h2{text-align:center;margin:5px 0}
+h2{text-align:center;margin:10px 0;}
 input,select,button{
   width:100%;
-  padding:8px;
+  padding:10px;
   margin:6px 0;
-  font-size:14px;
 }
 button{
-  background:#0b4d2e;
+  background:#0f5132;
   color:#fff;
   border:none;
-  border-radius:5px;
+  border-radius:6px;
+}
+.settings{
+  position:absolute;
+  right:12px;
+  top:12px;
+  cursor:pointer;
 }
 table{
   width:100%;
@@ -42,27 +50,19 @@ th,td{
   padding:5px;
   text-align:center;
 }
-th{background:#eee}
-.settings{
-  float:right;
-  font-size:18px;
-  cursor:pointer;
-}
-.hidden{display:none}
 .popup{
   position:fixed;
   inset:0;
-  background:rgba(0,0,0,.5);
+  background:rgba(0,0,0,0.4);
   display:flex;
   align-items:center;
   justify-content:center;
 }
 .popup div{
   background:#fff;
-  padding:15px;
-  border-radius:8px;
-  width:250px;
-  text-align:center;
+  padding:20px;
+  border-radius:10px;
+  width:260px;
 }
 </style>
 </head>
@@ -70,36 +70,29 @@ th{background:#eee}
 <body>
 
 <!-- LOGIN PAGE -->
-<div class="card" id="loginPage">
+<div id="loginPage" class="card">
   <h2>👤 Admin Login</h2>
-  <select disabled><option><b>ADMIN</b></option></select>
+  <select>
+    <option><b>ADMIN</b></option>
+  </select>
   <input type="password" id="password" placeholder="Password">
   <button onclick="login()">Login</button>
 </div>
 
-<!-- MAIN APP -->
-<div class="card hidden" id="appPage">
+<!-- APP PAGE -->
+<div id="appPage" class="card hidden">
   <span class="settings" onclick="openSettings()">⚙️</span>
   <h2>Register + Attendance</h2>
 
-  <!-- Month -->
-  <select id="month" onchange="renderTable()">
-    <option>January</option><option>February</option><option>March</option>
-    <option>April</option><option>May</option><option>June</option>
-    <option>July</option><option>August</option><option>September</option>
-    <option>October</option><option>November</option><option>December</option>
-  </select>
+  <select id="month"></select>
 
-  <!-- Date -->
   <input type="date" id="date">
 
-  <!-- Shift -->
   <select id="shift">
     <option>Day</option>
     <option>Night</option>
   </select>
 
-  <!-- Post -->
   <select id="post">
     <option>COE</option>
     <option>ABEER</option>
@@ -111,146 +104,140 @@ th{background:#eee}
     <option>CCTV</option>
   </select>
 
-  <!-- Signature -->
-  <select disabled><option>Ravi</option></select>
+  <select id="sign">
+    <option>Ravi</option>
+  </select>
 
-  <!-- Color -->
-  <input type="color" id="color" value="#ffffff">
+  <input type="color" id="rowColor" value="#ffffff">
 
   <button onclick="saveEntry()">Save Entry</button>
+  <button onclick="downloadCSV()">Download CSV</button>
 
-  <!-- TABLE -->
   <table>
     <thead>
       <tr>
-        <th>Date</th>
-        <th>Shift</th>
-        <th>Post</th>
-        <th>Edit</th>
-        <th>Del</th>
+        <th>Date</th><th>Shift</th><th>Post</th><th>Sign</th><th>Edit</th><th>Delete</th>
       </tr>
     </thead>
-    <tbody id="table"></tbody>
+    <tbody id="tableBody"></tbody>
     <tfoot>
       <tr>
         <th>Total</th>
-        <th id="dayCount">0</th>
-        <th id="nightCount">0</th>
-        <th colspan="2" id="totalCount">0</th>
+        <th id="dayTotal">0</th>
+        <th id="nightTotal">0</th>
+        <th colspan="3"></th>
       </tr>
     </tfoot>
   </table>
 </div>
 
-<!-- SETTINGS POPUP -->
-<div class="popup hidden" id="settings">
+<!-- SETTINGS -->
+<div id="settingsPopup" class="popup hidden">
   <div>
     <h3>Settings</h3>
-    <button onclick="logout()">Logout</button>
-    <br><br>
+    <button onclick="logout()">Logout</button><br><br>
     <button onclick="closeSettings()">Close</button>
   </div>
 </div>
 
 <script>
 const PASS="7024";
-let editIndex=-1;
+const key="attendanceData";
 
 function login(){
-  if(document.getElementById("password").value===PASS){
-    localStorage.setItem("logged","yes");
+  if(password.value===PASS){
+    localStorage.setItem("login","yes");
     showApp();
   }else alert("Wrong Password");
 }
+
 function showApp(){
   loginPage.classList.add("hidden");
   appPage.classList.remove("hidden");
 }
+
 function logout(){
-  localStorage.removeItem("logged");
-  location.reload();
+  localStorage.removeItem("login");
+  appPage.classList.add("hidden");
+  loginPage.classList.remove("hidden");
+  closeSettings();
 }
-if(localStorage.getItem("logged")==="yes") showApp();
+
+function openSettings(){settingsPopup.classList.remove("hidden");}
+function closeSettings(){settingsPopup.classList.add("hidden");}
+
+if(localStorage.getItem("login")==="yes") showApp();
+
+const monthSel=document.getElementById("month");
+["January","February","March","April","May","June","July","August","September","October","November","December"]
+.forEach(m=>monthSel.innerHTML+=`<option>${m}</option>`);
+
+function getData(){
+  return JSON.parse(localStorage.getItem(key)||"[]");
+}
 
 function saveEntry(){
-  let date=document.getElementById("date").value;
-  if(!date){alert("Date required");return;}
-
-  let data=JSON.parse(localStorage.getItem("data")||"[]");
-
-  let entry={
-    month:month.value,
-    date,
+  if(!date.value){alert("Date required");return;}
+  const data=getData();
+  data.push({
+    date:date.value,
     shift:shift.value,
     post:post.value,
-    color:color.value,
-    sign:"Ravi"
-  };
-
-  if(editIndex==-1) data.push(entry);
-  else{data[editIndex]=entry;editIndex=-1;}
-
-  localStorage.setItem("data",JSON.stringify(data));
-  renderTable();
-  window.scrollTo({top:0,behavior:"smooth"});
-}
-
-function renderTable(){
-  let body=document.getElementById("table");
-  body.innerHTML="";
-  let data=JSON.parse(localStorage.getItem("data")||"[]");
-  let m=month.value;
-
-  data=data.filter(d=>d.month===m)
-           .sort((a,b)=>new Date(a.date)-new Date(b.date));
-
-  let day=0,night=0;
-
-  data.forEach((e,i)=>{
-    if(e.shift==="Day") day++;
-    if(e.shift==="Night") night++;
-
-    let tr=document.createElement("tr");
-    tr.style.background=e.color;
-    tr.innerHTML=`
-      <td>${new Date(e.date).toLocaleDateString("en-GB")}</td>
-      <td>${e.shift}</td>
-      <td>${e.post}</td>
-      <td><button onclick="editRow(${i})">✏️</button></td>
-      <td><button onclick="delRow(${i})">❌</button></td>
-    `;
-    body.appendChild(tr);
+    sign:sign.value,
+    color:rowColor.value
   });
-
-  dayCount.innerText=day;
-  nightCount.innerText=night;
-  totalCount.innerText=day+night;
+  localStorage.setItem(key,JSON.stringify(data));
+  render();
 }
 
-function editRow(i){
-  let data=JSON.parse(localStorage.getItem("data"));
-  let e=data.filter(d=>d.month===month.value)[i];
-  date.value=e.date;
-  shift.value=e.shift;
-  post.value=e.post;
-  color.value=e.color;
-  editIndex=data.indexOf(e);
+function render(){
+  const data=getData().sort((a,b)=>a.date.localeCompare(b.date));
+  tableBody.innerHTML="";
+  let d=0,n=0;
+  data.forEach((r,i)=>{
+    if(r.shift==="Day")d++; else n++;
+    tableBody.innerHTML+=`
+    <tr style="background:${r.color}">
+      <td>${r.date}</td>
+      <td>${r.shift}</td>
+      <td>${r.post}</td>
+      <td>${r.sign}</td>
+      <td><button onclick="editRow(${i})">✏️</button></td>
+      <td><button onclick="delRow(${i})">🗑</button></td>
+    </tr>`;
+  });
+  dayTotal.innerText=d;
+  nightTotal.innerText=n;
 }
 
 function delRow(i){
-  if(!confirm("Delete entry?"))return;
-  let data=JSON.parse(localStorage.getItem("data"));
-  let filtered=data.filter(d=>d.month===month.value);
-  data.splice(data.indexOf(filtered[i]),1);
-  localStorage.setItem("data",JSON.stringify(data));
-  renderTable();
+  if(confirm("Delete entry?")){
+    const d=getData(); d.splice(i,1);
+    localStorage.setItem(key,JSON.stringify(d));
+    render();
+  }
 }
 
-function openSettings(){settings.classList.remove("hidden")}
-function closeSettings(){settings.classList.add("hidden")}
+function editRow(i){
+  const d=getData()[i];
+  date.value=d.date;
+  shift.value=d.shift;
+  post.value=d.post;
+  sign.value=d.sign;
+  rowColor.value=d.color;
+  delRow(i);
+}
 
-renderTable();
+function downloadCSV(){
+  let csv="Date,Shift,Post,Sign\n";
+  getData().forEach(r=>csv+=`${r.date},${r.shift},${r.post},${r.sign}\n`);
+  const a=document.createElement("a");
+  a.href="data:text/csv;charset=utf-8,"+encodeURIComponent(csv);
+  a.download="attendance.csv";
+  a.click();
+}
+
+render();
 </script>
-
 </body>
-  </html>
+</html>
