@@ -2,71 +2,78 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Register + Attendance</title>
 
 <style>
 body{
   margin:0;
-  font-family:Arial;
-  background:#0f4d2e;
+  font-family:Arial, sans-serif;
+  background:#0f3d2e;
+  color:#000;
 }
+.hidden{display:none}
+
 .card{
+  background:#fff;
   max-width:420px;
   margin:40px auto;
-  background:#fff;
   padding:20px;
-  border-radius:12px;
+  border-radius:10px;
 }
-h2{text-align:center;margin:10px 0}
-input,select,button{
+h2{text-align:center;margin:5px 0 15px}
+
+select,input,button{
   width:100%;
   padding:10px;
   margin:6px 0;
   font-size:15px;
 }
+
 button{
-  background:#0f4d2e;
+  background:#0f5132;
   color:#fff;
   border:none;
-  border-radius:6px;
+  border-radius:5px;
 }
-.hidden{display:none}
-.settings{
-  position:absolute;
-  right:15px;
-  top:15px;
-  font-size:22px;
-  cursor:pointer;
-}
-.popup{
-  position:fixed;
-  inset:0;
-  background:rgba(0,0,0,.5);
+button.red{background:#c0392b}
+
+.topbar{
   display:flex;
+  justify-content:space-between;
   align-items:center;
-  justify-content:center;
 }
-.popup-box{
-  background:#fff;
-  padding:20px;
-  border-radius:10px;
-  width:260px;
-  text-align:center;
+.gear{
+  cursor:pointer;
+  font-size:20px;
 }
+
 table{
   width:100%;
   border-collapse:collapse;
   margin-top:10px;
+  font-size:13px;
 }
 th,td{
   border:1px solid #ccc;
-  padding:6px;
-  font-size:13px;
+  padding:5px;
   text-align:center;
 }
-tbody{display:block;max-height:200px;overflow:auto}
-thead,tr{display:table;width:100%;table-layout:fixed}
+
+.popup{
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,.4);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+.popup .box{
+  background:#fff;
+  padding:20px;
+  width:260px;
+  border-radius:8px;
+}
 </style>
 </head>
 
@@ -75,18 +82,21 @@ thead,tr{display:table;width:100%;table-layout:fixed}
 <!-- LOGIN -->
 <div id="loginPage" class="card">
   <h2>👤 Admin Login</h2>
-  <select disabled><option>ADMIN</option></select>
-  <input type="password" id="pass" placeholder="Password">
+  <select id="adminId">
+    <option>ADMIN</option>
+  </select>
+  <input type="password" id="password" placeholder="Password">
   <button onclick="login()">Login</button>
 </div>
 
 <!-- APP -->
 <div id="appPage" class="card hidden">
-  <span class="settings" onclick="openSettings()">⚙️</span>
-  <h2>Register + Attendance</h2>
+  <div class="topbar">
+    <h2>Register + Attendance</h2>
+    <span class="gear" onclick="openSettings()">⚙️</span>
+  </div>
 
   <select id="month" onchange="render()">
-    <option value="">Select Month</option>
     <option>January</option><option>February</option><option>March</option>
     <option>April</option><option>May</option><option>June</option>
     <option>July</option><option>August</option><option>September</option>
@@ -94,7 +104,6 @@ thead,tr{display:table;width:100%;table-layout:fixed}
   </select>
 
   <input type="date" id="date">
-
   <select id="shift">
     <option>Day</option>
     <option>Night</option>
@@ -107,25 +116,31 @@ thead,tr{display:table;width:100%;table-layout:fixed}
   </select>
 
   <input type="color" id="color" value="#ffffff">
+  <button onclick="save()">Save Entry</button>
 
-  <button onclick="saveEntry()">Save Entry</button>
-
-  <table>
-    <thead>
-      <tr><th>Date</th><th>Shift</th><th>Post</th><th>Sign</th><th>Edit</th><th>Del</th></tr>
-    </thead>
-    <tbody id="rows"></tbody>
-    <tfoot>
-      <tr><th>Total</th><th id="dayT">0</th><th id="nightT">0</th><th colspan="3"></th></tr>
-    </tfoot>
-  </table>
+  <div style="max-height:200px;overflow:auto">
+    <table>
+      <thead>
+        <tr><th>Date</th><th>Day</th><th>Night</th><th>Post</th><th>Edit</th><th>Del</th></tr>
+      </thead>
+      <tbody id="rows"></tbody>
+      <tfoot>
+        <tr>
+          <th>Total</th>
+          <th id="dTotal">0</th>
+          <th id="nTotal">0</th>
+          <th colspan="3"></th>
+        </tr>
+      </tfoot>
+    </table>
+  </div>
 
   <button onclick="downloadCSV()">Download CSV</button>
 </div>
 
 <!-- SETTINGS -->
-<div id="settingsPopup" class="popup hidden">
-  <div class="popup-box">
+<div id="settings" class="popup hidden">
+  <div class="box">
     <h3>Settings</h3>
     <button onclick="logout()">Logout</button>
     <button onclick="closeSettings()">Close</button>
@@ -135,12 +150,23 @@ thead,tr{display:table;width:100%;table-layout:fixed}
 <script>
 const loginPage=document.getElementById("loginPage");
 const appPage=document.getElementById("appPage");
-const settingsPopup=document.getElementById("settingsPopup");
+const settings=document.getElementById("settings");
+const rowsEl=document.getElementById("rows");
 
-let data=JSON.parse(localStorage.getItem("data")||"[]");
+function checkLogin(){
+  settings.classList.add("hidden");
+  if(localStorage.getItem("login")==="yes"){
+    loginPage.classList.add("hidden");
+    appPage.classList.remove("hidden");
+  }else{
+    loginPage.classList.remove("hidden");
+    appPage.classList.add("hidden");
+  }
+}
+checkLogin();
 
 function login(){
-  if(document.getElementById("pass").value==="7024"){
+  if(password.value==="7024"){
     localStorage.setItem("login","yes");
     checkLogin();
   }else alert("Wrong password");
@@ -151,70 +177,73 @@ function logout(){
   checkLogin();
 }
 
-function checkLogin(){
-  if(localStorage.getItem("login")==="yes"){
-    loginPage.classList.add("hidden");
-    appPage.classList.remove("hidden");
-  }else{
-    loginPage.classList.remove("hidden");
-    appPage.classList.add("hidden");
-  }
-  settingsPopup.classList.add("hidden");
+function openSettings(){settings.classList.remove("hidden")}
+function closeSettings(){settings.classList.add("hidden")}
+
+function key(){
+  return "data_"+month.value;
 }
-checkLogin();
 
-function openSettings(){settingsPopup.classList.remove("hidden")}
-function closeSettings(){settingsPopup.classList.add("hidden")}
-
-function saveEntry(){
-  const m=month.value;
-  const d=date.value;
-  if(!m||!d){alert("Month & Date required");return;}
-  data.unshift({
-    m, d,
-    s:shift.value,
-    p:post.value,
-    c:color.value,
-    sign:"Ravi"
+function save(){
+  if(!date.value){alert("Date required");return}
+  let data=JSON.parse(localStorage.getItem(key())||"[]");
+  data.push({
+    date:date.value,
+    shift:shift.value,
+    post:post.value,
+    color:color.value
   });
-  localStorage.setItem("data",JSON.stringify(data));
+  localStorage.setItem(key(),JSON.stringify(data));
   render();
 }
 
 function render(){
-  rows.innerHTML="";
-  let day=0,night=0;
-  data.filter(x=>x.m===month.value).forEach((x,i)=>{
-    if(x.s==="Day")day++; else night++;
-    rows.innerHTML+=`
-    <tr style="background:${x.c}">
-      <td>${x.d}</td><td>${x.s}</td><td>${x.p}</td><td>${x.sign}</td>
+  let data=JSON.parse(localStorage.getItem(key())||"[]");
+  data.sort((a,b)=>a.date.localeCompare(b.date));
+  rowsEl.innerHTML="";
+  let d=0,n=0;
+
+  data.forEach((x,i)=>{
+    if(x.shift==="Day")d++; else n++;
+    let tr=document.createElement("tr");
+    tr.style.background=x.color;
+    tr.innerHTML=`
+      <td>${x.date}</td>
+      <td>${x.shift==="Day"?"P":""}</td>
+      <td>${x.shift==="Night"?"P":""}</td>
+      <td>${x.post}</td>
       <td><button onclick="edit(${i})">✏️</button></td>
-      <td><button onclick="del(${i})">🗑</button></td>
-    </tr>`;
+      <td><button onclick="del(${i})">❌</button></td>`;
+    rowsEl.appendChild(tr);
   });
-  dayT.innerText=day;
-  nightT.innerText=night;
+  dTotal.textContent=d;
+  nTotal.textContent=n;
+}
+
+function edit(i){
+  let data=JSON.parse(localStorage.getItem(key()));
+  let x=data[i];
+  date.value=x.date;
+  shift.value=x.shift;
+  post.value=x.post;
+  color.value=x.color;
+  del(i);
 }
 
 function del(i){
-  if(confirm("Delete?")){
-    data.splice(i,1);
-    localStorage.setItem("data",JSON.stringify(data));
-    render();
-  }
-}
-function edit(i){
-  post.value=data[i].p;
-  shift.value=data[i].s;
-  color.value=data[i].c;
+  if(!confirm("Delete entry?"))return;
+  let data=JSON.parse(localStorage.getItem(key()));
+  data.splice(i,1);
+  localStorage.setItem(key(),JSON.stringify(data));
+  render();
 }
 
 function downloadCSV(){
-  let csv="Date,Shift,Post,Sign\n";
-  data.forEach(x=>csv+=`${x.d},${x.s},${x.p},${x.sign}\n`);
-  const a=document.createElement("a");
-  a.href=URL.createObjectURL(new Blob([csv]));
+  let data=JSON.parse(localStorage.getItem(key())||"[]");
+  let csv="Date,Shift,Post\n";
+  data.forEach(x=>csv+=`${x.date},${x.shift},${x.post}\n`);
+  let a=document.createElement("a");
+  a.href="data:text/csv,"+encodeURIComponent(csv);
   a.download="attendance.csv";
   a.click();
 }
