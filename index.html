@@ -10,113 +10,117 @@ body{
   margin:0;
   font-family:Arial, sans-serif;
   background:#0f5132;
-  color:#000;
 }
-.hidden{display:none;}
 .card{
   background:#fff;
   max-width:420px;
   margin:40px auto;
   padding:20px;
-  border-radius:12px;
-  position:relative;
+  border-radius:10px;
 }
-h2{text-align:center;margin:10px 0;}
+h2{text-align:center}
 input,select,button{
   width:100%;
   padding:10px;
   margin:6px 0;
+  font-size:15px;
 }
 button{
   background:#0f5132;
   color:#fff;
   border:none;
-  border-radius:6px;
-}
-.settings{
-  position:absolute;
-  right:12px;
-  top:12px;
-  cursor:pointer;
+  border-radius:5px;
 }
 table{
   width:100%;
   border-collapse:collapse;
   margin-top:10px;
-  font-size:13px;
 }
 th,td{
   border:1px solid #ccc;
   padding:5px;
   text-align:center;
 }
+th{background:#eee}
+.hidden{display:none}
+
+.settings{
+  position:absolute;
+  right:15px;
+  top:15px;
+  font-size:20px;
+  cursor:pointer;
+}
+
 .popup{
   position:fixed;
   inset:0;
-  background:rgba(0,0,0,0.4);
+  background:rgba(0,0,0,.4);
   display:flex;
   align-items:center;
   justify-content:center;
 }
-.popup div{
+.popup .box{
   background:#fff;
   padding:20px;
   border-radius:10px;
-  width:260px;
+  width:250px;
 }
 </style>
 </head>
 
 <body>
 
-<!-- LOGIN PAGE -->
+<!-- LOGIN -->
 <div id="loginPage" class="card">
   <h2>👤 Admin Login</h2>
+
   <select>
     <option><b>ADMIN</b></option>
   </select>
+
   <input type="password" id="password" placeholder="Password">
+
   <button onclick="login()">Login</button>
 </div>
 
-<!-- APP PAGE -->
+<!-- APP -->
 <div id="appPage" class="card hidden">
-  <span class="settings" onclick="openSettings()">⚙️</span>
+  <div class="settings" onclick="openSettings()">⚙️</div>
   <h2>Register + Attendance</h2>
 
-  <select id="month"></select>
+  <select id="monthSelect">
+    <option value="">Select Month</option>
+    <option>January</option><option>February</option><option>March</option>
+    <option>April</option><option>May</option><option>June</option>
+    <option>July</option><option>August</option><option>September</option>
+    <option>October</option><option>November</option><option>December</option>
+  </select>
 
   <input type="date" id="date">
 
   <select id="shift">
+    <option value="">Day / Night</option>
     <option>Day</option>
     <option>Night</option>
   </select>
 
   <select id="post">
-    <option>COE</option>
-    <option>ABEER</option>
-    <option>DENIEM</option>
-    <option>ETP</option>
-    <option>ACL</option>
-    <option>BORD2</option>
-    <option>CASUAL</option>
-    <option>CCTV</option>
-  </select>
-
-  <select id="sign">
-    <option>Ravi</option>
+    <option value="">Post</option>
+    <option>COE</option><option>ABEER</option><option>DENIEM</option>
+    <option>ETP</option><option>ACL</option><option>BORD2</option>
+    <option>CASUAL</option><option>CCTV</option>
   </select>
 
   <input type="color" id="rowColor" value="#ffffff">
 
   <button onclick="saveEntry()">Save Entry</button>
-  <button onclick="downloadCSV()">Download CSV</button>
 
   <table>
     <thead>
       <tr>
-        <th>Date</th><th>Shift</th><th>Post</th><th>Sign</th><th>Edit</th><th>Delete</th>
+        <th>Date</th><th>Day</th><th>Night</th>
+        <th>Post</th><th>Sign</th><th>Edit</th><th>Del</th>
       </tr>
     </thead>
     <tbody id="tableBody"></tbody>
@@ -129,115 +133,114 @@ th,td{
       </tr>
     </tfoot>
   </table>
+
+  <button onclick="downloadCSV()">Download CSV</button>
 </div>
 
 <!-- SETTINGS -->
 <div id="settingsPopup" class="popup hidden">
-  <div>
+  <div class="box">
     <h3>Settings</h3>
-    <button onclick="logout()">Logout</button><br><br>
+    <button onclick="logout()">Logout</button>
     <button onclick="closeSettings()">Close</button>
   </div>
 </div>
 
 <script>
-const PASS="7024";
-const key="attendanceData";
+const loginPage=document.getElementById("loginPage");
+const appPage=document.getElementById("appPage");
+const settingsPopup=document.getElementById("settingsPopup");
+const tableBody=document.getElementById("tableBody");
+let data=JSON.parse(localStorage.getItem("attendance")||"[]");
 
-function login(){
-  if(password.value===PASS){
-    localStorage.setItem("login","yes");
-    showApp();
-  }else alert("Wrong Password");
-}
-
-function showApp(){
+if(localStorage.getItem("login")==="yes"){
   loginPage.classList.add("hidden");
   appPage.classList.remove("hidden");
+  render();
+}
+
+function login(){
+  if(password.value==="7024"){
+    localStorage.setItem("login","yes");
+    loginPage.classList.add("hidden");
+    appPage.classList.remove("hidden");
+  }else alert("Wrong Password");
 }
 
 function logout(){
   localStorage.removeItem("login");
+  settingsPopup.classList.add("hidden");
   appPage.classList.add("hidden");
   loginPage.classList.remove("hidden");
-  closeSettings();
 }
 
-function openSettings(){settingsPopup.classList.remove("hidden");}
-function closeSettings(){settingsPopup.classList.add("hidden");}
-
-if(localStorage.getItem("login")==="yes") showApp();
-
-const monthSel=document.getElementById("month");
-["January","February","March","April","May","June","July","August","September","October","November","December"]
-.forEach(m=>monthSel.innerHTML+=`<option>${m}</option>`);
-
-function getData(){
-  return JSON.parse(localStorage.getItem(key)||"[]");
-}
+function openSettings(){settingsPopup.classList.remove("hidden")}
+function closeSettings(){settingsPopup.classList.add("hidden")}
 
 function saveEntry(){
-  if(!date.value){alert("Date required");return;}
-  const data=getData();
+  if(!date.value){alert("Date required");return}
   data.push({
+    month:monthSelect.value,
     date:date.value,
     shift:shift.value,
     post:post.value,
-    sign:sign.value,
+    sign:"Ravi",
     color:rowColor.value
   });
-  localStorage.setItem(key,JSON.stringify(data));
+  data.sort((a,b)=>a.date.localeCompare(b.date));
+  localStorage.setItem("attendance",JSON.stringify(data));
   render();
 }
 
 function render(){
-  const data=getData().sort((a,b)=>a.date.localeCompare(b.date));
   tableBody.innerHTML="";
-  let d=0,n=0;
-  data.forEach((r,i)=>{
-    if(r.shift==="Day")d++; else n++;
+  let day=0,night=0;
+  data.filter(d=>d.month===monthSelect.value||monthSelect.value==="")
+  .forEach((d,i)=>{
+    if(d.shift==="Day")day++;
+    if(d.shift==="Night")night++;
     tableBody.innerHTML+=`
-    <tr style="background:${r.color}">
-      <td>${r.date}</td>
-      <td>${r.shift}</td>
-      <td>${r.post}</td>
-      <td>${r.sign}</td>
-      <td><button onclick="editRow(${i})">✏️</button></td>
-      <td><button onclick="delRow(${i})">🗑</button></td>
-    </tr>`;
+      <tr style="background:${d.color}">
+        <td>${d.date}</td>
+        <td>${d.shift==="Day"?"P":""}</td>
+        <td>${d.shift==="Night"?"P":""}</td>
+        <td>${d.post}</td>
+        <td>${d.sign}</td>
+        <td><button onclick="editRow(${i})">✏️</button></td>
+        <td><button onclick="delRow(${i})">🗑</button></td>
+      </tr>`;
   });
-  dayTotal.innerText=d;
-  nightTotal.innerText=n;
+  dayTotal.innerText=day;
+  nightTotal.innerText=night;
 }
 
 function delRow(i){
   if(confirm("Delete entry?")){
-    const d=getData(); d.splice(i,1);
-    localStorage.setItem(key,JSON.stringify(d));
+    data.splice(i,1);
+    localStorage.setItem("attendance",JSON.stringify(data));
     render();
   }
 }
 
 function editRow(i){
-  const d=getData()[i];
-  date.value=d.date;
-  shift.value=d.shift;
-  post.value=d.post;
-  sign.value=d.sign;
-  rowColor.value=d.color;
-  delRow(i);
+  date.value=data[i].date;
+  shift.value=data[i].shift;
+  post.value=data[i].post;
+  rowColor.value=data[i].color;
+  data.splice(i,1);
 }
 
 function downloadCSV(){
   let csv="Date,Shift,Post,Sign\n";
-  getData().forEach(r=>csv+=`${r.date},${r.shift},${r.post},${r.sign}\n`);
-  const a=document.createElement("a");
-  a.href="data:text/csv;charset=utf-8,"+encodeURIComponent(csv);
+  data.forEach(d=>{
+    csv+=`${d.date},${d.shift},${d.post},${d.sign}\n`;
+  });
+  let a=document.createElement("a");
+  a.href=URL.createObjectURL(new Blob([csv],{type:"text/csv"}));
   a.download="attendance.csv";
   a.click();
 }
-
-render();
 </script>
+
 </body>
 </html>
