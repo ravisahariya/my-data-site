@@ -2,79 +2,63 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Admin Attendance Register</title>
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Register + Attendance</title>
 
 <style>
-body{
-  margin:0;
-  font-family:Arial, sans-serif;
-  background:#0f5132;
-}
-.hidden{display:none}
-.box{
-  max-width:420px;
-  margin:40px auto;
-  background:#fff;
-  padding:20px;
-  border-radius:10px;
-}
-h2{text-align:center;margin:10px 0}
-input,select,button{
-  width:100%;
-  padding:10px;
-  margin:6px 0;
-  font-size:14px;
-}
-button{
-  border:none;
-  border-radius:5px;
-  cursor:pointer;
-}
-.green{background:#0f5132;color:#fff}
-.red{background:#dc3545;color:#fff}
-.blue{background:#0d6efd;color:#fff}
-
-table{
-  width:100%;
-  border-collapse:collapse;
-  margin-top:10px;
-  font-size:13px;
-}
-th,td{
-  border:1px solid #ccc;
-  padding:6px;
-  text-align:center;
-}
-.settings{
-  float:right;
-  cursor:pointer;
-  font-size:18px;
-}
-.count{
-  font-weight:bold;
-  margin-top:5px;
-}
+  body{
+    margin:0;
+    font-family: Arial, sans-serif;
+    background:#0b4d2e;
+  }
+  .card{
+    max-width:420px;
+    margin:20px auto;
+    background:#fff;
+    padding:15px;
+    border-radius:10px;
+  }
+  h2{text-align:center}
+  label{font-size:14px;font-weight:bold}
+  select,input,button{
+    width:100%;
+    padding:8px;
+    margin-top:5px;
+    margin-bottom:10px;
+    font-size:14px;
+  }
+  button{
+    background:#0b4d2e;
+    color:#fff;
+    border:none;
+    border-radius:5px;
+  }
+  table{
+    width:100%;
+    border-collapse:collapse;
+    margin-top:10px;
+    font-size:13px;
+  }
+  th,td{
+    border:1px solid #ccc;
+    padding:5px;
+    text-align:center;
+  }
+  th{background:#eee}
+  .logout{
+    background:#d32f2f;
+    margin-top:10px;
+  }
 </style>
 </head>
 
 <body>
 
-<!-- LOGIN -->
-<div class="box" id="login">
-  <h2>👨‍💼 Admin Login</h2>
-  <select>
-    <option><b>ADMIN</b></option>
-  </select>
-  <input type="password" id="password" placeholder="Password">
-  <button class="green" onclick="login()">Login</button>
-</div>
-
-<!-- APP -->
-<div class="box hidden" id="app">
-  <span class="settings">⚙️</span>
+<div class="card">
   <h2>Register + Attendance</h2>
 
+  <!-- Month -->
+  <label>Month</label>
   <select id="month">
     <option>January</option><option>February</option><option>March</option>
     <option>April</option><option>May</option><option>June</option>
@@ -82,139 +66,169 @@ th,td{
     <option>October</option><option>November</option><option>December</option>
   </select>
 
-  <input type="number" id="date" placeholder="Date (1-31)">
+  <!-- Date calendar -->
+  <label>Date</label>
+  <input type="date" id="date" required>
 
+  <!-- Shift -->
+  <label>Shift</label>
   <select id="shift">
     <option>Day</option>
     <option>Night</option>
   </select>
 
+  <!-- Status -->
+  <label>Status</label>
   <select id="status">
     <option>Present</option>
     <option>Absent</option>
   </select>
 
+  <!-- Post dropdown -->
+  <label>Post</label>
   <select id="post">
-    <option>ETP</option>
     <option>COE</option>
+    <option>ABEER</option>
+    <option>DENIEM</option>
+    <option>ETP</option>
     <option>ACL</option>
-    <option>AMBER</option>
+    <option>BORD2</option>
+    <option>CASUAL</option>
+    <option>CCTV</option>
   </select>
 
-  <input type="text" id="newPost" placeholder="Add new post">
-  <button class="blue" onclick="addPost()">Add Post</button>
-
+  <!-- Signature -->
+  <label>Signature</label>
   <select id="sign">
     <option>Ravi</option>
   </select>
 
+  <!-- Row color -->
   <label>Row Color</label>
   <input type="color" id="rowColor" value="#ffffff">
 
-  <button class="green" onclick="save()">Save Entry</button>
+  <button onclick="saveEntry()">Save Entry</button>
 
-  <div class="count" id="count"></div>
-
+  <!-- Table -->
   <table>
     <thead>
       <tr>
-        <th>Date</th><th>Shift</th><th>Status</th>
-        <th>Post</th><th>Sign</th><th>Edit</th><th>Delete</th>
+        <th>Date</th>
+        <th>Shift</th>
+        <th>Status</th>
+        <th>Post</th>
+        <th>Sign</th>
+        <th>Edit</th>
+        <th>Del</th>
       </tr>
     </thead>
-    <tbody id="rows"></tbody>
+    <tbody id="tableBody"></tbody>
+    <tfoot>
+      <tr>
+        <th>Total</th>
+        <th id="dayCount">0</th>
+        <th id="nightCount">0</th>
+        <th colspan="4"></th>
+      </tr>
+    </tfoot>
   </table>
 
-  <button class="blue" onclick="downloadCSV()">Download CSV</button>
-  <button class="red" onclick="logout()">Logout</button>
+  <button class="logout" onclick="logout()">Logout</button>
 </div>
 
 <script>
-const PASSWORD="7024";
-let data=JSON.parse(localStorage.getItem("attendance")||"[]");
+let editIndex = -1;
 
-function login(){
-  if(document.getElementById("password").value===PASSWORD){
-    loginBox(false); render();
-  }else alert("Wrong Password ❌");
-}
-function logout(){
-  loginBox(true);
-}
-function loginBox(show){
-  document.getElementById("login").classList.toggle("hidden",!show);
-  document.getElementById("app").classList.toggle("hidden",show);
-}
+function saveEntry(){
+  const date = document.getElementById("date").value;
+  if(!date){ alert("Date required"); return; }
 
-function addPost(){
-  let p=document.getElementById("newPost").value.trim();
-  if(!p)return;
-  let sel=document.getElementById("post");
-  sel.innerHTML+=`<option>${p}</option>`;
-  document.getElementById("newPost").value="";
-}
-
-function save(){
-  let obj={
-    month:month.value,
-    date:+date.value,
-    shift:shift.value,
-    status:status.value,
-    post:post.value,
-    sign:sign.value,
-    color:rowColor.value
+  const entry = {
+    month: document.getElementById("month").value,
+    date: date,
+    shift: document.getElementById("shift").value,
+    status: document.getElementById("status").value,
+    post: document.getElementById("post").value,
+    sign: document.getElementById("sign").value,
+    color: document.getElementById("rowColor").value
   };
-  if(!obj.date)return alert("Date required");
-  data.push(obj);
-  localStorage.setItem("attendance",JSON.stringify(data));
-  render();
-}
 
-function render(){
-  rows.innerHTML="";
-  let d=0,n=0;
-  data.sort((a,b)=>a.date-b.date);
-  data.forEach((r,i)=>{
-    if(r.shift==="Day"&&r.status==="Present")d++;
-    if(r.shift==="Night"&&r.status==="Present")n++;
-    rows.innerHTML+=`
-    <tr style="color:${r.color}">
-      <td>${r.date}</td><td>${r.shift}</td><td>${r.status}</td>
-      <td>${r.post}</td><td>${r.sign}</td>
-      <td><button onclick="edit(${i})">✏️</button></td>
-      <td><button onclick="del(${i})">🗑️</button></td>
-    </tr>`;
-  });
-  count.innerText=`Day: ${d} | Night: ${n} | Total: ${d+n}`;
-}
+  let data = JSON.parse(localStorage.getItem("attendanceData") || "[]");
 
-function edit(i){
-  let r=data[i];
-  date.value=r.date; shift.value=r.shift;
-  status.value=r.status; post.value=r.post;
-  rowColor.value=r.color;
-  data.splice(i,1);
-  localStorage.setItem("attendance",JSON.stringify(data));
-}
-
-function del(i){
-  if(confirm("Delete entry?")){
-    data.splice(i,1);
-    localStorage.setItem("attendance",JSON.stringify(data));
-    render();
+  if(editIndex === -1){
+    data.push(entry);
+  }else{
+    data[editIndex] = entry;
+    editIndex = -1;
   }
+
+  localStorage.setItem("attendanceData", JSON.stringify(data));
+  renderTable();
 }
 
-function downloadCSV(){
-  let csv="Date,Shift,Status,Post,Sign\n";
-  data.forEach(r=>{
-    csv+=`${r.date},${r.shift},${r.status},${r.post},${r.sign}\n`;
+function renderTable(){
+  const body = document.getElementById("tableBody");
+  body.innerHTML = "";
+
+  let data = JSON.parse(localStorage.getItem("attendanceData") || "[]");
+
+  // date wise sort
+  data.sort((a,b)=> new Date(a.date) - new Date(b.date));
+
+  let day=0, night=0;
+
+  data.forEach((e,i)=>{
+    if(e.shift==="Day" && e.status==="Present") day++;
+    if(e.shift==="Night" && e.status==="Present") night++;
+
+    let tr = document.createElement("tr");
+    tr.style.background = e.color;
+
+    tr.innerHTML = `
+      <td>${new Date(e.date).toLocaleDateString("en-GB")}</td>
+      <td>${e.shift}</td>
+      <td>${e.status}</td>
+      <td>${e.post}</td>
+      <td>${e.sign}</td>
+      <td><button onclick="editEntry(${i})">✏️</button></td>
+      <td><button onclick="deleteEntry(${i})">❌</button></td>
+    `;
+    body.appendChild(tr);
   });
-  let a=document.createElement("a");
-  a.href=URL.createObjectURL(new Blob([csv]));
-  a.download="attendance.csv";
-  a.click();
+
+  document.getElementById("dayCount").innerText = day;
+  document.getElementById("nightCount").innerText = night;
 }
+
+function editEntry(i){
+  let data = JSON.parse(localStorage.getItem("attendanceData"));
+  let e = data[i];
+
+  document.getElementById("month").value = e.month;
+  document.getElementById("date").value = e.date;
+  document.getElementById("shift").value = e.shift;
+  document.getElementById("status").value = e.status;
+  document.getElementById("post").value = e.post;
+  document.getElementById("sign").value = e.sign;
+  document.getElementById("rowColor").value = e.color;
+
+  editIndex = i;
+}
+
+function deleteEntry(i){
+  if(!confirm("Delete this entry?")) return;
+  let data = JSON.parse(localStorage.getItem("attendanceData"));
+  data.splice(i,1);
+  localStorage.setItem("attendanceData", JSON.stringify(data));
+  renderTable();
+}
+
+function logout(){
+  alert("Logout");
+  location.reload();
+}
+
+renderTable();
 </script>
 
 </body>
