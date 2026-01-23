@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <title>Attendance App</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
+
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#0b5ed7">
 
@@ -17,15 +18,41 @@ body{
  justify-content:center;
  align-items:center;
 }
+
+/* APP CARD */
 .card{
  background:#fff;
  width:95%;
  max-width:460px;
- padding:20px;
+ padding:15px;
  border-radius:14px;
  box-shadow:0 10px 25px rgba(0,0,0,.25);
 }
-h2{text-align:center}
+
+/* HEADER */
+.app-header{
+ display:flex;
+ align-items:center;
+ justify-content:center;
+ gap:10px;
+ padding:10px;
+ background:#0b5ed7;
+ color:#fff;
+ border-radius:10px;
+ margin-bottom:12px;
+}
+.app-header img{
+ width:42px;
+ height:42px;
+ border-radius:8px;
+}
+.app-header span{
+ font-size:18px;
+ font-weight:bold;
+}
+
+/* FORM */
+h2{text-align:center;margin:6px 0}
 input,select,button{
  width:100%;
  padding:10px;
@@ -43,7 +70,7 @@ button{
 .green{background:#198754;color:#fff}
 .hidden{display:none}
 
-/* TABLE + SCROLL */
+/* TABLE */
 .table-box{
  max-height:260px;
  overflow-y:auto;
@@ -69,25 +96,36 @@ th,td{
 .total{
  font-weight:bold;
  margin:8px 0;
+ text-align:center;
 }
 </style>
 </head>
 
 <body>
 
-<!-- 🔐 LOGIN -->
+<!-- 🔐 LOGIN PAGE -->
 <div class="card" id="loginBox">
+ <div class="app-header">
+  <img src="logo.png">
+  <span>Attendance App</span>
+ </div>
+
  <h2>Admin Login</h2>
  <select disabled><option>ADMIN</option></select>
  <input type="password" id="password" placeholder="Password (7024)">
  <button class="blue" onclick="login()">Login</button>
 </div>
 
-<!-- 📝 APP -->
+<!-- 📝 ATTENDANCE PAGE -->
 <div class="card hidden" id="appBox">
+ <div class="app-header">
+  <img src="logo.png">
+  <span>Attendance App</span>
+ </div>
+
  <h2>Attendance Entry</h2>
 
- <!-- MONTH DROPDOWN -->
+ <!-- MONTH -->
  <select id="monthFilter" onchange="renderTable()">
   <option value="">All Months</option>
   <option value="01">January</option>
@@ -125,6 +163,7 @@ th,td{
 
  <button class="blue" onclick="saveEntry()">Save Entry</button>
 
+ <!-- TABLE -->
  <div class="table-box">
  <table>
   <thead>
@@ -151,6 +190,7 @@ th,td{
 let entries = JSON.parse(localStorage.getItem("attendanceData") || "[]");
 let editIndex = null;
 
+/* VOICE */
 function speak(text){
  speechSynthesis.speak(new SpeechSynthesisUtterance(text));
 }
@@ -178,12 +218,11 @@ function logout(){
  location.reload();
 }
 
-/* SAVE */
+/* SAVE ENTRY */
 function saveEntry(){
  if(!date.value){alert("Date select karo");return;}
 
  const d = new Date(date.value);
- const dayName = d.toLocaleDateString("en",{weekday:"long"});
  const dd = String(d.getDate()).padStart(2,"0");
  const mm = String(d.getMonth()+1).padStart(2,"0");
  const yyyy = d.getFullYear();
@@ -192,16 +231,16 @@ function saveEntry(){
   rawDate: date.value,
   showDate: `${dd}-${mm}-${yyyy}`,
   month: mm,
-  day: dayName,
+  day: d.toLocaleDateString("en",{weekday:"long"}),
   shift: shift.value,
   post: post.value,
   name: name.value,
   color: fontColor.value
  };
 
- if(editIndex !== null){
-  entries[editIndex] = obj;
-  editIndex = null;
+ if(editIndex!==null){
+  entries[editIndex]=obj;
+  editIndex=null;
  }else{
   entries.push(obj);
  }
@@ -213,15 +252,15 @@ function saveEntry(){
 /* RENDER */
 function renderTable(){
  tableBody.innerHTML="";
- let dayCount=0, nightCount=0;
+ let d=0,n=0;
  let m = monthFilter.value;
 
- let filtered = entries.filter(e=> !m || e.month===m);
- filtered.sort((a,b)=> new Date(a.rawDate)-new Date(b.rawDate));
+ let filtered = entries.filter(e=>!m || e.month===m);
+ filtered.sort((a,b)=>new Date(a.rawDate)-new Date(b.rawDate));
 
  filtered.forEach((e,i)=>{
-  if(e.shift==="Day") dayCount++; else nightCount++;
-  tableBody.innerHTML += `
+  if(e.shift==="Day") d++; else n++;
+  tableBody.innerHTML+=`
    <tr style="color:${e.color}">
     <td>${e.showDate}</td>
     <td>${e.day}</td>
@@ -236,18 +275,18 @@ function renderTable(){
  });
 
  totalText.innerText =
-  `Total Day: ${dayCount} | Total Night: ${nightCount} | Grand Total: ${dayCount+nightCount}`;
+  `Total Day: ${d} | Total Night: ${n} | Grand Total: ${d+n}`;
 }
 
 /* EDIT */
 function editRow(i){
  let e = entries[i];
- date.value = e.rawDate;
- shift.value = e.shift;
- post.value = e.post;
- name.value = e.name;
- fontColor.value = e.color;
- editIndex = i;
+ date.value=e.rawDate;
+ shift.value=e.shift;
+ post.value=e.post;
+ name.value=e.name;
+ fontColor.value=e.color;
+ editIndex=i;
 }
 
 /* DELETE */
@@ -281,4 +320,4 @@ if("serviceWorker" in navigator){
 </script>
 
 </body>
-  </html>
+</html>
