@@ -2,74 +2,94 @@
 <html lang="hi">
 <head>
 <meta charset="UTF-8">
-<title>User Data</title>
+<title>Arvind App - Login</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<link rel="manifest" href="manifest.json">
 <style>
-body{font-family:Arial;background:#e3f2fd}
-.card{max-width:360px;margin:80px auto;background:#fff;padding:20px;border-radius:12px;box-shadow:0 5px 15px rgba(0,0,0,.3)}
-input,select,button{width:100%;padding:10px;margin:6px 0}
-button{background:#1976d2;color:#fff;border:none;border-radius:6px}
-.icon{float:right;cursor:pointer}
-.hide{display:none}
+body{
+  margin:0;
+  height:100vh;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  background:linear-gradient(#b3e5ff,#e6f7ff);
+  font-family:Arial;
+}
+.box{
+  background:#fff;
+  padding:20px;
+  width:320px;
+  border-radius:12px;
+  box-shadow:0 10px 25px rgba(0,0,0,.2);
+}
+h2{text-align:center}
+select,input,button{
+  width:100%;
+  padding:10px;
+  margin-top:10px;
+}
+button{
+  background:#1976d2;
+  color:#fff;
+  border:none;
+  border-radius:6px;
+}
+.small{
+  text-align:right;
+  font-size:12px;
+  cursor:pointer;
+  color:#1976d2;
+}
 </style>
 </head>
 <body>
 
-<div class="card" id="loginBox">
-<span class="icon" onclick="openReset()">🔒</span>
-<h2>Login</h2>
-<select id="user">
-<option>Admin</option>
-<option>Arvind</option>
-</select>
-<input type="password" id="pass" placeholder="Password">
-<button onclick="login()">Login</button>
-</div>
+<div class="box">
+  <h2>Login</h2>
 
-<div class="card hide" id="resetBox">
-<h2>पासवर्ड बदलें</h2>
-<select id="rUser"><option>Admin</option><option>Arvind</option></select>
-<input id="oldP" placeholder="पुराना पासवर्ड">
-<input id="newP" placeholder="नया पासवर्ड">
-<button onclick="resetPass()">Save</button>
-<button onclick="closeReset()">Close</button>
+  <select id="user">
+    <option value="admin">Admin</option>
+    <option value="arvind">Arvind</option>
+  </select>
+
+  <input type="password" id="pass" placeholder="Password">
+
+  <button onclick="login()">Login</button>
+
+  <div class="small" onclick="resetPass()">Change Password</div>
 </div>
 
 <script>
-let passDB = JSON.parse(localStorage.passDB || '{"Admin":"7024","Arvind":"1234"}');
+if(!localStorage.adminPass) localStorage.adminPass="1234";
+if(!localStorage.arvindPass) localStorage.arvindPass="1111";
 
 function speak(t){
   let s=new SpeechSynthesisUtterance(t);
-  s.lang="hi-IN"; s.rate=1; s.volume=1;
+  s.rate=1; s.volume=1;
   speechSynthesis.speak(s);
 }
 
 function login(){
-  if(pass.value===passDB[user.value]){
-    localStorage.session=user.value;
-    speak(user.value==="Admin"
-      ?"एडमिन लॉगिन सफल हो गया है"
-      :"अरविंद अटेंडेंस पैनल खुल गया है");
-    setTimeout(()=>{
-      location.href = user.value==="Admin"?"admin.html":"arvind.html";
-    },700);
-  }else alert("गलत पासवर्ड");
-}
+  let u=user.value;
+  let p=pass.value;
+  let ok =
+    (u==="admin" && p===localStorage.adminPass) ||
+    (u==="arvind" && p===localStorage.arvindPass);
 
-function openReset(){resetBox.classList.remove("hide")}
-function closeReset(){resetBox.classList.add("hide")}
+  if(ok){
+    localStorage.login=u;
+    speak("Login ho gaya");
+    location.href = u==="admin" ? "admin.html" : "arvind.html";
+  }else{
+    alert("Wrong Password");
+  }
+}
 
 function resetPass(){
-  if(passDB[rUser.value]!==oldP.value) return alert("पुराना पासवर्ड गलत है");
-  passDB[rUser.value]=newP.value;
-  localStorage.passDB=JSON.stringify(passDB);
-  speak("पासवर्ड सफलतापूर्वक बदल दिया गया है");
-  closeReset();
-}
-
-if('serviceWorker' in navigator){
-  navigator.serviceWorker.register('service-worker.js');
+  let u=prompt("User (admin / arvind)");
+  let np=prompt("New Password");
+  if(u==="admin") localStorage.adminPass=np;
+  if(u==="arvind") localStorage.arvindPass=np;
+  alert("Password changed");
 }
 </script>
 </body>
