@@ -1,12 +1,12 @@
 {
-  "name": "Attendance App",
-  "short_name": "Attendance",
-  "start_url": "./index.html",
+  "name": "User Data",
+  "short_name": "User Data",
+  "start_url": "index.html",
   "display": "standalone",
-  "background_color": "#87ceeb",
-  "theme_color": "#0b5ed7",
+  "background_color": "#e3f2fd",
+  "theme_color": "#1976d2",
   "icons": [
-    { "src": "logo.png", "sizes": "192x192", "type": "image/png" },
-    { "src": "logo.png", "sizes": "512x512", "type": "image/png" }
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png" }
   ]
 }
