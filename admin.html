@@ -1,18 +1,23 @@
 <!DOCTYPE html>
-<html lang="hi">
+<html>
 <head>
 <meta charset="UTF-8">
-<title>User Data - Admin</title>
+<title>Admin Expense</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <style>
-body{font-family:Arial;background:#e8f5e9}
-.card{max-width:420px;margin:20px auto;background:#fff;padding:15px;border-radius:12px}
-input,select,button{width:100%;padding:10px;margin:5px 0}
+body{margin:0;background:#e8f5e9;font-family:Arial}
+.card{
+  max-width:420px;
+  margin:20px auto;
+  background:#fff;
+  padding:15px;
+  border-radius:12px;
+}
+h2{text-align:center;color:#2e7d32}
+input,select,button{width:100%;padding:8px;margin:6px 0}
 button{background:#2e7d32;color:#fff;border:none;border-radius:6px}
 table{width:100%;border-collapse:collapse;font-size:13px}
-th,td{border:1px solid #ccc;padding:5px;text-align:center}
-.scroll{max-height:220px;overflow:auto}
-.total{font-weight:bold}
+td,th{border:1px solid #ccc;padding:5px;text-align:center}
 </style>
 </head>
 <body>
@@ -20,89 +25,86 @@ th,td{border:1px solid #ccc;padding:5px;text-align:center}
 <div class="card">
 <h2>Admin Expense Entry</h2>
 
-<select id="month" onchange="load()">
-<option>January</option><option>February</option><option>March</option>
-<option>April</option><option>May</option><option>June</option>
-<option>July</option><option>August</option><option>September</option>
-<option>October</option><option>November</option><option>December</option>
-</select>
+<input type="month" id="month">
+<input type="date" id="date">
+<input placeholder="Material / सामान" id="item">
+<input type="number" placeholder="₹ Amount" id="amt">
 
-<input type="date" id="date" onchange="day.value=new Date(date.value).toLocaleDateString('en',{weekday:'long'})">
-<input id="day" readonly placeholder="Day">
-<input id="item" placeholder="सामान / Material">
-<input type="number" id="amt" placeholder="₹ Amount">
 <button onclick="save()">Save Entry</button>
 
-<div class="scroll">
 <table>
 <thead>
-<tr><th>Date</th><th>Day</th><th>Item</th><th>₹</th><th>Edit</th><th>Del</th></tr>
+<tr><th>Date</th><th>Item</th><th>₹</th><th>Edit</th><th>Del</th></tr>
 </thead>
-<tbody id="rows"></tbody>
+<tbody id="list"></tbody>
 </table>
-</div>
 
-<div class="total" id="total"></div>
+<h3 id="total">Grand Total ₹0</h3>
+
 <button onclick="download()">Download CSV</button>
 <button onclick="logout()">Logout</button>
 </div>
 
 <script>
-if(localStorage.session!=="Admin") location.href="index.html";
-let edit=null;
+if(localStorage.login!=="admin") location.href="index.html";
 
-function get(){return JSON.parse(localStorage.adminExp||"[]")}
-function set(d){localStorage.adminExp=JSON.stringify(d)}
+let data=JSON.parse(localStorage.adminData||"[]");
+let edit=-1;
 
 function save(){
- let d=get();
- let o={m:month.value,date:date.value,day:day.value,item:item.value,amt:+amt.value};
- if(edit!=null){d[edit]=o;edit=null}else d.push(o);
- set(d); load();
+  let d={
+    date:date.value,
+    item:item.value,
+    amt:+amt.value
+  };
+  if(edit>-1){ data[edit]=d; edit=-1; }
+  else data.push(d);
+  localStorage.adminData=JSON.stringify(data);
+  item.value=amt.value="";
+  render();
 }
 
-function load(){
- let d=get().filter(x=>x.m===month.value)
- .sort((a,b)=>new Date(b.date)-new Date(a.date));
- let t=0,h="";
- d.forEach((e,i)=>{
-  t+=e.amt;
-  h+=`<tr>
-   <td>${fmt(e.date)}</td><td>${e.day}</td><td>${e.item}</td><td>${e.amt}</td>
-   <td onclick="editRow(${i})">✏️</td>
-   <td onclick="del(${i})">❌</td>
-  </tr>`;
- });
- rows.innerHTML=h;
- total.innerText="Grand Total ₹ "+t;
+function render(){
+  list.innerHTML="";
+  let t=0;
+  data.sort((a,b)=>a.date.localeCompare(b.date));
+  data.forEach((r,i)=>{
+    t+=r.amt;
+    list.innerHTML+=`
+    <tr>
+      <td>${r.date}</td>
+      <td>${r.item}</td>
+      <td>${r.amt}</td>
+      <td><button onclick="ed(${i})">✏</button></td>
+      <td><button onclick="del(${i})">❌</button></td>
+    </tr>`;
+  });
+  total.innerText="Grand Total ₹"+t;
 }
-
-function editRow(i){
- let e=get().filter(x=>x.m===month.value)[i];
- date.value=e.date; day.value=e.day; item.value=e.item; amt.value=e.amt;
- edit=i;
+function ed(i){
+  let r=data[i];
+  date.value=r.date; item.value=r.item; amt.value=r.amt;
+  edit=i;
 }
-
 function del(i){
- let d=get().filter(x=>x.m===month.value);
- d.splice(i,1); set(d); load();
+  if(confirm("Delete?")){
+    data.splice(i,1);
+    localStorage.adminData=JSON.stringify(data);
+    render();
+  }
 }
-
-function fmt(d){
- let x=new Date(d);
- return String(x.getDate()).padStart(2,'0')+"-"+String(x.getMonth()+1).padStart(2,'0')+"-"+x.getFullYear();
-}
-
 function download(){
- let d=get(); if(!d.length)return;
- let csv=Object.keys(d[0]).join(",")+"\n"+d.map(o=>Object.values(o).join(",")).join("\n");
- let a=document.createElement("a");
- a.href="data:text/csv,"+encodeURIComponent(csv);
- a.download="expense.csv"; a.click();
+  let csv="Date,Item,Amount\n";
+  data.forEach(r=>csv+=`${r.date},${r.item},${r.amt}\n`);
+  let a=document.createElement("a");
+  a.href=URL.createObjectURL(new Blob([csv]));
+  a.download="expense.csv"; a.click();
 }
-
-function logout(){localStorage.removeItem("session");location.href="index.html"}
-load();
+function logout(){
+  localStorage.removeItem("login");
+  location.href="index.html";
+}
+render();
 </script>
 </body>
-  </html>
+</html>
