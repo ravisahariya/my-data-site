@@ -3,18 +3,12 @@
 <head>
 <meta charset="UTF-8">
 <title>Admin Expense</title>
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width,initial-scale=1">
 <style>
-body{margin:0;background:#e8f5e9;font-family:Arial}
-.card{
-  max-width:420px;
-  margin:20px auto;
-  background:#fff;
-  padding:15px;
-  border-radius:12px;
-}
+body{background:#e8f5e9;font-family:Arial}
+.card{max-width:420px;margin:20px auto;background:#fff;padding:15px;border-radius:12px}
 h2{text-align:center;color:#2e7d32}
-input,select,button{width:100%;padding:8px;margin:6px 0}
+input,button{width:100%;padding:8px;margin:6px 0}
 button{background:#2e7d32;color:#fff;border:none;border-radius:6px}
 table{width:100%;border-collapse:collapse;font-size:13px}
 td,th{border:1px solid #ccc;padding:5px;text-align:center}
@@ -23,12 +17,14 @@ td,th{border:1px solid #ccc;padding:5px;text-align:center}
 <body>
 
 <div class="card">
-<h2>Admin Expense Entry</h2>
+<div style="text-align:right;cursor:pointer" onclick="settings()">⚙️</div>
+<h2>Admin Expense</h2>
 
-<input type="month" id="month">
+<input type="month" id="month" onchange="render()">
 <input type="date" id="date">
-<input placeholder="Material / सामान" id="item">
-<input type="number" placeholder="₹ Amount" id="amt">
+<input id="item" placeholder="Material">
+<input type="number" id="amt" placeholder="₹ Amount">
+<input type="color" id="color">
 
 <button onclick="save()">Save Entry</button>
 
@@ -40,69 +36,73 @@ td,th{border:1px solid #ccc;padding:5px;text-align:center}
 </table>
 
 <h3 id="total">Grand Total ₹0</h3>
-
-<button onclick="download()">Download CSV</button>
-<button onclick="logout()">Logout</button>
+<button onclick="csv()">Download CSV</button>
 </div>
 
 <script>
 if(localStorage.login!=="admin") location.href="index.html";
 
-let data=JSON.parse(localStorage.adminData||"[]");
+let data=JSON.parse(localStorage.adminExpense||"[]");
 let edit=-1;
 
+function format(d){
+ let x=new Date(d);
+ return String(x.getDate()).padStart(2,"0")+"-"+String(x.getMonth()+1).padStart(2,"0")+"-"+x.getFullYear();
+}
+
 function save(){
-  let d={
-    date:date.value,
-    item:item.value,
-    amt:+amt.value
-  };
-  if(edit>-1){ data[edit]=d; edit=-1; }
-  else data.push(d);
-  localStorage.adminData=JSON.stringify(data);
-  item.value=amt.value="";
-  render();
+ let d={date:date.value,item:item.value,amt:+amt.value,color:color.value};
+ if(edit>-1){data[edit]=d;edit=-1}else data.push(d);
+ localStorage.adminExpense=JSON.stringify(data);
+ render();
 }
 
 function render(){
-  list.innerHTML="";
-  let t=0;
-  data.sort((a,b)=>a.date.localeCompare(b.date));
-  data.forEach((r,i)=>{
-    t+=r.amt;
-    list.innerHTML+=`
-    <tr>
-      <td>${r.date}</td>
-      <td>${r.item}</td>
-      <td>${r.amt}</td>
-      <td><button onclick="ed(${i})">✏</button></td>
-      <td><button onclick="del(${i})">❌</button></td>
-    </tr>`;
-  });
-  total.innerText="Grand Total ₹"+t;
+ list.innerHTML=""; let sum=0;
+ let m=month.value;
+ data.filter(r=>!m||r.date.startsWith(m))
+ .sort((a,b)=>a.date.localeCompare(b.date))
+ .forEach((r,i)=>{
+  sum+=r.amt;
+  list.innerHTML+=`
+  <tr id="row${i}" style="color:${r.color||'#000'}">
+   <td>${format(r.date)}</td><td>${r.item}</td><td>${r.amt}</td>
+   <td onclick="ed(${i})">✏</td><td onclick="del(${i})">❌</td>
+  </tr>`;
+ });
+ total.innerText="Grand Total ₹"+sum;
 }
+
 function ed(i){
-  let r=data[i];
-  date.value=r.date; item.value=r.item; amt.value=r.amt;
-  edit=i;
+ let r=data[i];
+ date.value=r.date; item.value=r.item; amt.value=r.amt; color.value=r.color||"#000000";
+ edit=i;
+ document.getElementById("row"+i)?.scrollIntoView({behavior:"smooth",block:"center"});
 }
+
 function del(i){
-  if(confirm("Delete?")){
-    data.splice(i,1);
-    localStorage.adminData=JSON.stringify(data);
-    render();
-  }
+ if(confirm("Delete entry?")){
+  data.splice(i,1);
+  localStorage.adminExpense=JSON.stringify(data);
+  render();
+ }
 }
-function download(){
-  let csv="Date,Item,Amount\n";
-  data.forEach(r=>csv+=`${r.date},${r.item},${r.amt}\n`);
-  let a=document.createElement("a");
-  a.href=URL.createObjectURL(new Blob([csv]));
-  a.download="expense.csv"; a.click();
+
+function csv(){
+ let c="Date,Item,Amount\n";
+ data.forEach(r=>c+=`${format(r.date)},${r.item},${r.amt}\n`);
+ let a=document.createElement("a");
+ a.href=URL.createObjectURL(new Blob([c]));
+ a.download="expense.csv"; a.click();
 }
-function logout(){
-  localStorage.removeItem("login");
-  location.href="index.html";
+
+function settings(){
+ let c=prompt("1 Logout\n2 Change Password");
+ if(c==="1"){localStorage.removeItem("login");location.href="index.html"}
+ if(c==="2"){
+  let p=prompt("New password");
+  localStorage.adminPass=p;
+ }
 }
 render();
 </script>
