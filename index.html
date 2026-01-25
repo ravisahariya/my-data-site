@@ -3,7 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <title>Arvind App - Login</title>
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
 <style>
 body{
   margin:0;
@@ -11,86 +12,139 @@ body{
   display:flex;
   justify-content:center;
   align-items:center;
-  background:linear-gradient(#b3e5ff,#e6f7ff);
-  font-family:Arial;
+  background:linear-gradient(#b3e5fc,#e1f5fe);
+  font-family:Arial, sans-serif;
 }
 .box{
-  background:#fff;
-  padding:20px;
   width:320px;
-  border-radius:12px;
-  box-shadow:0 10px 25px rgba(0,0,0,.2);
+  background:#ffffff;
+  padding:25px;
+  border-radius:14px;
+  box-shadow:0 10px 25px rgba(0,0,0,0.25);
 }
-h2{text-align:center}
+h2{
+  text-align:center;
+  margin-bottom:20px;
+}
 select,input,button{
   width:100%;
   padding:10px;
   margin-top:10px;
+  font-size:15px;
 }
 button{
   background:#1976d2;
   color:#fff;
   border:none;
   border-radius:6px;
+  cursor:pointer;
+}
+button:hover{
+  background:#125aa0;
 }
 .small{
   text-align:right;
-  font-size:12px;
-  cursor:pointer;
+  font-size:13px;
+  margin-top:10px;
   color:#1976d2;
+  cursor:pointer;
 }
 </style>
 </head>
+
 <body>
 
 <div class="box">
   <h2>Login</h2>
 
+  <!-- User Select -->
   <select id="user">
     <option value="admin">Admin</option>
     <option value="arvind">Arvind</option>
   </select>
 
+  <!-- Password (auto show) -->
   <input type="password" id="pass" placeholder="Password">
 
+  <!-- Login Button -->
   <button onclick="login()">Login</button>
 
-  <div class="small" onclick="resetPass()">Change Password</div>
+  <!-- Change Password -->
+  <div class="small" onclick="changePassword()">Change Password</div>
 </div>
 
 <script>
-if(!localStorage.adminPass) localStorage.adminPass="1234";
-if(!localStorage.arvindPass) localStorage.arvindPass="1111";
-
-function speak(t){
-  let s=new SpeechSynthesisUtterance(t);
-  s.rate=1; s.volume=1;
-  speechSynthesis.speak(s);
+/* ===== DEFAULT PASSWORD SET ===== */
+if(!localStorage.adminPass){
+  localStorage.adminPass = "1234";
+}
+if(!localStorage.arvindPass){
+  localStorage.arvindPass = "1111";
 }
 
-function login(){
-  let u=user.value;
-  let p=pass.value;
-  let ok =
-    (u==="admin" && p===localStorage.adminPass) ||
-    (u==="arvind" && p===localStorage.arvindPass);
+/* ===== AUTO FILL PASSWORD ON LOAD ===== */
+document.getElementById("pass").value = localStorage.adminPass;
 
-  if(ok){
-    localStorage.login=u;
-    speak("Login ho gaya");
-    location.href = u==="admin" ? "admin.html" : "arvind.html";
-  }else{
-    alert("Wrong Password");
+/* ===== USER CHANGE → PASSWORD AUTO CHANGE ===== */
+document.getElementById("user").addEventListener("change", function(){
+  if(this.value === "admin"){
+    pass.value = localStorage.adminPass;
+  }
+  if(this.value === "arvind"){
+    pass.value = localStorage.arvindPass;
+  }
+});
+
+/* ===== VOICE FUNCTION ===== */
+function speak(text){
+  let msg = new SpeechSynthesisUtterance(text);
+  msg.lang = "hi-IN";
+  msg.volume = 1;
+  msg.rate = 1;
+  speechSynthesis.speak(msg);
+}
+
+/* ===== LOGIN FUNCTION ===== */
+function login(){
+  let u = user.value;
+  let p = pass.value;
+
+  if(u === "admin" && p === localStorage.adminPass){
+    localStorage.login = "admin";
+    speak("Admin login ho gaya");
+    window.location.href = "admin.html";
+  }
+  else if(u === "arvind" && p === localStorage.arvindPass){
+    localStorage.login = "arvind";
+    speak("Arvind login ho gaya");
+    window.location.href = "arvind.html";
+  }
+  else{
+    alert("गलत Password");
   }
 }
 
-function resetPass(){
-  let u=prompt("User (admin / arvind)");
-  let np=prompt("New Password");
-  if(u==="admin") localStorage.adminPass=np;
-  if(u==="arvind") localStorage.arvindPass=np;
-  alert("Password changed");
+/* ===== CHANGE PASSWORD ===== */
+function changePassword(){
+  let u = prompt("User likhiye (admin / arvind)");
+  if(u !== "admin" && u !== "arvind"){
+    alert("Galat user");
+    return;
+  }
+  let np = prompt("Naya password daliye");
+  if(!np){
+    alert("Password blank nahi ho sakta");
+    return;
+  }
+  if(u === "admin"){
+    localStorage.adminPass = np;
+  }
+  if(u === "arvind"){
+    localStorage.arvindPass = np;
+  }
+  alert("Password change ho gaya");
 }
 </script>
+
 </body>
 </html>
