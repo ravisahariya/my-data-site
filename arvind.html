@@ -3,16 +3,10 @@
 <head>
 <meta charset="UTF-8">
 <title>Arvind Attendance</title>
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width,initial-scale=1">
 <style>
-body{margin:0;background:#ffebee;font-family:Arial}
-.card{
-  max-width:420px;
-  margin:20px auto;
-  background:#fff;
-  padding:15px;
-  border-radius:12px;
-}
+body{background:#ffebee;font-family:Arial}
+.card{max-width:420px;margin:20px auto;background:#fff;padding:15px;border-radius:12px}
 h2{text-align:center;color:#c62828}
 input,select,button{width:100%;padding:8px;margin:6px 0}
 button{background:#c62828;color:#fff;border:none;border-radius:6px}
@@ -23,18 +17,17 @@ td,th{border:1px solid #ccc;padding:5px;text-align:center}
 <body>
 
 <div class="card">
+<div style="text-align:right;cursor:pointer" onclick="settings()">⚙️</div>
 <h2>Arvind Attendance</h2>
 
-<input type="month" id="month">
+<input type="month" id="month" onchange="render()">
 <input type="date" id="date">
-<input id="day" placeholder="Day" readonly>
-<select id="shift">
-<option>Day</option>
-<option>Night</option>
-</select>
+<input id="day" readonly placeholder="Day">
+<select id="shift"><option>Day</option><option>Night</option></select>
 <select id="post">
-<option>COE</option><option>ETP</option><option>ACL</option>
+<option>COE</option><option>ETP</option><option>ACL</option><option>CCTV</option>
 </select>
+<input type="color" id="color">
 
 <button onclick="save()">Save Entry</button>
 
@@ -45,67 +38,76 @@ td,th{border:1px solid #ccc;padding:5px;text-align:center}
 <tbody id="list"></tbody>
 </table>
 
-<h3 id="total"></h3>
-
-<button onclick="download()">Download CSV</button>
-<button onclick="logout()">Logout</button>
+<h3 id="count"></h3>
+<button onclick="csv()">Download CSV</button>
 </div>
 
 <script>
 if(localStorage.login!=="arvind") location.href="index.html";
 
-let data=JSON.parse(localStorage.attData||"[]");
+let data=JSON.parse(localStorage.attendance||"[]");
 let edit=-1;
 
-date.onchange=()=>day.value=
-["Sun","Mon","Tue","Wed","Thu","Fri","Sat"][new Date(date.value).getDay()];
+date.onchange=()=>day.value=["Sun","Mon","Tue","Wed","Thu","Fri","Sat"][new Date(date.value).getDay()];
+
+function format(d){
+ let x=new Date(d);
+ return String(x.getDate()).padStart(2,"0")+"-"+String(x.getMonth()+1).padStart(2,"0")+"-"+x.getFullYear();
+}
 
 function save(){
-  let d={date:date.value,day:day.value,shift:shift.value,post:post.value};
-  if(edit>-1){data[edit]=d;edit=-1;} else data.push(d);
-  localStorage.attData=JSON.stringify(data);
-  render();
+ let d={date:date.value,day:day.value,shift:shift.value,post:post.value,color:color.value};
+ if(edit>-1){data[edit]=d;edit=-1}else data.push(d);
+ localStorage.attendance=JSON.stringify(data);
+ render();
 }
 
 function render(){
-  let d=0,n=0;
-  list.innerHTML="";
-  data.sort((a,b)=>a.date.localeCompare(b.date));
-  data.forEach((r,i)=>{
-    r.shift==="Day"?d++:n++;
-    list.innerHTML+=`
-    <tr>
-      <td>${r.date}</td><td>${r.day}</td>
-      <td>${r.shift}</td><td>${r.post}</td>
-      <td><button onclick="ed(${i})">✏</button></td>
-      <td><button onclick="del(${i})">❌</button></td>
-    </tr>`;
-  });
-  total.innerText=`Day:${d} Night:${n} Total:${d+n}`;
+ list.innerHTML=""; let d=0,n=0;
+ let m=month.value;
+ data.filter(r=>!m||r.date.startsWith(m))
+ .sort((a,b)=>a.date.localeCompare(b.date))
+ .forEach((r,i)=>{
+  r.shift==="Day"?d++:n++;
+  list.innerHTML+=`
+  <tr id="row${i}" style="color:${r.color||'#000'}">
+   <td>${format(r.date)}</td><td>${r.day}</td><td>${r.shift}</td><td>${r.post}</td>
+   <td onclick="ed(${i})">✏</td><td onclick="del(${i})">❌</td>
+  </tr>`;
+ });
+ count.innerText=`Day:${d} Night:${n} Total:${d+n}`;
 }
+
 function ed(i){
-  let r=data[i];
-  date.value=r.date; day.value=r.day;
-  shift.value=r.shift; post.value=r.post;
-  edit=i;
+ let r=data[i];
+ date.value=r.date; day.value=r.day; shift.value=r.shift; post.value=r.post; color.value=r.color||"#000000";
+ edit=i;
+ document.getElementById("row"+i)?.scrollIntoView({behavior:"smooth",block:"center"});
 }
+
 function del(i){
-  if(confirm("Delete?")){
-    data.splice(i,1);
-    localStorage.attData=JSON.stringify(data);
-    render();
-  }
+ if(confirm("Delete entry?")){
+  data.splice(i,1);
+  localStorage.attendance=JSON.stringify(data);
+  render();
+ }
 }
-function download(){
-  let csv="Date,Day,Shift,Post\n";
-  data.forEach(r=>csv+=`${r.date},${r.day},${r.shift},${r.post}\n`);
-  let a=document.createElement("a");
-  a.href=URL.createObjectURL(new Blob([csv]));
-  a.download="attendance.csv"; a.click();
+
+function csv(){
+ let c="Date,Day,Shift,Post\n";
+ data.forEach(r=>c+=`${format(r.date)},${r.day},${r.shift},${r.post}\n`);
+ let a=document.createElement("a");
+ a.href=URL.createObjectURL(new Blob([c]));
+ a.download="attendance.csv"; a.click();
 }
-function logout(){
-  localStorage.removeItem("login");
-  location.href="index.html";
+
+function settings(){
+ let c=prompt("1 Logout\n2 Change Password");
+ if(c==="1"){localStorage.removeItem("login");location.href="index.html"}
+ if(c==="2"){
+  let p=prompt("New password");
+  localStorage.arvindPass=p;
+ }
 }
 render();
 </script>
