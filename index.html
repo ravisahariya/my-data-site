@@ -1,323 +1,76 @@
 <!DOCTYPE html>
-<html>
+<html lang="hi">
 <head>
 <meta charset="UTF-8">
-<title>Attendance App</title>
+<title>User Data</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
-
 <link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#0b5ed7">
-
 <style>
-body{
- margin:0;
- min-height:100vh;
- background:linear-gradient(#9fdcff,#e8f6ff);
- font-family:Arial;
- display:flex;
- justify-content:center;
- align-items:center;
-}
-
-/* APP CARD */
-.card{
- background:#fff;
- width:95%;
- max-width:460px;
- padding:15px;
- border-radius:14px;
- box-shadow:0 10px 25px rgba(0,0,0,.25);
-}
-
-/* HEADER */
-.app-header{
- display:flex;
- align-items:center;
- justify-content:center;
- gap:10px;
- padding:10px;
- background:#0b5ed7;
- color:#fff;
- border-radius:10px;
- margin-bottom:12px;
-}
-.app-header img{
- width:42px;
- height:42px;
- border-radius:8px;
-}
-.app-header span{
- font-size:18px;
- font-weight:bold;
-}
-
-/* FORM */
-h2{text-align:center;margin:6px 0}
-input,select,button{
- width:100%;
- padding:10px;
- margin:6px 0;
- font-size:15px;
-}
-button{
- border:none;
- border-radius:6px;
- font-weight:bold;
- cursor:pointer;
-}
-.blue{background:#0b5ed7;color:#fff}
-.red{background:#b00000;color:#fff}
-.green{background:#198754;color:#fff}
-.hidden{display:none}
-
-/* TABLE */
-.table-box{
- max-height:260px;
- overflow-y:auto;
- border:1px solid #ccc;
- margin-top:8px;
-}
-table{
- width:100%;
- border-collapse:collapse;
- font-size:13px;
-}
-th,td{
- border:1px solid #ccc;
- padding:6px;
- text-align:center;
-}
-.signature{font-family:cursive}
-.actions button{
- width:auto;
- padding:4px 6px;
- margin:0 2px;
-}
-.total{
- font-weight:bold;
- margin:8px 0;
- text-align:center;
-}
+body{font-family:Arial;background:#e3f2fd}
+.card{max-width:360px;margin:80px auto;background:#fff;padding:20px;border-radius:12px;box-shadow:0 5px 15px rgba(0,0,0,.3)}
+input,select,button{width:100%;padding:10px;margin:6px 0}
+button{background:#1976d2;color:#fff;border:none;border-radius:6px}
+.icon{float:right;cursor:pointer}
+.hide{display:none}
 </style>
 </head>
-
 <body>
 
-<!-- 🔐 LOGIN PAGE -->
 <div class="card" id="loginBox">
- <div class="app-header">
-  <img src="logo.png">
-  <span>Attendance App</span>
- </div>
-
- <h2>Admin Login</h2>
- <select disabled><option>ADMIN</option></select>
- <input type="password" id="password" placeholder="Password (7024)">
- <button class="blue" onclick="login()">Login</button>
+<span class="icon" onclick="openReset()">🔒</span>
+<h2>Login</h2>
+<select id="user">
+<option>Admin</option>
+<option>Arvind</option>
+</select>
+<input type="password" id="pass" placeholder="Password">
+<button onclick="login()">Login</button>
 </div>
 
-<!-- 📝 ATTENDANCE PAGE -->
-<div class="card hidden" id="appBox">
- <div class="app-header">
-  <img src="logo.png">
-  <span>Attendance App</span>
- </div>
-
- <h2>Attendance Entry</h2>
-
- <!-- MONTH -->
- <select id="monthFilter" onchange="renderTable()">
-  <option value="">All Months</option>
-  <option value="01">January</option>
-  <option value="02">February</option>
-  <option value="03">March</option>
-  <option value="04">April</option>
-  <option value="05">May</option>
-  <option value="06">June</option>
-  <option value="07">July</option>
-  <option value="08">August</option>
-  <option value="09">September</option>
-  <option value="10">October</option>
-  <option value="11">November</option>
-  <option value="12">December</option>
- </select>
-
- <input type="date" id="date">
-
- <select id="shift">
-  <option>Day</option>
-  <option>Night</option>
- </select>
-
- <select id="post">
-  <option>COE</option><option>ABEER</option><option>DENIEM</option>
-  <option>ETP</option><option>ACL</option><option>BORD2</option>
-  <option>CASUAL</option><option>CCTV</option>
- </select>
-
- <select id="name" class="signature">
-  <option>Ravi</option>
- </select>
-
- <input type="color" id="fontColor">
-
- <button class="blue" onclick="saveEntry()">Save Entry</button>
-
- <!-- TABLE -->
- <div class="table-box">
- <table>
-  <thead>
-   <tr>
-    <th>Date</th>
-    <th>Day</th>
-    <th>Shift</th>
-    <th>Post</th>
-    <th>Name</th>
-    <th>Action</th>
-   </tr>
-  </thead>
-  <tbody id="tableBody"></tbody>
- </table>
- </div>
-
- <div class="total" id="totalText"></div>
-
- <button class="green" onclick="downloadCSV()">⬇ Download CSV</button>
- <button class="red" onclick="logout()">Logout</button>
+<div class="card hide" id="resetBox">
+<h2>पासवर्ड बदलें</h2>
+<select id="rUser"><option>Admin</option><option>Arvind</option></select>
+<input id="oldP" placeholder="पुराना पासवर्ड">
+<input id="newP" placeholder="नया पासवर्ड">
+<button onclick="resetPass()">Save</button>
+<button onclick="closeReset()">Close</button>
 </div>
 
 <script>
-let entries = JSON.parse(localStorage.getItem("attendanceData") || "[]");
-let editIndex = null;
+let passDB = JSON.parse(localStorage.passDB || '{"Admin":"7024","Arvind":"1234"}');
 
-/* VOICE */
-function speak(text){
- speechSynthesis.speak(new SpeechSynthesisUtterance(text));
+function speak(t){
+  let s=new SpeechSynthesisUtterance(t);
+  s.lang="hi-IN"; s.rate=1; s.volume=1;
+  speechSynthesis.speak(s);
 }
 
-/* LOGIN */
 function login(){
- if(password.value==="7024"){
-  speak("Login ho gaya hai");
-  loginBox.classList.add("hidden");
-  appBox.classList.remove("hidden");
-  localStorage.setItem("logged","yes");
-  renderTable();
- }else alert("Wrong password");
+  if(pass.value===passDB[user.value]){
+    localStorage.session=user.value;
+    speak(user.value==="Admin"
+      ?"एडमिन लॉगिन सफल हो गया है"
+      :"अरविंद अटेंडेंस पैनल खुल गया है");
+    setTimeout(()=>{
+      location.href = user.value==="Admin"?"admin.html":"arvind.html";
+    },700);
+  }else alert("गलत पासवर्ड");
 }
 
-/* AUTO LOGIN */
-if(localStorage.getItem("logged")==="yes"){
- loginBox.classList.add("hidden");
- appBox.classList.remove("hidden");
+function openReset(){resetBox.classList.remove("hide")}
+function closeReset(){resetBox.classList.add("hide")}
+
+function resetPass(){
+  if(passDB[rUser.value]!==oldP.value) return alert("पुराना पासवर्ड गलत है");
+  passDB[rUser.value]=newP.value;
+  localStorage.passDB=JSON.stringify(passDB);
+  speak("पासवर्ड सफलतापूर्वक बदल दिया गया है");
+  closeReset();
 }
 
-/* LOGOUT */
-function logout(){
- localStorage.removeItem("logged");
- location.reload();
-}
-
-/* SAVE ENTRY */
-function saveEntry(){
- if(!date.value){alert("Date select karo");return;}
-
- const d = new Date(date.value);
- const dd = String(d.getDate()).padStart(2,"0");
- const mm = String(d.getMonth()+1).padStart(2,"0");
- const yyyy = d.getFullYear();
-
- const obj = {
-  rawDate: date.value,
-  showDate: `${dd}-${mm}-${yyyy}`,
-  month: mm,
-  day: d.toLocaleDateString("en",{weekday:"long"}),
-  shift: shift.value,
-  post: post.value,
-  name: name.value,
-  color: fontColor.value
- };
-
- if(editIndex!==null){
-  entries[editIndex]=obj;
-  editIndex=null;
- }else{
-  entries.push(obj);
- }
-
- localStorage.setItem("attendanceData",JSON.stringify(entries));
- renderTable();
-}
-
-/* RENDER */
-function renderTable(){
- tableBody.innerHTML="";
- let d=0,n=0;
- let m = monthFilter.value;
-
- let filtered = entries.filter(e=>!m || e.month===m);
- filtered.sort((a,b)=>new Date(a.rawDate)-new Date(b.rawDate));
-
- filtered.forEach((e,i)=>{
-  if(e.shift==="Day") d++; else n++;
-  tableBody.innerHTML+=`
-   <tr style="color:${e.color}">
-    <td>${e.showDate}</td>
-    <td>${e.day}</td>
-    <td>${e.shift}</td>
-    <td>${e.post}</td>
-    <td class="signature">${e.name}</td>
-    <td class="actions">
-     <button class="green" onclick="editRow(${i})">✏</button>
-     <button class="red" onclick="deleteRow(${i})">✖</button>
-    </td>
-   </tr>`;
- });
-
- totalText.innerText =
-  `Total Day: ${d} | Total Night: ${n} | Grand Total: ${d+n}`;
-}
-
-/* EDIT */
-function editRow(i){
- let e = entries[i];
- date.value=e.rawDate;
- shift.value=e.shift;
- post.value=e.post;
- name.value=e.name;
- fontColor.value=e.color;
- editIndex=i;
-}
-
-/* DELETE */
-function deleteRow(i){
- if(confirm("Delete entry?")){
-  entries.splice(i,1);
-  localStorage.setItem("attendanceData",JSON.stringify(entries));
-  renderTable();
- }
-}
-
-/* CSV */
-function downloadCSV(){
- let m = monthFilter.value;
- let filtered = entries.filter(e=>!m || e.month===m);
- let csv="Date,Day,Shift,Post,Name\n";
- filtered.forEach(e=>{
-  csv+=`${e.showDate},${e.day},${e.shift},${e.post},${e.name}\n`;
- });
- let a=document.createElement("a");
- a.href=URL.createObjectURL(new Blob([csv],{type:"text/csv"}));
- a.download="attendance.csv";
- a.click();
+if('serviceWorker' in navigator){
+  navigator.serviceWorker.register('service-worker.js');
 }
 </script>
-
-<script>
-if("serviceWorker" in navigator){
- navigator.serviceWorker.register("service-worker.js");
-}
-</script>
-
 </body>
 </html>
