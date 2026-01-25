@@ -1,10 +1,16 @@
 self.addEventListener("install",e=>{
- e.waitUntil(
-  caches.open("user-data").then(c=>c.addAll([
-   "./","index.html","admin.html","arvind.html","manifest.json"
-  ]))
- );
+  e.waitUntil(
+    caches.open("app").then(c=>
+      c.addAll([
+        "index.html",
+        "admin.html",
+        "arvind.html"
+      ])
+    )
+  );
 });
 self.addEventListener("fetch",e=>{
- e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request)));
+  e.respondWith(
+    caches.match(e.request).then(r=>r||fetch(e.request))
+  );
 });
