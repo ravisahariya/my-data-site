@@ -3,72 +3,124 @@
 <head>
 <meta charset="UTF-8">
 <title>Arvind App - Login</title>
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<!-- PWA -->
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon-192.png">
+<meta name="theme-color" content="#1976d2">
+
 <style>
 body{
- margin:0;height:100vh;display:flex;justify-content:center;align-items:center;
- background:linear-gradient(#b3e5fc,#e1f5fe);font-family:Arial
+  margin:0;
+  height:100vh;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  background:linear-gradient(#b3e5fc,#e1f5fe);
+  font-family:Arial;
 }
+
 .box{
- width:320px;background:#fff;padding:20px;border-radius:12px;
- box-shadow:0 8px 20px rgba(0,0,0,.25)
+  width:320px;
+  background:#fff;
+  padding:20px;
+  border-radius:12px;
+  box-shadow:0 8px 20px rgba(0,0,0,.25);
 }
-h2{text-align:center}
-select,input,button{width:100%;padding:10px;margin-top:10px}
-button{background:#1976d2;color:#fff;border:none;border-radius:6px}
-.small{text-align:right;font-size:12px;color:#1976d2;cursor:pointer}
+
+h2{
+  text-align:center;
+  margin-bottom:10px;
+}
+
+select,input,button{
+  width:100%;
+  padding:10px;
+  margin-top:10px;
+  font-size:14px;
+}
+
+button{
+  background:#1976d2;
+  color:#fff;
+  border:none;
+  border-radius:6px;
+  cursor:pointer;
+}
+
+.small{
+  text-align:right;
+  font-size:12px;
+  color:#1976d2;
+  cursor:pointer;
+  margin-top:6px;
+}
 </style>
 </head>
+
 <body>
 
 <div class="box">
-<h2>Login</h2>
+  <h2>Login</h2>
 
-<select id="user">
- <option value="admin">Admin</option>
- <option value="arvind">Arvind</option>
-</select>
+  <select id="user">
+    <option value="admin">Admin</option>
+    <option value="arvind">Arvind</option>
+  </select>
 
-<input type="password" id="pass">
+  <input type="password" id="pass" placeholder="Password">
 
-<button onclick="login()">Login</button>
-<div class="small" onclick="changePass()">Change Password</div>
+  <button onclick="login()">Login</button>
+
+  <div class="small" onclick="changePass()">Change Password</div>
 </div>
 
 <script>
-if(!localStorage.adminPass) localStorage.adminPass="1234";
-if(!localStorage.arvindPass) localStorage.arvindPass="1111";
+// default passwords (पहली बार)
+if(!localStorage.adminPass) localStorage.adminPass = "1234";
+if(!localStorage.arvindPass) localStorage.arvindPass = "1111";
 
+// auto show password
 pass.value = localStorage.adminPass;
-user.onchange=()=>{
- pass.value = user.value==="admin"
-  ? localStorage.adminPass
-  : localStorage.arvindPass;
+
+user.onchange = ()=>{
+  pass.value = user.value==="admin"
+    ? localStorage.adminPass
+    : localStorage.arvindPass;
 };
 
+// voice
 function speak(t){
- let s=new SpeechSynthesisUtterance(t);
- s.lang="hi-IN"; speechSynthesis.speak(s);
+  let s = new SpeechSynthesisUtterance(t);
+  s.lang="hi-IN";
+  speechSynthesis.speak(s);
 }
 
 function login(){
- if(user.value==="admin" && pass.value===localStorage.adminPass){
-  localStorage.login="admin"; speak("Admin login ho gaya");
-  location.href="admin.html";
- }
- else if(user.value==="arvind" && pass.value===localStorage.arvindPass){
-  localStorage.login="arvind"; speak("Arvind login ho gaya");
-  location.href="arvind.html";
- }
- else alert("Galat password");
+  if(user.value==="admin" && pass.value===localStorage.adminPass){
+    localStorage.login="admin";
+    speak("Admin login ho gaya");
+    location.href="admin.html";
+  }
+  else if(user.value==="arvind" && pass.value===localStorage.arvindPass){
+    localStorage.login="arvind";
+    speak("Arvind login ho gaya");
+    location.href="arvind.html";
+  }
+  else{
+    alert("Galat password");
+  }
 }
 
 function changePass(){
- let u=prompt("admin / arvind");
- let p=prompt("Naya password");
- if(u==="admin") localStorage.adminPass=p;
- if(u==="arvind") localStorage.arvindPass=p;
+  let u = prompt("admin / arvind");
+  let p = prompt("Naya password");
+  if(u==="admin") localStorage.adminPass = p;
+  if(u==="arvind") localStorage.arvindPass = p;
+  alert("Password badal diya gaya");
 }
 </script>
+
 </body>
 </html>
