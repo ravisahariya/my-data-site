@@ -4,28 +4,29 @@
 <meta charset="UTF-8">
 <title>Arvind Attendance</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
-
 <style>
 body{
   margin:0;
+  min-height:100vh;
+  background:#ffebee;
   font-family:Arial;
-  background:linear-gradient(#e3f2fd,#bbdefb);
+  display:flex;
+  justify-content:center;
 }
 .card{
-  max-width:380px;
-  margin:20px auto;
+  width:95%;
+  max-width:420px;
   background:#fff;
+  margin:20px;
   padding:15px;
   border-radius:12px;
-  box-shadow:0 8px 25px rgba(0,0,0,.25);
+  box-shadow:0 6px 18px rgba(0,0,0,.2);
 }
-h2{color:#c62828;text-align:center}
-
+h2{text-align:center;color:#c62828}
 input,select,button{
   width:100%;
-  padding:9px;
+  padding:10px;
   margin-top:8px;
-  font-size:14px;
 }
 button{
   background:#c62828;
@@ -33,66 +34,43 @@ button{
   border:none;
   border-radius:6px;
 }
-button:hover{opacity:.9}
-
-.table-box{
-  max-height:260px;
-  overflow-y:auto;
-  margin-top:10px;
-  border:1px solid #ccc;
-}
-
 table{
   width:100%;
   border-collapse:collapse;
+  margin-top:10px;
   font-size:13px;
 }
 th,td{
   border:1px solid #ccc;
-  padding:5px;
+  padding:6px;
   text-align:center;
 }
-
-.edit{color:green;cursor:pointer}
 .del{color:red;cursor:pointer}
-
-#count{
-  margin-top:8px;
-  font-weight:bold;
-}
+.edit{color:green;cursor:pointer}
+.footer{margin-top:10px;font-weight:bold}
 </style>
 </head>
-
 <body>
 
 <div class="card">
-<h2>Arvind Attendance Entry</h2>
+<h2>Arvind Attendance</h2>
 
-<input type="month" id="month" onchange="render()">
+<input type="month" id="month">
 <input type="date" id="date">
 <input id="day" readonly placeholder="Day">
-
 <select id="shift">
   <option>Day</option>
   <option>Night</option>
 </select>
-
 <select id="post">
-  <option>COE</option>
   <option>ETP</option>
-  <option>ABEER</option>
-  <option>DENIEM</option>
+  <option>COE</option>
   <option>ACL</option>
-  <option>BORD2</option>
-  <option>CASUAL</option>
   <option>CCTV</option>
 </select>
 
-<input type="color" id="color">
-
 <button onclick="save()">Save Entry</button>
 
-<div class="table-box">
 <table>
 <thead>
 <tr>
@@ -101,107 +79,62 @@ th,td{
 </thead>
 <tbody id="list"></tbody>
 </table>
-</div>
 
-<div id="count"></div>
+<div class="footer" id="count"></div>
 
 <button onclick="csv()">Download CSV</button>
 <button onclick="logout()">Logout</button>
 </div>
 
 <script>
-/* सुरक्षा */
 if(localStorage.login!=="arvind") location.href="index.html";
 
-let data = JSON.parse(localStorage.attendance || "[]");
-let editIndex = -1;
+let data=JSON.parse(localStorage.arvindData||"[]"),edit=-1;
 
-date.onchange=()=>{
- let d=new Date(date.value);
- day.value=["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"][d.getDay()];
-};
-
-function format(d){
- let x=new Date(d);
- return String(x.getDate()).padStart(2,"0")+"-"+String(x.getMonth()+1).padStart(2,"0")+"-"+x.getFullYear();
-}
+date.onchange=()=>day.value=
+["Sun","Mon","Tue","Wed","Thu","Fri","Sat"][new Date(date.value).getDay()];
 
 function save(){
- let obj={
-  date:date.value,
-  day:day.value,
-  shift:shift.value,
-  post:post.value,
-  color:color.value
- };
- if(editIndex>-1){
-  data[editIndex]=obj;
-  editIndex=-1;
- }else data.push(obj);
-
- localStorage.attendance=JSON.stringify(data);
+ let d={date:date.value,day:day.value,shift:shift.value,post:post.value};
+ if(edit>-1){data[edit]=d;edit=-1}else data.push(d);
+ localStorage.arvindData=JSON.stringify(data);
  render();
 }
 
 function render(){
- list.innerHTML="";
- let d=0,n=0;
- let m=month.value;
-
- data
- .filter(r=>!m || r.date.startsWith(m))
- .sort((a,b)=>a.date.localeCompare(b.date))
- .forEach((r,i)=>{
+ list.innerHTML=""; let d=0,n=0;
+ data.forEach((r,i)=>{
   r.shift==="Day"?d++:n++;
   list.innerHTML+=`
-  <tr style="color:${r.color}">
-   <td>${format(r.date)}</td>
-   <td>${r.day}</td>
-   <td>${r.shift}</td>
-   <td>${r.post}</td>
-   <td class="edit" onclick="edit(${i})">✏️</td>
+  <tr>
+   <td>${r.date}</td><td>${r.day}</td><td>${r.shift}</td><td>${r.post}</td>
+   <td class="edit" onclick="ed(${i})">✏️</td>
    <td class="del" onclick="del(${i})">❌</td>
   </tr>`;
  });
- count.innerText=`Day: ${d} | Night: ${n} | Total: ${d+n}`;
+ count.innerText=`Day:${d} | Night:${n} | Total:${d+n}`;
 }
-
-function edit(i){
- editIndex=i;
+function ed(i){
  let r=data[i];
- date.value=r.date;
- day.value=r.day;
- shift.value=r.shift;
- post.value=r.post;
- color.value=r.color;
+ date.value=r.date;day.value=r.day;shift.value=r.shift;post.value=r.post;
+ edit=i;
 }
-
 function del(i){
  if(confirm("Delete entry?")){
   data.splice(i,1);
-  localStorage.attendance=JSON.stringify(data);
+  localStorage.arvindData=JSON.stringify(data);
   render();
  }
 }
-
 function csv(){
- let t="Date,Day,Shift,Post\n";
- data.forEach(r=>{
-  t+=`${format(r.date)},${r.day},${r.shift},${r.post}\n`;
- });
+ let c="Date,Day,Shift,Post\n";
+ data.forEach(r=>c+=`${r.date},${r.day},${r.shift},${r.post}\n`);
  let a=document.createElement("a");
- a.href="data:text/csv;charset=utf-8,"+encodeURIComponent(t);
- a.download="attendance.csv";
- a.click();
+ a.href=URL.createObjectURL(new Blob([c]));
+ a.download="arvind-attendance.csv";a.click();
 }
-
-function logout(){
- localStorage.removeItem("login");
- location.href="index.html";
-}
-
+function logout(){localStorage.login="";location.href="index.html";}
 render();
 </script>
-
 </body>
 </html>
