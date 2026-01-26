@@ -4,79 +4,65 @@
 <meta charset="UTF-8">
 <title>Admin Expense</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
-
 <style>
 body{
- margin:0;
- font-family:Arial;
- background:linear-gradient(#e8f5e9,#c8e6c9);
+  margin:0;
+  min-height:100vh;
+  background:#e8f5e9;
+  font-family:Arial;
+  display:flex;
+  justify-content:center;
 }
 .card{
- max-width:380px;
- margin:20px auto;
- background:#fff;
- padding:15px;
- border-radius:12px;
- box-shadow:0 8px 25px rgba(0,0,0,.25);
+  width:95%;
+  max-width:420px;
+  background:#fff;
+  margin:20px;
+  padding:15px;
+  border-radius:12px;
+  box-shadow:0 6px 18px rgba(0,0,0,.2);
 }
 h2{text-align:center;color:#2e7d32}
-
 input,select,button{
- width:100%;
- padding:9px;
- margin-top:8px;
- font-size:14px;
+  width:100%;
+  padding:10px;
+  margin-top:8px;
 }
 button{
- background:#2e7d32;
- color:#fff;
- border:none;
- border-radius:6px;
+  background:#2e7d32;
+  color:#fff;
+  border:none;
+  border-radius:6px;
 }
-
-.table-box{
- max-height:260px;
- overflow-y:auto;
- border:1px solid #ccc;
- margin-top:10px;
-}
-
 table{
- width:100%;
- border-collapse:collapse;
- font-size:13px;
+  width:100%;
+  border-collapse:collapse;
+  margin-top:10px;
+  font-size:13px;
 }
 th,td{
- border:1px solid #ccc;
- padding:5px;
- text-align:center;
+  border:1px solid #ccc;
+  padding:6px;
+  text-align:center;
 }
-
-.edit{color:green;cursor:pointer}
 .del{color:red;cursor:pointer}
-
-#total{
- font-weight:bold;
- margin-top:8px;
-}
+.edit{color:green;cursor:pointer}
+.footer{margin-top:10px;font-weight:bold}
 </style>
 </head>
-
 <body>
 
 <div class="card">
 <h2>Admin Expense Entry</h2>
 
-<input type="month" id="month" onchange="render()">
+<input type="month" id="month">
 <input type="date" id="date">
 <input id="day" readonly placeholder="Day">
-<input placeholder="Material / सामान" id="item">
-<input type="number" placeholder="₹ Amount" id="amount">
-<input type="color" id="color">
+<input id="item" placeholder="Material / सामान">
+<input type="number" id="amt" placeholder="₹ Amount">
 
 <button onclick="save()">Save Entry</button>
 
-<div class="table-box">
 <table>
 <thead>
 <tr>
@@ -85,9 +71,8 @@ th,td{
 </thead>
 <tbody id="list"></tbody>
 </table>
-</div>
 
-<div id="total"></div>
+<div class="footer" id="total"></div>
 
 <button onclick="csv()">Download CSV</button>
 <button onclick="logout()">Logout</button>
@@ -96,96 +81,52 @@ th,td{
 <script>
 if(localStorage.login!=="admin") location.href="index.html";
 
-let data=JSON.parse(localStorage.expense||"[]");
-let editIndex=-1;
+let data=JSON.parse(localStorage.adminData||"[]"),edit=-1;
 
-date.onchange=()=>{
- let d=new Date(date.value);
- day.value=["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"][d.getDay()];
-};
-
-function format(d){
- let x=new Date(d);
- return String(x.getDate()).padStart(2,"0")+"-"+String(x.getMonth()+1).padStart(2,"0")+"-"+x.getFullYear();
-}
+date.onchange=()=>day.value=
+["Sun","Mon","Tue","Wed","Thu","Fri","Sat"][new Date(date.value).getDay()];
 
 function save(){
- let obj={
-  date:date.value,
-  day:day.value,
-  item:item.value,
-  amount:Number(amount.value),
-  color:color.value
- };
-
- if(editIndex>-1){
-  data[editIndex]=obj;
-  editIndex=-1;
- }else data.push(obj);
-
- localStorage.expense=JSON.stringify(data);
+ let d={date:date.value,day:day.value,item:item.value,amt:+amt.value};
+ if(edit>-1){data[edit]=d;edit=-1}else data.push(d);
+ localStorage.adminData=JSON.stringify(data);
  render();
 }
 
 function render(){
- list.innerHTML="";
- let sum=0;
- let m=month.value;
-
- data
- .filter(r=>!m||r.date.startsWith(m))
- .sort((a,b)=>a.date.localeCompare(b.date))
- .forEach((r,i)=>{
-  sum+=r.amount;
+ list.innerHTML=""; let sum=0;
+ data.forEach((r,i)=>{
+  sum+=r.amt;
   list.innerHTML+=`
-  <tr style="color:${r.color}">
-   <td>${format(r.date)}</td>
-   <td>${r.day}</td>
-   <td>${r.item}</td>
-   <td>${r.amount}</td>
-   <td class="edit" onclick="edit(${i})">✏️</td>
+  <tr>
+   <td>${r.date}</td><td>${r.day}</td><td>${r.item}</td><td>${r.amt}</td>
+   <td class="edit" onclick="ed(${i})">✏️</td>
    <td class="del" onclick="del(${i})">❌</td>
   </tr>`;
  });
  total.innerText="Grand Total ₹ "+sum;
 }
-
-function edit(i){
- editIndex=i;
+function ed(i){
  let r=data[i];
- date.value=r.date;
- day.value=r.day;
- item.value=r.item;
- amount.value=r.amount;
- color.value=r.color;
+ date.value=r.date;day.value=r.day;item.value=r.item;amt.value=r.amt;
+ edit=i;
 }
-
 function del(i){
- if(confirm("Delete expense entry?")){
+ if(confirm("Delete entry?")){
   data.splice(i,1);
-  localStorage.expense=JSON.stringify(data);
+  localStorage.adminData=JSON.stringify(data);
   render();
  }
 }
-
 function csv(){
- let t="Date,Day,Item,Amount\n";
- data.forEach(r=>{
-  t+=`${format(r.date)},${r.day},${r.item},${r.amount}\n`;
- });
+ let c="Date,Day,Item,Amount\n";
+ data.forEach(r=>c+=`${r.date},${r.day},${r.item},${r.amt}\n`);
  let a=document.createElement("a");
- a.href="data:text/csv;charset=utf-8,"+encodeURIComponent(t);
- a.download="expense.csv";
- a.click();
+ a.href=URL.createObjectURL(new Blob([c]));
+ a.download="admin-expense.csv";a.click();
 }
-
-function logout(){
- localStorage.removeItem("login");
- location.href="index.html";
-}
-
+function logout(){localStorage.login="";location.href="index.html";}
 render();
 </script>
-
 </body>
 </html>
