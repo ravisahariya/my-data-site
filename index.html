@@ -2,125 +2,187 @@
 <html lang="hi">
 <head>
 <meta charset="UTF-8">
-<title>Arvind App - Login</title>
+<title>Duty System</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
-<!-- PWA -->
-<link rel="manifest" href="manifest.json">
-<link rel="icon" href="icon-192.png">
-<meta name="theme-color" content="#1976d2">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
 
 <style>
-body{
-  margin:0;
-  height:100vh;
-  display:flex;
-  justify-content:center;
-  align-items:center;
-  background:linear-gradient(#b3e5fc,#e1f5fe);
-  font-family:Arial;
-}
-
-.box{
-  width:320px;
-  background:#fff;
-  padding:20px;
-  border-radius:12px;
-  box-shadow:0 8px 20px rgba(0,0,0,.25);
-}
-
-h2{
-  text-align:center;
-  margin-bottom:10px;
-}
-
-select,input,button{
-  width:100%;
-  padding:10px;
-  margin-top:10px;
-  font-size:14px;
-}
-
-button{
-  background:#1976d2;
-  color:#fff;
-  border:none;
-  border-radius:6px;
-  cursor:pointer;
-}
-
-.small{
-  text-align:right;
-  font-size:12px;
-  color:#1976d2;
-  cursor:pointer;
-  margin-top:6px;
-}
+body{background:#eef1f5;font-family:system-ui}
+.card{max-width:1200px;margin:25px auto;border-radius:12px;box-shadow:0 8px 20px rgba(0,0,0,.15)}
+.hidden{display:none}
+.secret-box{background:#f8f9fa;padding:10px;border-radius:8px;margin-bottom:10px}
 </style>
 </head>
-
 <body>
 
-<div class="box">
-  <h2>Login</h2>
+<!-- LOGIN PAGE -->
+<div id="loginPage" class="card p-4">
+<h4 class="text-center">🔐 Login Page</h4>
 
-  <select id="user">
-    <option value="admin">Admin</option>
-    <option value="arvind">Arvind</option>
-  </select>
+<div class="secret-box">
+<input type="number" id="secretYear" class="form-control mb-2" placeholder="Secret Year">
+<button class="btn btn-sm btn-secondary w-100" onclick="openSecret()">Secret Option</button>
+<div id="secretData" class="hidden mt-2 text-danger">
+<b>User:</b> admin <br>
+<b>Password:</b> 12345
+</div>
+</div>
 
-  <input type="password" id="pass" placeholder="Password">
+<input id="loginUser" class="form-control mb-2" placeholder="User ID">
+<input id="loginPass" type="password" class="form-control mb-2" placeholder="Password">
+<button class="btn btn-primary w-100" onclick="login()">Login</button>
+</div>
 
-  <button onclick="login()">Login</button>
+<!-- DUTY PAGE -->
+<div id="dutyPage" class="card p-4 hidden">
 
-  <div class="small" onclick="changePass()">Change Password</div>
+<div class="d-flex justify-content-between">
+<b>ड्यूटी रिकॉर्ड सिस्टम</b>
+<button class="btn btn-danger btn-sm" onclick="logout()">Logout</button>
+</div>
+
+<h4 class="text-center mt-2">ड्यूटी एंट्री</h4>
+
+<form id="entryForm" class="row g-2 mt-2">
+<input class="form-control col-md-4" id="company" placeholder="कंपनी / स्थान" required>
+<input type="date" class="form-control col-md-3" id="date" required>
+
+<select id="shift" class="form-control col-md-3">
+<option>दिन</option>
+<option>रात</option>
+</select>
+
+<input type="time" id="start" class="form-control col-md-3">
+<input type="time" id="end" class="form-control col-md-3">
+<input class="form-control col-md-3" id="work" placeholder="काम / नोट्स">
+
+<div class="col-md-3">
+Font <input type="color" id="fontColor">
+BG <input type="color" id="bgColor">
+</div>
+
+<button class="btn btn-success col-md-3">सेव / अपडेट</button>
+</form>
+
+<hr>
+
+<div class="d-flex justify-content-between">
+<select id="monthFilter" class="form-select w-auto" onchange="loadData()">
+<option value="">सभी महीने</option>
+<option value="01">January</option><option value="02">February</option>
+<option value="03">March</option><option value="04">April</option>
+<option value="05">May</option><option value="06">June</option>
+<option value="07">July</option><option value="08">August</option>
+<option value="09">September</option><option value="10">October</option>
+<option value="11">November</option><option value="12">December</option>
+</select>
+
+<input id="search" class="form-control w-25" placeholder="Search" onkeyup="loadData()">
+</div>
+
+<table class="table table-bordered table-sm mt-2">
+<thead class="table-light">
+<tr>
+<th>#</th><th>कंपनी</th><th>तारीख</th><th>शिफ्ट</th>
+<th>समय</th><th>काम</th><th>Action</th>
+</tr>
+</thead>
+<tbody id="tbody"></tbody>
+</table>
+
+<div class="d-flex justify-content-between">
+<div>महीने का कुल समय: <b id="monthTotal">0</b> घंटे</div>
+<div>कुल एंट्री: <b id="grandTotal">0</b></div>
+</div>
+
 </div>
 
 <script>
-// default passwords (पहली बार)
-if(!localStorage.adminPass) localStorage.adminPass = "1234";
-if(!localStorage.arvindPass) localStorage.arvindPass = "1111";
+let edit=-1;
+const UID="admin",PWD="12345";
 
-// auto show password
-pass.value = localStorage.adminPass;
-
-user.onchange = ()=>{
-  pass.value = user.value==="admin"
-    ? localStorage.adminPass
-    : localStorage.arvindPass;
-};
-
-// voice
-function speak(t){
-  let s = new SpeechSynthesisUtterance(t);
-  s.lang="hi-IN";
-  speechSynthesis.speak(s);
+function openSecret(){
+ if(secretYear.value==1995)
+  secretData.classList.remove("hidden");
+ else alert("Wrong Year");
 }
 
 function login(){
-  if(user.value==="admin" && pass.value===localStorage.adminPass){
-    localStorage.login="admin";
-    speak("Admin login ho gaya");
-    location.href="admin.html";
-  }
-  else if(user.value==="arvind" && pass.value===localStorage.arvindPass){
-    localStorage.login="arvind";
-    speak("Arvind login ho gaya");
-    location.href="arvind.html";
-  }
-  else{
-    alert("Galat password");
-  }
+ if(loginUser.value==UID && loginPass.value==PWD){
+  localStorage.setItem("login","yes");
+  showDuty();
+ } else alert("Wrong Login");
 }
 
-function changePass(){
-  let u = prompt("admin / arvind");
-  let p = prompt("Naya password");
-  if(u==="admin") localStorage.adminPass = p;
-  if(u==="arvind") localStorage.arvindPass = p;
-  alert("Password badal diya gaya");
+function logout(){
+ localStorage.removeItem("login");
+ location.reload();
+}
+
+function showDuty(){
+ loginPage.classList.add("hidden");
+ dutyPage.classList.remove("hidden");
+ loadData();
+}
+
+if(localStorage.getItem("login")) showDuty();
+
+entryForm.onsubmit=e=>{
+ e.preventDefault();
+ let d=JSON.parse(localStorage.getItem("duty"))||[];
+ let obj={
+  company:company.value,date:date.value,shift:shift.value,
+  start:start.value,end:end.value,work:work.value,
+  font:fontColor.value,bg:bgColor.value
+ };
+ if(edit>=0){d[edit]=obj;edit=-1}else d.push(obj);
+ localStorage.setItem("duty",JSON.stringify(d));
+ entryForm.reset(); loadData();
+};
+
+function loadData(){
+ let d=JSON.parse(localStorage.getItem("duty"))||[];
+ tbody.innerHTML=""; let total=0;
+ let m=monthFilter.value, s=search.value.toLowerCase();
+ d.forEach((x,i)=>{
+  if(m && x.date.substr(5,2)!=m) return;
+  if(s && !x.company.toLowerCase().includes(s) && !x.work.toLowerCase().includes(s)) return;
+
+  let h=(new Date("1970-1-1 "+x.end)-new Date("1970-1-1 "+x.start))/36e5;
+  if(h>0) total+=h;
+
+  let tr=document.createElement("tr");
+  tr.style.color=x.font; tr.style.background=x.bg;
+  tr.innerHTML=`
+  <td>${i+1}</td><td>${x.company}</td><td>${x.date}</td>
+  <td>${x.shift}</td><td>${x.start}-${x.end}</td>
+  <td>${x.work}</td>
+  <td>
+  <button class="btn btn-warning btn-sm" onclick="editRow(${i})">Edit</button>
+  <button class="btn btn-danger btn-sm" onclick="del(${i})">Delete</button>
+  </td>`;
+  tbody.appendChild(tr);
+ });
+ monthTotal.innerText=total.toFixed(2);
+ grandTotal.innerText=d.length;
+}
+
+function editRow(i){
+ let x=JSON.parse(localStorage.getItem("duty"))[i];
+ company.value=x.company;date.value=x.date;shift.value=x.shift;
+ start.value=x.start;end.value=x.end;work.value=x.work;
+ fontColor.value=x.font;bgColor.value=x.bg; edit=i;
+}
+
+function del(i){
+ if(confirm("Delete?")){
+  let d=JSON.parse(localStorage.getItem("duty"));
+  d.splice(i,1); localStorage.setItem("duty",JSON.stringify(d));
+  loadData();
+ }
 }
 </script>
 
 </body>
-</html>
+  </html>
