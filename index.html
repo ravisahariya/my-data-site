@@ -2,73 +2,76 @@
 <html lang="hi">
 <head>
 <meta charset="UTF-8">
-<title>Duty System</title>
-<meta name="viewport" content="width=device-width, initial-scale=1">
-
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Duty Register Final</title>
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
 
 <style>
-body{background:#eef1f5;font-family:system-ui}
-.card{max-width:1200px;margin:25px auto;border-radius:12px;box-shadow:0 8px 20px rgba(0,0,0,.15)}
+body{background:#eef2f7;font-family:system-ui}
+.card{max-width:1200px;margin:20px auto;padding:20px;border-radius:12px;box-shadow:0 6px 20px rgba(0,0,0,.15)}
 .hidden{display:none}
-.secret-box{background:#f8f9fa;padding:10px;border-radius:8px;margin-bottom:10px}
+.table-box{max-height:320px;overflow:auto}
+.secret{background:#f1f1f1;padding:10px;border-radius:8px}
 </style>
 </head>
+
 <body>
 
-<!-- LOGIN PAGE -->
-<div id="loginPage" class="card p-4">
-<h4 class="text-center">🔐 Login Page</h4>
+<!-- LOGIN -->
+<div id="loginPage" class="card">
+<h4 class="text-center">🔐 Login</h4>
 
-<div class="secret-box">
-<input type="number" id="secretYear" class="form-control mb-2" placeholder="Secret Year">
-<button class="btn btn-sm btn-secondary w-100" onclick="openSecret()">Secret Option</button>
-<div id="secretData" class="hidden mt-2 text-danger">
-<b>User:</b> admin <br>
-<b>Password:</b> 12345
+<div class="secret mb-3">
+<input id="year" type="number" class="form-control mb-2" placeholder="Secret Year (1995)">
+<button class="btn btn-secondary w-100" onclick="secret()">Secret Option</button>
+<div id="secretBox" class="hidden mt-2 text-danger">
+User: <b>admin</b><br>Password: <b>12345</b>
 </div>
 </div>
 
-<input id="loginUser" class="form-control mb-2" placeholder="User ID">
-<input id="loginPass" type="password" class="form-control mb-2" placeholder="Password">
+<input id="uid" class="form-control mb-2" placeholder="User ID">
+<input id="pwd" type="password" class="form-control mb-2" placeholder="Password">
 <button class="btn btn-primary w-100" onclick="login()">Login</button>
 </div>
 
-<!-- DUTY PAGE -->
-<div id="dutyPage" class="card p-4 hidden">
+
+<!-- APP -->
+<div id="app" class="card hidden">
 
 <div class="d-flex justify-content-between">
 <b>ड्यूटी रिकॉर्ड सिस्टम</b>
 <button class="btn btn-danger btn-sm" onclick="logout()">Logout</button>
 </div>
 
-<h4 class="text-center mt-2">ड्यूटी एंट्री</h4>
+<h5 class="text-center mt-2">ड्यूटी एंट्री</h5>
 
-<form id="entryForm" class="row g-2 mt-2">
-<input class="form-control col-md-4" id="company" placeholder="कंपनी / स्थान" required>
-<input type="date" class="form-control col-md-3" id="date" required>
+<form id="form" class="row g-2">
 
-<select id="shift" class="form-control col-md-3">
+<input required id="company" class="form-control col-md-3" placeholder="कंपनी / स्थान">
+<input required type="date" id="date" class="form-control col-md-2">
+
+<select id="shift" class="form-control col-md-2">
 <option>दिन</option>
 <option>रात</option>
 </select>
 
-<input type="time" id="start" class="form-control col-md-3">
-<input type="time" id="end" class="form-control col-md-3">
-<input class="form-control col-md-3" id="work" placeholder="काम / नोट्स">
+<input type="time" id="start" class="form-control col-md-2">
+<input type="time" id="end" class="form-control col-md-2">
+<input id="work" class="form-control col-md-3" placeholder="काम / नोट्स">
 
 <div class="col-md-3">
-Font <input type="color" id="fontColor">
-BG <input type="color" id="bgColor">
+Font <input type="color" id="fc">
+BG <input type="color" id="bc">
 </div>
 
-<button class="btn btn-success col-md-3">सेव / अपडेट</button>
+<button class="btn btn-success col-md-2">Save</button>
 </form>
 
 <hr>
 
 <div class="d-flex justify-content-between">
-<select id="monthFilter" class="form-select w-auto" onchange="loadData()">
+
+<select id="month" class="form-select w-auto" onchange="loadData()">
 <option value="">सभी महीने</option>
 <option value="01">January</option><option value="02">February</option>
 <option value="03">March</option><option value="04">April</option>
@@ -79,110 +82,183 @@ BG <input type="color" id="bgColor">
 </select>
 
 <input id="search" class="form-control w-25" placeholder="Search" onkeyup="loadData()">
+
+<div>
+<button onclick="downloadCSV()" class="btn btn-success btn-sm">CSV</button>
+<button onclick="downloadCSV()" class="btn btn-primary btn-sm">Excel</button>
+<button onclick="window.print()" class="btn btn-danger btn-sm">PDF</button>
 </div>
 
-<table class="table table-bordered table-sm mt-2">
+</div>
+
+<div class="table-box mt-2">
+<table class="table table-bordered table-sm">
 <thead class="table-light">
 <tr>
-<th>#</th><th>कंपनी</th><th>तारीख</th><th>शिफ्ट</th>
-<th>समय</th><th>काम</th><th>Action</th>
+<th>कंपनी</th>
+<th>तारीख</th>
+<th>दिन</th>
+<th>शिफ्ट</th>
+<th>समय</th>
+<th>काम</th>
+<th>घंटे</th>
+<th>Action</th>
 </tr>
 </thead>
 <tbody id="tbody"></tbody>
 </table>
+</div>
 
 <div class="d-flex justify-content-between">
-<div>महीने का कुल समय: <b id="monthTotal">0</b> घंटे</div>
-<div>कुल एंट्री: <b id="grandTotal">0</b></div>
+<div>Total Hours: <b id="total">0</b></div>
+<div>Total Entries: <b id="count">0</b></div>
 </div>
 
 </div>
 
 <script>
-let edit=-1;
-const UID="admin",PWD="12345";
 
-function openSecret(){
- if(secretYear.value==1995)
-  secretData.classList.remove("hidden");
- else alert("Wrong Year");
+const USER="admin",PASS="12345";
+let editIndex=-1;
+
+function secret(){
+ if(year.value==1995) secretBox.classList.remove("hidden");
 }
 
 function login(){
- if(loginUser.value==UID && loginPass.value==PWD){
-  localStorage.setItem("login","yes");
-  showDuty();
- } else alert("Wrong Login");
+ if(uid.value==USER && pwd.value==PASS){
+  localStorage.setItem("login",1);
+  show();
+ }else alert("Wrong Login");
 }
 
 function logout(){
- localStorage.removeItem("login");
+ localStorage.clear();
  location.reload();
 }
 
-function showDuty(){
+function show(){
  loginPage.classList.add("hidden");
- dutyPage.classList.remove("hidden");
+ app.classList.remove("hidden");
  loadData();
 }
 
-if(localStorage.getItem("login")) showDuty();
+if(localStorage.getItem("login")) show();
 
-entryForm.onsubmit=e=>{
+function dayName(d){
+ return ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"][new Date(d).getDay()];
+}
+
+function hours(a,b){
+ let s=new Date("1970-1-1 "+a);
+ let e=new Date("1970-1-1 "+b);
+ if(e<s) e.setDate(e.getDate()+1);
+ return ((e-s)/3600000).toFixed(2);
+}
+
+form.onsubmit=e=>{
  e.preventDefault();
- let d=JSON.parse(localStorage.getItem("duty"))||[];
+
+ let data=JSON.parse(localStorage.getItem("duty")||"[]");
+
  let obj={
-  company:company.value,date:date.value,shift:shift.value,
-  start:start.value,end:end.value,work:work.value,
-  font:fontColor.value,bg:bgColor.value
+  company:company.value,
+  date:date.value,
+  shift:shift.value,
+  start:start.value,
+  end:end.value,
+  work:work.value,
+  fc:fc.value,
+  bc:bc.value
  };
- if(edit>=0){d[edit]=obj;edit=-1}else d.push(obj);
- localStorage.setItem("duty",JSON.stringify(d));
- entryForm.reset(); loadData();
+
+ if(editIndex>=0){
+  data[editIndex]=obj;
+  editIndex=-1;
+ }else data.push(obj);
+
+ localStorage.setItem("duty",JSON.stringify(data));
+ form.reset();
+ loadData();
 };
 
 function loadData(){
- let d=JSON.parse(localStorage.getItem("duty"))||[];
- tbody.innerHTML=""; let total=0;
- let m=monthFilter.value, s=search.value.toLowerCase();
- d.forEach((x,i)=>{
-  if(m && x.date.substr(5,2)!=m) return;
-  if(s && !x.company.toLowerCase().includes(s) && !x.work.toLowerCase().includes(s)) return;
 
-  let h=(new Date("1970-1-1 "+x.end)-new Date("1970-1-1 "+x.start))/36e5;
-  if(h>0) total+=h;
+ let data=JSON.parse(localStorage.getItem("duty")||"[]");
+ let m=month.value;
+ let s=search.value.toLowerCase();
+
+ tbody.innerHTML="";
+ let total=0,countEntry=0;
+
+ data.sort((a,b)=>new Date(a.date)-new Date(b.date));
+
+ data.forEach((x,i)=>{
+
+  if(m && x.date.substr(5,2)!=m) return;
+  if(s && !(x.company+x.work).toLowerCase().includes(s)) return;
+
+  let h=parseFloat(hours(x.start,x.end));
+  total+=h;
+  countEntry++;
 
   let tr=document.createElement("tr");
-  tr.style.color=x.font; tr.style.background=x.bg;
+  tr.style.color=x.fc;
+  tr.style.background=x.bc;
+
   tr.innerHTML=`
-  <td>${i+1}</td><td>${x.company}</td><td>${x.date}</td>
-  <td>${x.shift}</td><td>${x.start}-${x.end}</td>
+  <td>${x.company}</td>
+  <td>${new Date(x.date).toLocaleDateString('en-GB')}</td>
+  <td>${dayName(x.date)}</td>
+  <td>${x.shift}</td>
+  <td>${x.start}-${x.end}</td>
   <td>${x.work}</td>
+  <td>${h.toFixed(2)}</td>
   <td>
   <button class="btn btn-warning btn-sm" onclick="editRow(${i})">Edit</button>
-  <button class="btn btn-danger btn-sm" onclick="del(${i})">Delete</button>
+  <button class="btn btn-danger btn-sm" onclick="deleteRow(${i})">Delete</button>
   </td>`;
+
   tbody.appendChild(tr);
  });
- monthTotal.innerText=total.toFixed(2);
- grandTotal.innerText=d.length;
+
+ totalEl.innerText=total.toFixed(2);
+ count.innerText=countEntry;
 }
+
+const totalEl=document.getElementById("total");
 
 function editRow(i){
- let x=JSON.parse(localStorage.getItem("duty"))[i];
- company.value=x.company;date.value=x.date;shift.value=x.shift;
- start.value=x.start;end.value=x.end;work.value=x.work;
- fontColor.value=x.font;bgColor.value=x.bg; edit=i;
+ let d=JSON.parse(localStorage.getItem("duty"))[i];
+ company.value=d.company;
+ date.value=d.date;
+ shift.value=d.shift;
+ start.value=d.start;
+ end.value=d.end;
+ work.value=d.work;
+ fc.value=d.fc;
+ bc.value=d.bc;
+ editIndex=i;
 }
 
-function del(i){
- if(confirm("Delete?")){
+function deleteRow(i){
+ if(confirm("Delete this entry?")){
   let d=JSON.parse(localStorage.getItem("duty"));
-  d.splice(i,1); localStorage.setItem("duty",JSON.stringify(d));
+  d.splice(i,1);
+  localStorage.setItem("duty",JSON.stringify(d));
   loadData();
  }
 }
+
+function downloadCSV(){
+ let rows=[...tbody.rows].map(r=>[...r.cells].slice(0,7).map(c=>c.innerText).join(",")).join("\n");
+ let a=document.createElement("a");
+ a.href="data:text/csv;charset=utf-8,"+encodeURI(rows);
+ a.download="duty.csv";
+ a.click();
+}
+
 </script>
 
 </body>
-  </html>
+</html>
