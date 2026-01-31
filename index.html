@@ -4,56 +4,106 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 
-<title>Duty Register Final Pro Max</title>
+<title>Duty Dashboard Pro</title>
 
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
 
 <style>
-body{background:#eef2f7;font-family:system-ui}
-.card{max-width:1300px;margin:20px auto;padding:20px;border-radius:12px;box-shadow:0 6px 20px rgba(0,0,0,.15)}
-.hidden{display:none}
-.table-box{max-height:330px;overflow:auto}
 
-table{table-layout:fixed;width:100%}
-th,td{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:14px}
+body{
+ background:linear-gradient(135deg,#4e73df,#1cc88a);
+ font-family:system-ui;
+ min-height:100vh;
+}
+
+/* LOGIN CARD */
+.login-card{
+ max-width:380px;
+ margin:80px auto;
+ padding:30px;
+ border-radius:15px;
+ background:#fff;
+ box-shadow:0 10px 25px rgba(0,0,0,.25);
+}
+
+/* DASHBOARD */
+.dashboard{
+ max-width:1400px;
+ margin:20px auto;
+ padding:20px;
+ border-radius:15px;
+ background:#fff;
+ box-shadow:0 10px 25px rgba(0,0,0,.25);
+}
+
+.hidden{display:none}
+
+.table-box{
+ max-height:350px;
+ overflow:auto;
+}
+
+table{
+ table-layout:fixed;
+ width:100%;
+}
+
+th,td{
+ white-space:nowrap;
+ overflow:hidden;
+ text-overflow:ellipsis;
+ font-size:14px;
+}
+
+.big-btn{
+ height:50px;
+ font-size:18px;
+}
+
 </style>
 </head>
 
 <body>
 
-<!-- LOGIN -->
-<div id="loginPage" class="card">
 
-<h4 class="text-center">🔐 Login</h4>
+<!-- ================= LOGIN ================= -->
 
-<button class="btn btn-secondary w-100 mb-3" onclick="secret()">Secret Option</button>
+<div id="loginPage" class="login-card text-center">
+
+<h3 class="mb-4">🔐 Login</h3>
+
+<button class="btn btn-secondary mb-3 w-100" onclick="secret()">Secret</button>
 
 <div id="secretBox" class="hidden text-danger mb-2">
 User: admin<br>Password: 12345
 </div>
 
-<input id="uid" class="form-control mb-2" placeholder="User ID">
-<input id="pwd" type="password" class="form-control mb-2" placeholder="Password">
+<input id="uid" class="form-control mb-3" placeholder="User ID">
+<input id="pwd" type="password" class="form-control mb-3" placeholder="Password">
 
-<button class="btn btn-primary w-100" onclick="login()">Login</button>
+<button onclick="login()" class="btn btn-primary w-100 big-btn">Login</button>
 
 </div>
 
 
 
-<!-- APP -->
-<div id="app" class="card hidden">
+<!-- ================= DASHBOARD ================= -->
 
-<div class="d-flex justify-content-between">
-<b>ड्यूटी रिकॉर्ड सिस्टम</b>
-<button class="btn btn-danger btn-sm" onclick="logout()">Logout</button>
+<div id="app" class="dashboard hidden">
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+<h4>📋 Duty Record Dashboard</h4>
+<button class="btn btn-danger" onclick="logout()">Logout</button>
 </div>
 
 
-<!-- ENTRY -->
-<form id="form" class="row g-2 mt-3">
+<!-- ENTRY CARD -->
+<div class="card p-3 mb-3">
 
-<input required id="company" class="form-control col-md-3" placeholder="कंपनी / स्थान">
+<form id="form" class="row g-2">
+
+<input required id="company" class="form-control col-md-3" placeholder="कंपनी">
+
 <input required type="date" id="date" class="form-control col-md-2">
 
 <select id="shift" class="form-control col-md-2">
@@ -71,18 +121,18 @@ Font <input type="color" id="fc" value="#000000">
 BG <input type="color" id="bc" value="#ffffff">
 </div>
 
-<button class="btn btn-success col-md-2">Save</button>
+<button class="btn btn-success col-md-2 big-btn">Save</button>
 
 </form>
 
-<hr>
+</div>
 
 
-<!-- FILTER -->
+<!-- FILTERS -->
 <div class="d-flex justify-content-between mb-2">
 
-<select id="month" class="form-select w-auto" onchange="loadData()">
-<option value="">सभी महीने</option>
+<select id="month" onchange="loadData()" class="form-select w-auto">
+<option value="">All Months</option>
 <option value="01">Jan</option><option value="02">Feb</option>
 <option value="03">Mar</option><option value="04">Apr</option>
 <option value="05">May</option><option value="06">Jun</option>
@@ -91,7 +141,7 @@ BG <input type="color" id="bc" value="#ffffff">
 <option value="11">Nov</option><option value="12">Dec</option>
 </select>
 
-<input id="search" class="form-control w-25" placeholder="Search" onkeyup="loadData()">
+<input id="search" onkeyup="loadData()" class="form-control w-25" placeholder="Search">
 
 <div>
 <button onclick="downloadCSV()" class="btn btn-success btn-sm">CSV</button>
@@ -102,20 +152,20 @@ BG <input type="color" id="bc" value="#ffffff">
 </div>
 
 
-
 <!-- TABLE -->
 <div class="table-box">
+
 <table class="table table-bordered table-sm">
 
 <thead class="table-light">
 <tr>
-<th>कंपनी</th>
-<th>तारीख</th>
-<th>दिन</th>
-<th>शिफ्ट</th>
-<th>समय</th>
-<th>काम</th>
-<th>घंटे</th>
+<th>Company</th>
+<th>Date</th>
+<th>Day</th>
+<th>Shift</th>
+<th>Time</th>
+<th>Work</th>
+<th>Hours</th>
 <th>Action</th>
 </tr>
 </thead>
@@ -123,11 +173,13 @@ BG <input type="color" id="bc" value="#ffffff">
 <tbody id="tbody"></tbody>
 
 </table>
+
 </div>
 
-<div class="d-flex justify-content-between">
-<div>Total Hours: <b id="total">0</b></div>
-<div>Total Entries: <b id="count">0</b></div>
+
+<div class="d-flex justify-content-between mt-2">
+<b>Total Hours: <span id="total">0</span></b>
+<b>Total Entries: <span id="count">0</span></b>
 </div>
 
 </div>
@@ -138,6 +190,7 @@ BG <input type="color" id="bc" value="#ffffff">
 
 const USER="admin",PASS="12345";
 let editIndex=-1;
+
 
 /* LOGIN */
 function secret(){
@@ -166,7 +219,6 @@ function show(){
 if(localStorage.getItem("login")) show();
 
 
-
 /* HELPERS */
 function dayName(d){
  return ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"][new Date(d).getDay()];
@@ -178,7 +230,6 @@ function hours(a,b){
  if(e<s) e.setDate(e.getDate()+1);
  return ((e-s)/3600000).toFixed(2);
 }
-
 
 
 /* SAVE */
@@ -199,21 +250,17 @@ form.onsubmit=function(e){
   bc:bc.value
  };
 
- if(editIndex>=0){
-  data[editIndex]=obj;
-  editIndex=-1;
- }else{
-  data.push(obj);
- }
+ if(editIndex>=0){ data[editIndex]=obj; editIndex=-1; }
+ else data.push(obj);
 
  localStorage.setItem("duty",JSON.stringify(data));
+
  form.reset();
  loadData();
 };
 
 
-
-/* LOAD + DUPLICATE HIGHLIGHT */
+/* LOAD + DUPLICATE */
 function loadData(){
 
  let data=JSON.parse(localStorage.getItem("duty")||"[]");
@@ -224,9 +271,6 @@ function loadData(){
  tbody.innerHTML="";
  let totalH=0,countE=0;
 
- data.sort((a,b)=>new Date(a.date)-new Date(b.date));
-
- /* duplicate date count */
  let dateCount={};
  data.forEach(x=>dateCount[x.date]=(dateCount[x.date]||0)+1);
 
@@ -242,16 +286,12 @@ function loadData(){
 
   tr.style.color=x.fc;
 
-  /* ⭐ duplicate highlight ⭐ */
-  if(dateCount[x.date] > 1){
-   tr.style.backgroundColor="#ffe08a";
-  }else{
-   tr.style.backgroundColor=x.bc;
-  }
+  if(dateCount[x.date]>1) tr.style.background="#ffe08a";
+  else tr.style.background=x.bc;
 
   tr.innerHTML=`
   <td>${x.company}</td>
-  <td>${new Date(x.date).toLocaleDateString('en-GB')}</td>
+  <td>${x.date}</td>
   <td>${dayName(x.date)}</td>
   <td>${x.shift}</td>
   <td>${x.start}-${x.end}</td>
@@ -271,7 +311,6 @@ function loadData(){
 }
 
 
-
 /* EDIT */
 function editRow(i){
  let d=JSON.parse(localStorage.getItem("duty"))[i];
@@ -279,17 +318,15 @@ function editRow(i){
  editIndex=i;
 }
 
-
 /* DELETE */
 function delRow(i){
- if(confirm("Delete this entry?")){
+ if(confirm("Delete entry?")){
   let d=JSON.parse(localStorage.getItem("duty"));
   d.splice(i,1);
   localStorage.setItem("duty",JSON.stringify(d));
   loadData();
  }
 }
-
 
 /* CSV */
 function downloadCSV(){
