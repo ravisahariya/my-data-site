@@ -1,54 +1,17 @@
 <!DOCTYPE html>
 <html>
 <head>
-<meta charset="UTF-8" />
-<title>Duty Dashboard</title>
-
+<meta charset="UTF-8">
+<title>Dashboard</title>
 <link rel="stylesheet" href="style.css">
-
-<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
-
 </head>
 
 <body class="bg">
 
-<h2 style="color:white;text-align:center;">Duty Entry</h2>
-
-<div class="card">
-
-<input type="date" id="date">
-<input type="time" id="in">
-<input type="time" id="out">
-
-<select id="shift">
-<option>Day</option>
-<option>Night</option>
-<option>Day+Night</option>
-</select>
-
-<select id="post">
-<option>ETP</option>
-<option>BORD2</option>
-<option>COE</option>
-<option>ACL</option>
-</select>
-
-<label>
-<input type="checkbox" id="double"> Double Duty (OT)
-</label>
-
-<button onclick="saveData()">Save Entry</button>
-
-</div>
-
-<h3 style="color:white;">Total Hours: <span id="total">0</span></h3>
-
-<div id="list"></div>
+<h2 style="color:white;text-align:center;">Dashboard Open ✅</h2>
 
 <button onclick="logout()">Logout</button>
 
-<script src="firebase.js"></script>
 <script src="app.js"></script>
 
 </body>
