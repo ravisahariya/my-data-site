@@ -2,58 +2,27 @@
 <html>
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1">
-
-<title>Attendance Cloud MASTER</title>
-
-<!-- Firebase CDN -->
-<script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-import {
-  getFirestore, collection, addDoc, deleteDoc,
-  updateDoc, doc, onSnapshot
-} from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-
-/* ================= FIREBASE CONFIG (YOURS ADDED) ================= */
-
-const firebaseConfig = {
-  apiKey: "AIzaSyD71mpolAsmejtU2icecQQcX07iCW_is0Y",
-  authDomain: "ravicardmaker.firebaseapp.com",
-  projectId: "ravicardmaker",
-  storageBucket: "ravicardmaker.firebasestorage.app",
-  messagingSenderId: "125321734592",
-  appId: "1:125321734592:web:eaba2d7477376694134025",
-  measurementId: "G-MNNJKSP9T2"
-};
-
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
-
-/* ================================================================ */
-window.db = db;
-window.collection = collection;
-window.addDoc = addDoc;
-window.deleteDoc = deleteDoc;
-window.updateDoc = updateDoc;
-window.doc = doc;
-window.onSnapshot = onSnapshot;
-</script>
+<title>Attendance CLOUD MASTER FINAL</title>
 
 <style>
-body{margin:0;font-family:Arial}
+body{margin:0;font-family:Arial;background:#f2f2f2}
 
 /* LOGIN */
 #loginPage{
 height:100vh;display:flex;justify-content:center;align-items:center;
 background:linear-gradient(135deg,#667eea,#764ba2);
 }
-.card{background:white;padding:25px;width:90%;max-width:330px;text-align:center}
+.card{background:white;padding:25px;width:90%;max-width:320px;text-align:center;border-radius:10px}
 input,select,button{padding:8px;margin:4px}
 button{background:#4CAF50;color:white;border:none}
 
 /* APP */
-#app{display:none;height:100vh;flex-direction:column;background:#f2f2f2}
-.topbar{display:flex;justify-content:space-between;padding:6px}
-.logout{background:#f44336;color:white}
+#app{display:none;height:100vh;flex-direction:column}
+.topbar{display:flex;justify-content:space-between;padding:8px}
+.logout{background:#f44336}
+
+.form{display:grid;grid-template-columns:1fr 1fr;gap:6px;padding:6px}
+.tools{display:flex;gap:6px;padding:6px;flex-wrap:wrap}
 
 .table-box{flex:1;overflow:auto;background:white}
 table{width:100%;border-collapse:collapse}
@@ -67,13 +36,13 @@ th{background:#ffd9d9;position:sticky;top:0}
 
 <!-- ================= LOGIN ================= -->
 <div id="loginPage">
-  <div class="card">
-    <h2>🔐 Login</h2>
-    <input id="username" placeholder="Username">
-    <input type="password" id="password" placeholder="Password">
-    <button onclick="login()">Login</button>
-    <div onclick="unlockSecret()" style="cursor:pointer">🔒</div>
-  </div>
+<div class="card">
+<h2>🔐 Login</h2>
+<input id="username" placeholder="Username">
+<input type="password" id="password" placeholder="Password">
+<button onclick="login()">Login</button>
+<div onclick="unlockSecret()" style="cursor:pointer">🔒</div>
+</div>
 </div>
 
 <!-- ================= APP ================= -->
@@ -84,22 +53,24 @@ th{background:#ffd9d9;position:sticky;top:0}
 <button class="logout" onclick="logout()">Logout</button>
 </div>
 
-<div>
+<div class="form">
 <input type="date" id="date">
 <input type="time" id="inTime">
 <input type="time" id="outTime">
 
-<input list="postList" id="post" placeholder="Post">
+<input list="postList" id="post" placeholder="Type Post">
 <datalist id="postList">
-<option>ETP</option><option>BOARD 2</option>
-<option>COE</option><option>ACL</option>
+<option>ETP</option>
+<option>BOARD 2</option>
+<option>COE</option>
+<option>ACL</option>
 <option>BEBRIG</option>
 </datalist>
 
 <button onclick="save()">Save</button>
 </div>
 
-<div>
+<div class="tools">
 <select id="monthFilter" onchange="render()">
 <option value="all">All Month</option>
 <option value="01">Jan</option><option value="02">Feb</option>
@@ -120,10 +91,9 @@ th{background:#ffd9d9;position:sticky;top:0}
 <table>
 <thead>
 <tr>
-<th>Date</th><th>In</th><th>Out</th><th>Hours</th><th>Post</th><th>Delete</th>
+<th>Date</th><th>In</th><th>Out</th><th>Hours</th><th>Post</th><th>BG</th><th>Font</th><th>Edit</th><th>Delete</th>
 </tr>
 </thead>
-
 <tbody id="tbody"></tbody>
 
 <tfoot>
@@ -131,7 +101,7 @@ th{background:#ffd9d9;position:sticky;top:0}
 <td>Total Duty: <span id="dutyCount">0</span></td>
 <td colspan="2">Total Hours</td>
 <td id="totalHours">0</td>
-<td></td>
+<td colspan="4"></td>
 </tr>
 </tfoot>
 </table>
@@ -140,22 +110,41 @@ th{background:#ffd9d9;position:sticky;top:0}
 </div>
 
 
+<!-- ================= FIREBASE ================= -->
 <script type="module">
 
-const ADMIN_USER="Ravi";
-const ADMIN_PASS="Ravi123";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+import {
+ getFirestore, collection, addDoc, deleteDoc, updateDoc, doc, onSnapshot
+} from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-if(localStorage.getItem("loggedIn")==="true") showApp();
+const firebaseConfig = {
+  apiKey: "AIzaSyD71mpolAsmejtU2icecQQcX07iCW_is0Y",
+  authDomain: "ravicardmaker.firebaseapp.com",
+  projectId: "ravicardmaker",
+  storageBucket: "ravicardmaker.firebasestorage.app",
+  messagingSenderId: "125321734592",
+  appId: "1:125321734592:web:eaba2d7477376694134025"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+/* ================= LOGIN ================= */
+const USER="Ravi";
+const PASS="Ravi123";
+
+if(localStorage.getItem("login")) showApp();
 
 window.login=()=>{
- if(username.value===ADMIN_USER && password.value===ADMIN_PASS){
-  localStorage.setItem("loggedIn","true");
+ if(username.value===USER && password.value===PASS){
+  localStorage.setItem("login","1");
   showApp();
- }else alert("Wrong login");
+ } else alert("Wrong login");
 };
 
 window.logout=()=>{
- localStorage.removeItem("loggedIn");
+ localStorage.removeItem("login");
  location.reload();
 };
 
@@ -164,25 +153,21 @@ function showApp(){
  app.style.display="flex";
 }
 
-/* SECRET */
 window.unlockSecret=()=>{
  let y=prompt("Year?");
  if(y==="1995") alert("Username: Ravi\nPassword: Ravi123");
 };
 
-
-/* ================= CLOUD DATABASE ================= */
+/* ================= CLOUD DATA ================= */
 
 let data=[];
-const col = collection(db,"attendance");
+const col=collection(db,"attendance");
 
-/* realtime sync */
 onSnapshot(col,(snap)=>{
  data=[];
- snap.forEach(d=> data.push({id:d.id,...d.data()}));
+ snap.forEach(d=>data.push({id:d.id,...d.data()}));
  render();
 });
-
 
 window.save=async()=>{
  let d=date.value,i=inTime.value,o=outTime.value,p=post.value;
@@ -190,45 +175,47 @@ window.save=async()=>{
 
  let h=((new Date("2000 "+o)-new Date("2000 "+i))/3600000).toFixed(2);
 
- await addDoc(col,{d,i,o,p,h});
+ await addDoc(col,{d,i,o,p,h,bg:"#fffacd",font:"#000"});
 };
 
 window.del=async(id)=>{
- await deleteDoc(doc(db,"attendance",id));
+ if(confirm("Delete?")) await deleteDoc(doc(db,"attendance",id));
+};
+
+window.updateColor=async(id,key,val)=>{
+ await updateDoc(doc(db,"attendance",id),{[key]:val});
 };
 
 window.render=()=>{
-
  tbody.innerHTML="";
- let totalH=0,duty=0;
+ let total=0,duty=0;
 
- let m=monthFilter.value;
- let s=search.value.toLowerCase();
+ let m=monthFilter.value,s=search.value.toLowerCase();
 
  data.forEach(r=>{
-
   if(m!=="all" && r.d.split("-")[1]!==m) return;
   if(s && !(r.d+r.p).toLowerCase().includes(s)) return;
 
-  totalH+=+r.h; duty++;
+  total+=+r.h; duty++;
 
   tbody.innerHTML+=`
-  <tr>
+  <tr style="background:${r.bg};color:${r.font}">
   <td>${r.d}</td>
   <td>${r.i}</td>
   <td>${r.o}</td>
   <td>${r.h}</td>
   <td>${r.p}</td>
+  <td><input type="color" value="${r.bg}" onchange="updateColor('${r.id}','bg',this.value)"></td>
+  <td><input type="color" value="${r.font}" onchange="updateColor('${r.id}','font',this.value)"></td>
+  <td>—</td>
   <td><button onclick="del('${r.id}')">❌</button></td>
   </tr>`;
  });
 
- totalHours.innerText=totalH.toFixed(2);
+ totalHours.innerText=total.toFixed(2);
  dutyCount.innerText=duty;
 };
 
-
-/* CSV */
 window.downloadCSV=()=>{
  let csv="Date,In,Out,Hours,Post\n";
  data.forEach(r=> csv+=`${r.d},${r.i},${r.o},${r.h},${r.p}\n`);
@@ -240,6 +227,5 @@ window.downloadCSV=()=>{
 };
 
 </script>
-
 </body>
- </html>
+</html>
