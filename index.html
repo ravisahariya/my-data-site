@@ -2,10 +2,12 @@
 <html>
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Attendance MASTER</title>
+
+<title>Attendance MASTER PRO</title>
 
 <style>
 
+/* ===== BODY ===== */
 body{
   margin:0;
   font-family:Arial;
@@ -41,7 +43,7 @@ button{
   border-radius:4px;
 }
 
-/* ===== TOOLS ===== */
+/* ===== TOOLBAR ===== */
 .tools{
   display:flex;
   gap:6px;
@@ -61,10 +63,17 @@ table{
   border-collapse:collapse;
 }
 
+/* ⭐ DATE BREAK FIX */
 th,td{
   border:1px solid #ccc;
   padding:6px;
   text-align:center;
+  white-space:nowrap;
+}
+
+/* date column width */
+th:first-child, td:first-child{
+  min-width:100px;
 }
 
 th{
@@ -84,11 +93,12 @@ th{
 </style>
 </head>
 
+
 <body>
 
-<h3>📋 Attendance MASTER (All Features)</h3>
+<h3>📋 Attendance MASTER PRO (All Features)</h3>
 
-<!-- ENTRY -->
+<!-- ENTRY FORM -->
 <div class="form">
 <input type="date" id="date">
 <input type="time" id="inTime">
@@ -116,8 +126,9 @@ th{
 </div>
 
 
+<!-- TABLE -->
 <div class="table-box">
-<table id="tbl">
+<table>
 
 <thead>
 <tr>
@@ -154,7 +165,7 @@ let data = JSON.parse(localStorage.getItem("attData")) || [];
 let editIndex=-1;
 
 
-/* SAVE */
+/* ===== SAVE ===== */
 function save(){
 
  let d=date.value;
@@ -162,7 +173,10 @@ function save(){
  let o=outTime.value;
  let p=post.value;
 
- if(!d||!i||!o) return alert("Fill all fields");
+ if(!d||!i||!o){
+   alert("Fill all fields");
+   return;
+ }
 
  let h=calcHours(i,o);
 
@@ -171,7 +185,11 @@ function save(){
    editIndex=-1;
  }
  else{
-   data.push({d,i,o,h,p,bg:"#ffffff",font:"#000000"});
+   data.push({
+     d,i,o,h,p,
+     bg:"#fffacd",
+     font:"#000000"
+   });
  }
 
  store();
@@ -180,7 +198,7 @@ function save(){
 }
 
 
-/* HOURS */
+/* ===== HOURS ===== */
 function calcHours(a,b){
  let x=new Date("2000-01-01 "+a);
  let y=new Date("2000-01-01 "+b);
@@ -189,16 +207,17 @@ function calcHours(a,b){
 }
 
 
-/* RENDER */
+/* ===== RENDER ===== */
 function render(){
 
  tbody.innerHTML="";
+
  let totalH=0,duty=0;
 
  let month=monthFilter.value;
  let s=search.value.toLowerCase();
 
- /* AUTO SORT */
+ /* AUTO DATE SORT */
  data.sort((a,b)=> new Date(a.d)-new Date(b.d));
 
  data.forEach((r,i)=>{
@@ -210,8 +229,11 @@ function render(){
    duty++;
 
    let tr=document.createElement("tr");
-   tr.style.background=r.bg;
+
+   /* ⭐ FULL ROW COLOR */
+   tr.style.backgroundColor=r.bg;
    tr.style.color=r.font;
+   tr.style.fontWeight="bold";
 
    tr.innerHTML=`
    <td>${r.d}</td>
@@ -219,8 +241,10 @@ function render(){
    <td>${r.o}</td>
    <td>${r.h}</td>
    <td>${r.p}</td>
+
    <td><input type="color" value="${r.bg}" onchange="setBg(${i},this.value)"></td>
    <td><input type="color" value="${r.font}" onchange="setFont(${i},this.value)"></td>
+
    <td><button class="edit" onclick="edit(${i})">✏️</button></td>
    <td><button class="del" onclick="del(${i})">❌</button></td>
    `;
@@ -233,12 +257,12 @@ function render(){
 }
 
 
-/* COLOR */
-function setBg(i,c){data[i].bg=c;store();render();}
-function setFont(i,c){data[i].font=c;store();render();}
+/* ===== COLOR ===== */
+function setBg(i,c){ data[i].bg=c; store(); render(); }
+function setFont(i,c){ data[i].font=c; store(); render(); }
 
 
-/* DELETE POPUP */
+/* ===== DELETE POPUP ===== */
 function del(i){
  if(confirm("Delete this entry?")){
    data.splice(i,1);
@@ -248,18 +272,30 @@ function del(i){
 }
 
 
-/* STORE */
+/* ===== EDIT ===== */
+function edit(i){
+ let r=data[i];
+ date.value=r.d;
+ inTime.value=r.i;
+ outTime.value=r.o;
+ post.value=r.p;
+ editIndex=i;
+}
+
+
+/* ===== STORAGE ===== */
 function store(){
  localStorage.setItem("attData",JSON.stringify(data));
 }
 
 
-/* CSV */
+/* ===== CSV ===== */
 function downloadCSV(){
  let csv="Date,In,Out,Hours,Post\n";
  data.forEach(r=>{
   csv+=`${r.d},${r.i},${r.o},${r.h},${r.p}\n`;
  });
+
  let blob=new Blob([csv]);
  let a=document.createElement("a");
  a.href=URL.createObjectURL(blob);
@@ -268,12 +304,13 @@ function downloadCSV(){
 }
 
 
-/* CLEAR */
+/* ===== CLEAR ===== */
 function clear(){
  date.value="";
  inTime.value="";
  outTime.value="";
 }
+
 
 render();
 
