@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+<head>
+<link rel="stylesheet" href="style.css">
+</head>
+<body class="bg">
+
+<h2>Duty Entry</h2>
+
+<div class="card">
+
+<input type="date" id="date">
+<input type="time" id="in">
+<input type="time" id="out">
+
+<select id="shift">
+<option>Day</option>
+<option>Night</option>
+<option>Day+Night</option>
+</select>
+
+<select id="post">
+<option>ETP</option>
+<option>BORD2</option>
+<option>COE</option>
+<option>ACL</option>
+</select>
+
+<label><input type="checkbox" id="double"> Double Duty</label>
+
+<button onclick="saveData()">Save</button>
+
+</div>
+
+<select id="monthFilter" onchange="loadData()"></select>
+
+<h3>Total Hours: <span id="total">0</span></h3>
+
+<div id="list"></div>
+
+<button onclick="logout()">Logout</button>
+
+<script src="firebase.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
