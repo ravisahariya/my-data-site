@@ -2,7 +2,6 @@
 <html>
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1">
-
 <title>Attendance MASTER PRO</title>
 
 <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
@@ -10,19 +9,28 @@
 
 <style>
 body{margin:0;font-family:Arial;background:#f2f2f2}
-#loginPage{height:100vh;display:flex;justify-content:center;align-items:center;background:linear-gradient(135deg,#667eea,#764ba2)}
-.card{background:#fff;padding:25px;border-radius:10px;text-align:center}
+
+#loginPage{
+height:100vh;display:flex;justify-content:center;align-items:center;
+background:linear-gradient(135deg,#667eea,#764ba2);
+}
+.card{background:white;padding:25px;border-radius:10px;text-align:center}
 
 #app{display:none;height:100vh;flex-direction:column}
-.topbar{display:flex;justify-content:space-between;padding:8px}
-.logout{background:#f44336;color:white;border:none;padding:6px 12px}
 
-input,select,button{padding:5px;margin:2px}
+.topbar{display:flex;justify-content:space-between;padding:8px}
+.logout{background:#f44336;color:#fff;border:none;padding:6px 12px}
+
+.form{display:flex;flex-wrap:wrap;padding:6px;gap:5px}
+input,select,button{padding:6px}
+
 .table-box{flex:1;overflow:auto;background:white}
 table{width:100%;border-collapse:collapse}
 th,td{border:1px solid #ccc;padding:5px;text-align:center}
 th{background:#ffd9d9}
 .total{background:#ffeaa7;font-weight:bold}
+
+.editMode{background:#ffeb3b}
 </style>
 </head>
 
@@ -47,20 +55,44 @@ th{background:#ffd9d9}
 <button class="logout" onclick="logout()">Logout</button>
 </div>
 
-<div>
+<!-- ENTRY FORM (EDIT YAHI HOGA) -->
+<div class="form">
+
 <input type="date" id="date">
 <input type="time" id="inTime">
 <input type="time" id="outTime">
 <input id="post" placeholder="Post">
+
+BG <input type="color" id="bg" value="#fffacd">
+Font <input type="color" id="font" value="#000000">
+
 <button onclick="save()">Save</button>
+<button onclick="clearForm()">Clear</button>
+
+<select id="monthFilter" onchange="render()">
+<option value="all">All</option>
+<option value="01">Jan</option><option value="02">Feb</option>
+<option value="03">Mar</option><option value="04">Apr</option>
+<option value="05">May</option><option value="06">Jun</option>
+<option value="07">Jul</option><option value="08">Aug</option>
+<option value="09">Sep</option><option value="10">Oct</option>
+<option value="11">Nov</option><option value="12">Dec</option>
+</select>
+
+<input id="search" placeholder="Search" onkeyup="render()">
+
+<button onclick="downloadCSV()">Excel</button>
+<button onclick="window.print()">Print</button>
+
 </div>
+
 
 <div class="table-box">
 <table>
 <thead>
 <tr>
 <th>Date</th><th>In</th><th>Out</th><th>Hours</th>
-<th>Post</th><th>BG</th><th>Font</th><th>Edit</th><th>Delete</th>
+<th>Post</th><th>Edit</th><th>Delete</th>
 </tr>
 </thead>
 <tbody id="tbody"></tbody>
@@ -70,12 +102,13 @@ th{background:#ffd9d9}
 <td>Total Duty: <span id="duty">0</span></td>
 <td colspan="2">Total Hours</td>
 <td id="hours">0</td>
-<td colspan="5"></td>
+<td colspan="3"></td>
 </tr>
 </tfoot>
 </table>
 </div>
 </div>
+
 
 <script>
 firebase.initializeApp({
@@ -94,6 +127,8 @@ function unlockSecret(){ if(prompt("Year?")==="1995") alert("Username: Ravi\nPas
 
 /* DATA */
 let data=[];
+let editId=null;
+
 db.collection("attendance").onSnapshot(s=>{
  data=[];
  s.forEach(d=>data.push({id:d.id,...d.data()}));
@@ -101,21 +136,55 @@ db.collection("attendance").onSnapshot(s=>{
 });
 
 function calc(i,o){
- let a=new Date("2000 "+i), b=new Date("2000 "+o);
+ let a=new Date("2000 "+i),b=new Date("2000 "+o);
  if(b<a) b.setDate(b.getDate()+1);
  return ((b-a)/3600000).toFixed(2);
 }
 
+/* SAVE OR UPDATE */
 function save(){
- db.collection("attendance").add({
+
+ let obj={
   d:date.value,
   i:inTime.value,
   o:outTime.value,
   p:post.value,
-  h:calc(inTime.value,outTime.value),
-  bg:"#fffacd",
-  font:"#000"
- });
+  bg:bg.value,
+  font:font.value,
+  h:calc(inTime.value,outTime.value)
+ };
+
+ if(editId){
+  db.collection("attendance").doc(editId).update(obj);
+ }else{
+  db.collection("attendance").add(obj);
+ }
+
+ clearForm();
+}
+
+function clearForm(){
+ editId=null;
+ document.querySelector(".form").classList.remove("editMode");
+ date.value=""; inTime.value=""; outTime.value=""; post.value="";
+}
+
+/* EDIT -> FORM ME DATA */
+function edit(id){
+ let r=data.find(x=>x.id===id);
+
+ editId=id;
+
+ date.value=r.d;
+ inTime.value=r.i;
+ outTime.value=r.o;
+ post.value=r.p;
+ bg.value=r.bg;
+ font.value=r.font;
+
+ document.querySelector(".form").classList.add("editMode");
+
+ window.scrollTo(0,0);
 }
 
 function del(id){
@@ -123,43 +192,18 @@ function del(id){
   db.collection("attendance").doc(id).delete();
 }
 
-/* FULL ROW EDIT */
-function editRow(r){
- return `
- <tr>
- <td><input type="date" value="${r.d}" id="d${r.id}"></td>
- <td><input type="time" value="${r.i}" id="i${r.id}"></td>
- <td><input type="time" value="${r.o}" id="o${r.id}"></td>
- <td>-</td>
- <td><input value="${r.p}" id="p${r.id}"></td>
- <td><input type="color" value="${r.bg}" id="bg${r.id}"></td>
- <td><input type="color" value="${r.font}" id="f${r.id}"></td>
- <td><button onclick="updateRow('${r.id}')">💾</button></td>
- <td><button onclick="render()">❌</button></td>
- </tr>`;
-}
-
-function updateRow(id){
- let d=document.getElementById("d"+id).value;
- let i=document.getElementById("i"+id).value;
- let o=document.getElementById("o"+id).value;
- let p=document.getElementById("p"+id).value;
- let bg=document.getElementById("bg"+id).value;
- let font=document.getElementById("f"+id).value;
-
- db.collection("attendance").doc(id).update({
-  d,i,o,p,
-  h:calc(i,o),
-  bg,font
- });
-}
-
 /* RENDER */
 function render(){
  tbody.innerHTML="";
- let th=0, td=0;
+ let th=0,td=0;
+
+ let m=monthFilter.value;
+ let s=search.value.toLowerCase();
 
  data.forEach(r=>{
+  if(m!=="all" && r.d.split("-")[1]!==m) return;
+  if(s && !(r.d+r.p).toLowerCase().includes(s)) return;
+
   th+=+r.h; td++;
 
   tbody.innerHTML+=`
@@ -169,15 +213,24 @@ function render(){
   <td>${r.o}</td>
   <td>${r.h}</td>
   <td>${r.p}</td>
-  <td><input type="color" value="${r.bg}" disabled></td>
-  <td><input type="color" value="${r.font}" disabled></td>
-  <td><button onclick="document.getElementById('tbody').innerHTML=editRow(${JSON.stringify(r).replace(/"/g,'&quot;')})">✏️</button></td>
+  <td><button onclick="edit('${r.id}')">✏️</button></td>
   <td><button onclick="del('${r.id}')">❌</button></td>
   </tr>`;
  });
 
  hours.innerText=th.toFixed(2);
  duty.innerText=td;
+}
+
+/* CSV */
+function downloadCSV(){
+ let csv="Date,In,Out,Hours,Post\n";
+ data.forEach(r=>csv+=`${r.d},${r.i},${r.o},${r.h},${r.p}\n`);
+ let blob=new Blob([csv]);
+ let a=document.createElement("a");
+ a.href=URL.createObjectURL(blob);
+ a.download="attendance.csv";
+ a.click();
 }
 </script>
 </body>
