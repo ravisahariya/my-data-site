@@ -2,7 +2,11 @@
 <html>
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Attendance CLOUD MASTER FINAL</title>
+<title>Attendance Cloud Master</title>
+
+<!-- Firebase SIMPLE CDN (NO MODULE = NO BLANK BUG) -->
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
 
 <style>
 body{margin:0;font-family:Arial;background:#f2f2f2}
@@ -12,7 +16,8 @@ body{margin:0;font-family:Arial;background:#f2f2f2}
 height:100vh;display:flex;justify-content:center;align-items:center;
 background:linear-gradient(135deg,#667eea,#764ba2);
 }
-.card{background:white;padding:25px;width:90%;max-width:320px;text-align:center;border-radius:10px}
+.card{background:#fff;padding:25px;width:90%;max-width:320px;text-align:center;border-radius:10px}
+
 input,select,button{padding:8px;margin:4px}
 button{background:#4CAF50;color:white;border:none}
 
@@ -21,87 +26,58 @@ button{background:#4CAF50;color:white;border:none}
 .topbar{display:flex;justify-content:space-between;padding:8px}
 .logout{background:#f44336}
 
-.form{display:grid;grid-template-columns:1fr 1fr;gap:6px;padding:6px}
-.tools{display:flex;gap:6px;padding:6px;flex-wrap:wrap}
-
 .table-box{flex:1;overflow:auto;background:white}
 table{width:100%;border-collapse:collapse}
-th,td{border:1px solid #ccc;padding:6px;text-align:center;white-space:nowrap}
-th{background:#ffd9d9;position:sticky;top:0}
+th,td{border:1px solid #ccc;padding:6px;text-align:center}
+th{background:#ffd9d9}
 .total{background:#ffeaa7;font-weight:bold}
 </style>
 </head>
 
 <body>
 
-<!-- ================= LOGIN ================= -->
+<!-- LOGIN -->
 <div id="loginPage">
-<div class="card">
-<h2>🔐 Login</h2>
-<input id="username" placeholder="Username">
-<input type="password" id="password" placeholder="Password">
-<button onclick="login()">Login</button>
-<div onclick="unlockSecret()" style="cursor:pointer">🔒</div>
-</div>
+  <div class="card">
+    <h2>🔐 Login</h2>
+    <input id="username" placeholder="Username">
+    <input type="password" id="password" placeholder="Password">
+    <button onclick="login()">Login</button>
+    <div onclick="unlockSecret()" style="cursor:pointer">🔒</div>
+  </div>
 </div>
 
-<!-- ================= APP ================= -->
+<!-- APP -->
 <div id="app">
 
 <div class="topbar">
-<h3>☁️ Attendance CLOUD MASTER</h3>
-<button class="logout" onclick="logout()">Logout</button>
+  <h3>☁️ Attendance Cloud</h3>
+  <button class="logout" onclick="logout()">Logout</button>
 </div>
 
-<div class="form">
+<div>
 <input type="date" id="date">
 <input type="time" id="inTime">
 <input type="time" id="outTime">
-
-<input list="postList" id="post" placeholder="Type Post">
-<datalist id="postList">
-<option>ETP</option>
-<option>BOARD 2</option>
-<option>COE</option>
-<option>ACL</option>
-<option>BEBRIG</option>
-</datalist>
-
+<input id="post" placeholder="Post">
 <button onclick="save()">Save</button>
-</div>
-
-<div class="tools">
-<select id="monthFilter" onchange="render()">
-<option value="all">All Month</option>
-<option value="01">Jan</option><option value="02">Feb</option>
-<option value="03">Mar</option><option value="04">Apr</option>
-<option value="05">May</option><option value="06">Jun</option>
-<option value="07">Jul</option><option value="08">Aug</option>
-<option value="09">Sep</option><option value="10">Oct</option>
-<option value="11">Nov</option><option value="12">Dec</option>
-</select>
-
-<input id="search" placeholder="Search" onkeyup="render()">
-
-<button onclick="downloadCSV()">Excel</button>
-<button onclick="window.print()">Print</button>
 </div>
 
 <div class="table-box">
 <table>
 <thead>
 <tr>
-<th>Date</th><th>In</th><th>Out</th><th>Hours</th><th>Post</th><th>BG</th><th>Font</th><th>Edit</th><th>Delete</th>
+<th>Date</th><th>In</th><th>Out</th><th>Hours</th><th>Post</th><th>Delete</th>
 </tr>
 </thead>
 <tbody id="tbody"></tbody>
 
 <tfoot>
 <tr class="total">
-<td>Total Duty: <span id="dutyCount">0</span></td>
+<td>Total Duty: <span id="duty">0</span></td>
 <td colspan="2">Total Hours</td>
-<td id="totalHours">0</td>
-<td colspan="4"></td>
+<td id="hours">0</td>
+<td></td>
 </tr>
 </tfoot>
 </table>
@@ -110,122 +86,86 @@ th{background:#ffd9d9;position:sticky;top:0}
 </div>
 
 
-<!-- ================= FIREBASE ================= -->
-<script type="module">
+<script>
+/* ================= FIREBASE ================= */
+firebase.initializeApp({
+  apiKey:"AIzaSyD71mpolAsmejtU2icecQQcX07iCW_is0Y",
+  authDomain:"ravicardmaker.firebaseapp.com",
+  projectId:"ravicardmaker"
+});
 
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-import {
- getFirestore, collection, addDoc, deleteDoc, updateDoc, doc, onSnapshot
-} from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-
-const firebaseConfig = {
-  apiKey: "AIzaSyD71mpolAsmejtU2icecQQcX07iCW_is0Y",
-  authDomain: "ravicardmaker.firebaseapp.com",
-  projectId: "ravicardmaker",
-  storageBucket: "ravicardmaker.firebasestorage.app",
-  messagingSenderId: "125321734592",
-  appId: "1:125321734592:web:eaba2d7477376694134025"
-};
-
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
+const db = firebase.firestore();
 
 /* ================= LOGIN ================= */
-const USER="Ravi";
-const PASS="Ravi123";
-
 if(localStorage.getItem("login")) showApp();
 
-window.login=()=>{
- if(username.value===USER && password.value===PASS){
-  localStorage.setItem("login","1");
-  showApp();
- } else alert("Wrong login");
-};
+function login(){
+ if(username.value==="Ravi" && password.value==="Ravi123"){
+   localStorage.setItem("login","1");
+   showApp();
+ }
+}
 
-window.logout=()=>{
+function logout(){
  localStorage.removeItem("login");
  location.reload();
-};
+}
 
 function showApp(){
  loginPage.style.display="none";
  app.style.display="flex";
 }
 
-window.unlockSecret=()=>{
- let y=prompt("Year?");
- if(y==="1995") alert("Username: Ravi\nPassword: Ravi123");
-};
+function unlockSecret(){
+ if(prompt("Year?")==="1995")
+   alert("Username: Ravi\nPassword: Ravi123");
+}
 
-/* ================= CLOUD DATA ================= */
-
+/* ================= DATA ================= */
 let data=[];
-const col=collection(db,"attendance");
 
-onSnapshot(col,(snap)=>{
+db.collection("attendance").onSnapshot(snap=>{
  data=[];
  snap.forEach(d=>data.push({id:d.id,...d.data()}));
  render();
 });
 
-window.save=async()=>{
+function save(){
  let d=date.value,i=inTime.value,o=outTime.value,p=post.value;
  if(!d||!i||!o||!p) return;
 
  let h=((new Date("2000 "+o)-new Date("2000 "+i))/3600000).toFixed(2);
 
- await addDoc(col,{d,i,o,p,h,bg:"#fffacd",font:"#000"});
-};
+ db.collection("attendance").add({d,i,o,p,h});
+}
 
-window.del=async(id)=>{
- if(confirm("Delete?")) await deleteDoc(doc(db,"attendance",id));
-};
+function del(id){
+ if(confirm("Delete?"))
+  db.collection("attendance").doc(id).delete();
+}
 
-window.updateColor=async(id,key,val)=>{
- await updateDoc(doc(db,"attendance",id),{[key]:val});
-};
-
-window.render=()=>{
+function render(){
  tbody.innerHTML="";
- let total=0,duty=0;
-
- let m=monthFilter.value,s=search.value.toLowerCase();
+ let th=0, td=0;
 
  data.forEach(r=>{
-  if(m!=="all" && r.d.split("-")[1]!==m) return;
-  if(s && !(r.d+r.p).toLowerCase().includes(s)) return;
+   th+=+r.h; td++;
 
-  total+=+r.h; duty++;
-
-  tbody.innerHTML+=`
-  <tr style="background:${r.bg};color:${r.font}">
-  <td>${r.d}</td>
-  <td>${r.i}</td>
-  <td>${r.o}</td>
-  <td>${r.h}</td>
-  <td>${r.p}</td>
-  <td><input type="color" value="${r.bg}" onchange="updateColor('${r.id}','bg',this.value)"></td>
-  <td><input type="color" value="${r.font}" onchange="updateColor('${r.id}','font',this.value)"></td>
-  <td>—</td>
-  <td><button onclick="del('${r.id}')">❌</button></td>
-  </tr>`;
+   tbody.innerHTML+=`
+   <tr>
+   <td>${r.d}</td>
+   <td>${r.i}</td>
+   <td>${r.o}</td>
+   <td>${r.h}</td>
+   <td>${r.p}</td>
+   <td><button onclick="del('${r.id}')">❌</button></td>
+   </tr>`;
  });
 
- totalHours.innerText=total.toFixed(2);
- dutyCount.innerText=duty;
-};
-
-window.downloadCSV=()=>{
- let csv="Date,In,Out,Hours,Post\n";
- data.forEach(r=> csv+=`${r.d},${r.i},${r.o},${r.h},${r.p}\n`);
- let blob=new Blob([csv]);
- let a=document.createElement("a");
- a.href=URL.createObjectURL(blob);
- a.download="attendance.csv";
- a.click();
-};
-
+ hours.innerText=th.toFixed(2);
+ duty.innerText=td;
+}
 </script>
+
 </body>
 </html>
