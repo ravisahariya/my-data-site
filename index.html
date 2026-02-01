@@ -2,17 +2,23 @@
 <html>
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Attendance PRO++</title>
+<title>Attendance MASTER</title>
 
 <style>
 
 body{
   margin:0;
   font-family:Arial;
+  background:#f2f2f2;
   height:100vh;
   display:flex;
   flex-direction:column;
-  background:#f2f2f2;
+}
+
+/* ===== HEADER ===== */
+h3{
+  text-align:center;
+  margin:6px;
 }
 
 /* ===== FORM ===== */
@@ -35,16 +41,12 @@ button{
   border-radius:4px;
 }
 
-/* ===== TOOLBAR ===== */
+/* ===== TOOLS ===== */
 .tools{
   display:flex;
   gap:6px;
   padding:6px;
   flex-wrap:wrap;
-}
-
-.tools input,.tools select{
-  flex:1;
 }
 
 /* ===== TABLE ===== */
@@ -84,9 +86,9 @@ th{
 
 <body>
 
-<h3 style="text-align:center">📋 Attendance Register PRO++</h3>
+<h3>📋 Attendance MASTER (All Features)</h3>
 
-<!-- ENTRY FORM -->
+<!-- ENTRY -->
 <div class="form">
 <input type="date" id="date">
 <input type="time" id="inTime">
@@ -111,9 +113,6 @@ th{
 
 <button onclick="downloadCSV()">Excel</button>
 <button onclick="window.print()">Print</button>
-
-<label>BG <input type="color" id="bgColor"></label>
-<label>Font <input type="color" id="fontColor"></label>
 </div>
 
 
@@ -127,6 +126,8 @@ th{
 <th>Out</th>
 <th>Hours</th>
 <th>Post</th>
+<th>BG</th>
+<th>Font</th>
 <th>Edit</th>
 <th>Delete</th>
 </tr>
@@ -139,7 +140,7 @@ th{
 <td>Total Duty: <span id="dutyCount">0</span></td>
 <td colspan="2">Grand Total Hours</td>
 <td id="totalHours">0</td>
-<td colspan="3"></td>
+<td colspan="5"></td>
 </tr>
 </tfoot>
 
@@ -166,10 +167,11 @@ function save(){
  let h=calcHours(i,o);
 
  if(editIndex>=0){
-   data[editIndex]={d,i,o,h,p};
+   data[editIndex]={...data[editIndex],d,i,o,h,p};
    editIndex=-1;
- }else{
-   data.push({d,i,o,h,p});
+ }
+ else{
+   data.push({d,i,o,h,p,bg:"#ffffff",font:"#000000"});
  }
 
  store();
@@ -191,35 +193,39 @@ function calcHours(a,b){
 function render(){
 
  tbody.innerHTML="";
-
- let totalH=0;
- let duty=0;
+ let totalH=0,duty=0;
 
  let month=monthFilter.value;
  let s=search.value.toLowerCase();
 
+ /* AUTO SORT */
  data.sort((a,b)=> new Date(a.d)-new Date(b.d));
 
  data.forEach((r,i)=>{
 
    if(month && !r.d.startsWith(month)) return;
-
-   let txt=(r.d+r.p).toLowerCase();
-   if(s && !txt.includes(s)) return;
+   if(s && !(r.d+r.p).toLowerCase().includes(s)) return;
 
    totalH+=parseFloat(r.h);
    duty++;
 
-   tbody.innerHTML+=`
-   <tr>
+   let tr=document.createElement("tr");
+   tr.style.background=r.bg;
+   tr.style.color=r.font;
+
+   tr.innerHTML=`
    <td>${r.d}</td>
    <td>${r.i}</td>
    <td>${r.o}</td>
    <td>${r.h}</td>
    <td>${r.p}</td>
+   <td><input type="color" value="${r.bg}" onchange="setBg(${i},this.value)"></td>
+   <td><input type="color" value="${r.font}" onchange="setFont(${i},this.value)"></td>
    <td><button class="edit" onclick="edit(${i})">✏️</button></td>
    <td><button class="del" onclick="del(${i})">❌</button></td>
-   </tr>`;
+   `;
+
+   tbody.appendChild(tr);
  });
 
  totalHours.innerText=totalH.toFixed(2);
@@ -227,18 +233,12 @@ function render(){
 }
 
 
-/* EDIT */
-function edit(i){
- let r=data[i];
- date.value=r.d;
- inTime.value=r.i;
- outTime.value=r.o;
- post.value=r.p;
- editIndex=i;
-}
+/* COLOR */
+function setBg(i,c){data[i].bg=c;store();render();}
+function setFont(i,c){data[i].font=c;store();render();}
 
 
-/* DELETE WITH POPUP */
+/* DELETE POPUP */
 function del(i){
  if(confirm("Delete this entry?")){
    data.splice(i,1);
@@ -248,17 +248,9 @@ function del(i){
 }
 
 
-/* LOCAL SAVE */
+/* STORE */
 function store(){
  localStorage.setItem("attData",JSON.stringify(data));
-}
-
-
-/* CLEAR */
-function clear(){
- date.value="";
- inTime.value="";
- outTime.value="";
 }
 
 
@@ -276,9 +268,12 @@ function downloadCSV(){
 }
 
 
-/* COLOR CUSTOM */
-bgColor.oninput=()=> tbl.style.background=bgColor.value;
-fontColor.oninput=()=> tbl.style.color=fontColor.value;
+/* CLEAR */
+function clear(){
+ date.value="";
+ inTime.value="";
+ outTime.value="";
+}
 
 render();
 
