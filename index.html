@@ -3,7 +3,7 @@
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
-<title>Attendance MASTER PRO</title>
+<title>Attendance Secure App</title>
 
 <style>
 
@@ -11,19 +11,65 @@
 body{
   margin:0;
   font-family:Arial;
-  background:#f2f2f2;
   height:100vh;
+}
+
+/* ================= LOGIN PAGE ================= */
+
+.loginPage{
+  height:100vh;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  background:linear-gradient(135deg,#667eea,#764ba2);
+}
+
+.card{
+  width:90%;
+  max-width:350px;
+  background:white;
+  padding:25px;
+  border-radius:12px;
+  box-shadow:0 10px 30px rgba(0,0,0,.3);
+  text-align:center;
+}
+
+.card h2{
+  margin-bottom:20px;
+}
+
+.card input{
+  width:100%;
+  padding:10px;
+  margin:8px 0;
+  font-size:16px;
+}
+
+.card button{
+  width:100%;
+  padding:10px;
+  font-size:16px;
+  background:#4CAF50;
+  color:white;
+  border:none;
+}
+
+.secret{
+  font-size:26px;
+  cursor:pointer;
+  margin-top:10px;
+}
+
+/* ================= ATTENDANCE ================= */
+
+.app{
+  display:none;
+  height:100vh;
+  background:#f2f2f2;
   display:flex;
   flex-direction:column;
 }
 
-/* ===== HEADER ===== */
-h3{
-  text-align:center;
-  margin:6px;
-}
-
-/* ===== FORM ===== */
 .form{
   display:grid;
   grid-template-columns:1fr 1fr;
@@ -31,19 +77,10 @@ h3{
   padding:6px;
 }
 
-input,select,button{
+input,select{
   padding:8px;
-  font-size:14px;
 }
 
-button{
-  background:#4CAF50;
-  color:white;
-  border:none;
-  border-radius:4px;
-}
-
-/* ===== TOOLBAR ===== */
 .tools{
   display:flex;
   gap:6px;
@@ -51,7 +88,6 @@ button{
   flex-wrap:wrap;
 }
 
-/* ===== TABLE ===== */
 .table-box{
   flex:1;
   overflow:auto;
@@ -63,17 +99,11 @@ table{
   border-collapse:collapse;
 }
 
-/* ⭐ DATE BREAK FIX */
 th,td{
   border:1px solid #ccc;
   padding:6px;
   text-align:center;
   white-space:nowrap;
-}
-
-/* date column width */
-th:first-child, td:first-child{
-  min-width:100px;
 }
 
 th{
@@ -93,12 +123,33 @@ th{
 </style>
 </head>
 
-
 <body>
 
-<h3>📋 Attendance MASTER PRO (All Features)</h3>
+<!-- ================= LOGIN ================= -->
 
-<!-- ENTRY FORM -->
+<div class="loginPage" id="loginPage">
+
+  <div class="card">
+    <h2>🔐 Admin Login</h2>
+
+    <input type="password" id="password" placeholder="Enter Password">
+
+    <button onclick="login()">Login</button>
+
+    <!-- secret icon -->
+    <div class="secret" onclick="unlockSecret()">🔒</div>
+  </div>
+
+</div>
+
+
+
+<!-- ================= ATTENDANCE ================= -->
+
+<div class="app" id="app">
+
+<h3 style="text-align:center">📋 Attendance MASTER PRO</h3>
+
 <div class="form">
 <input type="date" id="date">
 <input type="time" id="inTime">
@@ -115,8 +166,6 @@ th{
 <button onclick="save()">Save</button>
 </div>
 
-
-<!-- TOOLS -->
 <div class="tools">
 <input type="month" id="monthFilter" onchange="render()">
 <input type="text" id="search" placeholder="Search..." onkeyup="render()">
@@ -125,8 +174,6 @@ th{
 <button onclick="window.print()">Print</button>
 </div>
 
-
-<!-- TABLE -->
 <div class="table-box">
 <table>
 
@@ -158,14 +205,44 @@ th{
 </table>
 </div>
 
+</div>
+
+
 
 <script>
+
+/* ================= LOGIN LOGIC ================= */
+
+function login(){
+ let pass=password.value;
+
+ if(pass==="ravi8888"){
+   loginPage.style.display="none";
+   app.style.display="flex";
+ }else{
+   alert("Wrong Password");
+ }
+}
+
+/* secret unlock */
+function unlockSecret(){
+
+ let year=prompt("Enter Secret Year");
+
+ if(year==="1995"){
+   password.type="text";
+   alert("Password Visible 🔓");
+ }
+}
+
+
+
+/* ================= ATTENDANCE SYSTEM ================= */
 
 let data = JSON.parse(localStorage.getItem("attData")) || [];
 let editIndex=-1;
 
 
-/* ===== SAVE ===== */
 function save(){
 
  let d=date.value;
@@ -173,10 +250,7 @@ function save(){
  let o=outTime.value;
  let p=post.value;
 
- if(!d||!i||!o){
-   alert("Fill all fields");
-   return;
- }
+ if(!d||!i||!o) return alert("Fill all fields");
 
  let h=calcHours(i,o);
 
@@ -185,11 +259,7 @@ function save(){
    editIndex=-1;
  }
  else{
-   data.push({
-     d,i,o,h,p,
-     bg:"#fffacd",
-     font:"#000000"
-   });
+   data.push({d,i,o,h,p,bg:"#fffacd",font:"#000"});
  }
 
  store();
@@ -197,8 +267,6 @@ function save(){
  clear();
 }
 
-
-/* ===== HOURS ===== */
 function calcHours(a,b){
  let x=new Date("2000-01-01 "+a);
  let y=new Date("2000-01-01 "+b);
@@ -206,34 +274,22 @@ function calcHours(a,b){
  return ((y-x)/3600000).toFixed(2);
 }
 
-
-/* ===== RENDER ===== */
 function render(){
 
  tbody.innerHTML="";
-
  let totalH=0,duty=0;
 
- let month=monthFilter.value;
- let s=search.value.toLowerCase();
-
- /* AUTO DATE SORT */
  data.sort((a,b)=> new Date(a.d)-new Date(b.d));
 
  data.forEach((r,i)=>{
-
-   if(month && !r.d.startsWith(month)) return;
-   if(s && !(r.d+r.p).toLowerCase().includes(s)) return;
 
    totalH+=parseFloat(r.h);
    duty++;
 
    let tr=document.createElement("tr");
 
-   /* ⭐ FULL ROW COLOR */
-   tr.style.backgroundColor=r.bg;
+   tr.style.background=r.bg;
    tr.style.color=r.font;
-   tr.style.fontWeight="bold";
 
    tr.innerHTML=`
    <td>${r.d}</td>
@@ -241,10 +297,8 @@ function render(){
    <td>${r.o}</td>
    <td>${r.h}</td>
    <td>${r.p}</td>
-
    <td><input type="color" value="${r.bg}" onchange="setBg(${i},this.value)"></td>
    <td><input type="color" value="${r.font}" onchange="setFont(${i},this.value)"></td>
-
    <td><button class="edit" onclick="edit(${i})">✏️</button></td>
    <td><button class="del" onclick="del(${i})">❌</button></td>
    `;
@@ -256,23 +310,17 @@ function render(){
  dutyCount.innerText=duty;
 }
 
+function setBg(i,c){data[i].bg=c;store();render();}
+function setFont(i,c){data[i].font=c;store();render();}
 
-/* ===== COLOR ===== */
-function setBg(i,c){ data[i].bg=c; store(); render(); }
-function setFont(i,c){ data[i].font=c; store(); render(); }
-
-
-/* ===== DELETE POPUP ===== */
 function del(i){
- if(confirm("Delete this entry?")){
+ if(confirm("Delete entry?")){
    data.splice(i,1);
    store();
    render();
  }
 }
 
-
-/* ===== EDIT ===== */
 function edit(i){
  let r=data[i];
  date.value=r.d;
@@ -282,19 +330,19 @@ function edit(i){
  editIndex=i;
 }
 
-
-/* ===== STORAGE ===== */
 function store(){
  localStorage.setItem("attData",JSON.stringify(data));
 }
 
+function clear(){
+ date.value="";
+ inTime.value="";
+ outTime.value="";
+}
 
-/* ===== CSV ===== */
 function downloadCSV(){
  let csv="Date,In,Out,Hours,Post\n";
- data.forEach(r=>{
-  csv+=`${r.d},${r.i},${r.o},${r.h},${r.p}\n`;
- });
+ data.forEach(r=> csv+=`${r.d},${r.i},${r.o},${r.h},${r.p}\n`);
 
  let blob=new Blob([csv]);
  let a=document.createElement("a");
@@ -302,15 +350,6 @@ function downloadCSV(){
  a.download="attendance.csv";
  a.click();
 }
-
-
-/* ===== CLEAR ===== */
-function clear(){
- date.value="";
- inTime.value="";
- outTime.value="";
-}
-
 
 render();
 
