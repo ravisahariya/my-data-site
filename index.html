@@ -7,7 +7,7 @@
 <style>
 body{margin:0;font-family:Arial}
 
-/* ===== LOGIN ===== */
+/* ========= LOGIN ========= */
 #loginPage{
 height:100vh;
 display:flex;
@@ -15,7 +15,6 @@ justify-content:center;
 align-items:center;
 background:linear-gradient(135deg,#667eea,#764ba2);
 }
-
 .loginCard{
 background:white;
 padding:25px;
@@ -24,85 +23,46 @@ max-width:320px;
 border-radius:12px;
 text-align:center;
 }
+.loginCard input{width:100%;padding:10px;margin:6px 0}
+.loginCard button{width:100%;padding:10px;background:#4CAF50;color:white;border:none}
+.secret{font-size:22px;cursor:pointer;margin-top:8px}
 
-.loginCard input{
-width:100%;
-padding:10px;
-margin:6px 0;
-}
-
-.loginCard button{
-width:100%;
-padding:10px;
-background:#4CAF50;
-color:white;
-border:none;
-}
-
-.secret{font-size:24px;cursor:pointer;margin-top:8px}
-
-/* ===== APP ===== */
+/* ========= APP ========= */
 #app{display:none;height:100vh;background:#f2f2f2;flex-direction:column}
+.topbar{display:flex;justify-content:space-between;padding:6px}
+.logout{background:#f44336;color:white;border:none;padding:6px 12px}
 
-.topbar{
-display:flex;
-justify-content:space-between;
-padding:6px;
-}
-
-.logout{
-background:#f44336;
-color:white;
-border:none;
-padding:6px 12px;
-}
-
-/* ===== FORM ===== */
-.form{
-display:grid;
-grid-template-columns:1fr 1fr;
-gap:6px;
-padding:6px;
-}
-
+.form{display:grid;grid-template-columns:1fr 1fr;gap:6px;padding:6px}
 input,select,button{padding:8px}
 
-/* ===== TABLE ===== */
+.tools{display:flex;gap:6px;padding:6px;flex-wrap:wrap}
+
 .table-box{flex:1;overflow:auto;background:white}
-
 table{width:100%;border-collapse:collapse}
-
-th,td{
-border:1px solid #ccc;
-padding:6px;
-text-align:center;
-white-space:nowrap;
-}
-
+th,td{border:1px solid #ccc;padding:6px;text-align:center;white-space:nowrap}
 th{background:#ffd9d9;position:sticky;top:0}
 .total{background:#ffeaa7;font-weight:bold}
-
 .edit{background:#2196F3;color:white}
 .del{background:#f44336;color:white}
 
+@media print{#loginPage{display:none!important}}
 </style>
 </head>
 
 <body>
 
-<!-- LOGIN -->
+<!-- ================= LOGIN ================= -->
 <div id="loginPage">
-  <div class="loginCard">
-    <h2>🔐 Login</h2>
-    <input id="username" placeholder="Username">
-    <input type="password" id="password" placeholder="Password">
-    <button onclick="login()">Login</button>
-    <div class="secret" onclick="unlockSecret()">🔒</div>
-  </div>
+<div class="loginCard">
+<h2>🔐 Login</h2>
+<input id="username" placeholder="Username">
+<input type="password" id="password" placeholder="Password">
+<button onclick="login()">Login</button>
+<div class="secret" onclick="unlockSecret()">🔒</div>
+</div>
 </div>
 
-
-<!-- APP -->
+<!-- ================= APP ================= -->
 <div id="app">
 
 <div class="topbar">
@@ -115,9 +75,8 @@ th{background:#ffd9d9;position:sticky;top:0}
 <input type="time" id="inTime">
 <input type="time" id="outTime">
 
-<!-- ⭐ CUSTOM POST FIELD -->
-<input list="postList" id="post" placeholder="Select or Type Post">
-
+<!-- ⭐ custom post typing -->
+<input list="postList" id="post" placeholder="Type or Select Post">
 <datalist id="postList">
 <option value="ETP">
 <option value="BOARD 2">
@@ -129,11 +88,30 @@ th{background:#ffd9d9;position:sticky;top:0}
 <button onclick="save()">Save</button>
 </div>
 
-<div style="padding:6px">
-<input type="month" id="monthFilter" onchange="render()">
+<div class="tools">
+
+<!-- ⭐ MONTH FILTER FIXED -->
+<select id="monthFilter" onchange="render()">
+<option value="all">All Month</option>
+<option value="01">Jan</option>
+<option value="02">Feb</option>
+<option value="03">Mar</option>
+<option value="04">Apr</option>
+<option value="05">May</option>
+<option value="06">Jun</option>
+<option value="07">Jul</option>
+<option value="08">Aug</option>
+<option value="09">Sep</option>
+<option value="10">Oct</option>
+<option value="11">Nov</option>
+<option value="12">Dec</option>
+</select>
+
 <input type="text" id="search" placeholder="Search..." onkeyup="render()">
+
 <button onclick="downloadCSV()">Excel</button>
 <button onclick="window.print()">Print</button>
+
 </div>
 
 <div class="table-box">
@@ -170,24 +148,19 @@ th{background:#ffd9d9;position:sticky;top:0}
 </div>
 
 
-
 <script>
 
-/* ===== LOGIN DATA ===== */
+/* ========= LOGIN ========= */
 const ADMIN_USER="Ravi";
 const ADMIN_PASS="Ravi123";
 
-/* ===== SESSION ===== */
-if(localStorage.getItem("loggedIn")==="true"){
- showApp();
-}
+if(localStorage.getItem("loggedIn")==="true") showApp();
 
 function login(){
  if(username.value===ADMIN_USER && password.value===ADMIN_PASS){
    localStorage.setItem("loggedIn","true");
    showApp();
- }
- else alert("Wrong Login");
+ }else alert("Wrong login");
 }
 
 function logout(){
@@ -200,7 +173,6 @@ function showApp(){
  app.style.display="flex";
 }
 
-/* ===== SECRET ===== */
 function unlockSecret(){
  let year=prompt("Enter Secret Year");
  if(year==="1995"){
@@ -208,27 +180,21 @@ function unlockSecret(){
  }
 }
 
-/* ===== ATTENDANCE ===== */
+/* ========= ATTENDANCE ========= */
 let data=JSON.parse(localStorage.getItem("attData"))||[];
 let editIndex=-1;
 
 function save(){
-
- let d=date.value;
- let i=inTime.value;
- let o=outTime.value;
- let p=post.value;
-
+ let d=date.value,i=inTime.value,o=outTime.value,p=post.value;
  if(!d||!i||!o||!p) return alert("Fill all");
 
  let h=calcHours(i,o);
 
  if(editIndex>=0){
-   data[editIndex]={...data[editIndex],d,i,o,h,p};
-   editIndex=-1;
- }
- else{
-   data.push({d,i,o,h,p,bg:"#fffacd",font:"#000"});
+  data[editIndex]={...data[editIndex],d,i,o,h,p};
+  editIndex=-1;
+ }else{
+  data.push({d,i,o,h,p,bg:"#fffacd",font:"#000"});
  }
 
  store(); render(); clear();
@@ -241,14 +207,23 @@ function calcHours(a,b){
  return ((y-x)/3600000).toFixed(2);
 }
 
+/* ⭐ FULL WORKING FILTER + SEARCH */
 function render(){
 
  tbody.innerHTML="";
  let totalH=0,duty=0;
 
+ let month=monthFilter.value;
+ let s=search.value.toLowerCase();
+
  data.sort((a,b)=> new Date(a.d)-new Date(b.d));
 
  data.forEach((r,i)=>{
+
+  let rowMonth=r.d.split("-")[1];
+
+  if(month!=="all" && rowMonth!==month) return;
+  if(s && !(r.d+r.p).toLowerCase().includes(s)) return;
 
   totalH+=+r.h; duty++;
 
@@ -280,27 +255,23 @@ function setFont(i,c){data[i].font=c;store();render();}
 
 function del(i){
  if(confirm("Delete?")){
-  data.splice(i,1); store(); render();
+  data.splice(i,1);store();render();
  }
 }
 
 function edit(i){
  let r=data[i];
- date.value=r.d; inTime.value=r.i; outTime.value=r.o; post.value=r.p;
+ date.value=r.d;inTime.value=r.i;outTime.value=r.o;post.value=r.p;
  editIndex=i;
 }
 
-function store(){
- localStorage.setItem("attData",JSON.stringify(data));
-}
+function store(){localStorage.setItem("attData",JSON.stringify(data));}
 
-function clear(){
- date.value=""; inTime.value=""; outTime.value=""; post.value="";
-}
+function clear(){date.value="";inTime.value="";outTime.value="";post.value="";}
 
 function downloadCSV(){
  let csv="Date,In,Out,Hours,Post\n";
- data.forEach(r=> csv+=`${r.d},${r.i},${r.o},${r.h},${r.p}\n`);
+ data.forEach(r=>csv+=`${r.d},${r.i},${r.o},${r.h},${r.p}\n`);
  let blob=new Blob([csv]);
  let a=document.createElement("a");
  a.href=URL.createObjectURL(blob);
