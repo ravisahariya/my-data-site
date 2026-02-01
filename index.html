@@ -1,25 +1,146 @@
 <!DOCTYPE html>
 <html>
 <head>
-<meta charset="UTF-8">
-<title>Login</title>
-<link rel="stylesheet" href="style.css">
+  <title>Attendance Register</title>
+  <link rel="stylesheet" href="style.css">
 </head>
 
-<body class="bg">
+<body>
 
-<div class="login-box">
+<h2>📋 Attendance Register</h2>
 
-<h2>Duty Login</h2>
+<div class="form-box">
 
-<input id="username" placeholder="Username">
-<input id="password" type="password" placeholder="Password">
+  <input type="date" id="date">
 
-<button onclick="login()">LOGIN</button>
+  <input type="time" id="intime">
+
+  <input type="time" id="outtime">
+
+  <select id="post">
+    <option>ETP</option>
+    <option>BOARD 2</option>
+    <option>COE</option>
+    <option>ACL</option>
+    <option>BEBRIG</option>
+  </select>
+
+  <button onclick="saveData()">Save</button>
 
 </div>
 
-<script src="app.js"></script>
+
+<table id="table">
+  <thead>
+    <tr>
+      <th>Date</th>
+      <th>In Time</th>
+      <th>Out Time</th>
+      <th>Hours</th>
+      <th>Post</th>
+      <th>Edit</th>
+      <th>Delete</th>
+    </tr>
+  </thead>
+
+  <tbody id="tbody"></tbody>
+
+  <tfoot>
+    <tr class="total">
+      <td colspan="3">Grand Total</td>
+      <td id="totalHours">0</td>
+      <td colspan="3"></td>
+    </tr>
+  </tfoot>
+</table>
+
+
+<script>
+
+let editRow = null;
+
+function saveData(){
+
+  let d = date.value;
+  let i = intime.value;
+  let o = outtime.value;
+  let p = post.value;
+
+  if(!d || !i || !o){
+    alert("Fill all fields");
+    return;
+  }
+
+  let hours = calcHours(i,o);
+
+  if(editRow){
+    editRow.cells[0].innerHTML = d;
+    editRow.cells[1].innerHTML = i;
+    editRow.cells[2].innerHTML = o;
+    editRow.cells[3].innerHTML = hours;
+    editRow.cells[4].innerHTML = p;
+    editRow = null;
+  }
+  else{
+    let row = tbody.insertRow();
+
+    row.insertCell(0).innerHTML = d;
+    row.insertCell(1).innerHTML = i;
+    row.insertCell(2).innerHTML = o;
+    row.insertCell(3).innerHTML = hours;
+    row.insertCell(4).innerHTML = p;
+
+    row.insertCell(5).innerHTML =
+      "<button onclick='edit(this)'>✏️</button>";
+
+    row.insertCell(6).innerHTML =
+      "<button onclick='del(this)'>❌</button>";
+  }
+
+  updateTotal();
+  clearForm();
+}
+
+
+function calcHours(inTime,outTime){
+  let a = new Date("01/01/2000 "+inTime);
+  let b = new Date("01/01/2000 "+outTime);
+  return ((b-a)/3600000).toFixed(2);
+}
+
+
+function edit(btn){
+  editRow = btn.parentNode.parentNode;
+
+  date.value   = editRow.cells[0].innerHTML;
+  intime.value = editRow.cells[1].innerHTML;
+  outtime.value= editRow.cells[2].innerHTML;
+  post.value   = editRow.cells[4].innerHTML;
+}
+
+
+function del(btn){
+  btn.parentNode.parentNode.remove();
+  updateTotal();
+}
+
+
+function updateTotal(){
+  let total = 0;
+  for(let r of tbody.rows){
+    total += parseFloat(r.cells[3].innerHTML);
+  }
+  totalHours.innerHTML = total.toFixed(2);
+}
+
+
+function clearForm(){
+  date.value="";
+  intime.value="";
+  outtime.value="";
+}
+
+</script>
 
 </body>
 </html>
