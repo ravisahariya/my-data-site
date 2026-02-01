@@ -3,39 +3,58 @@
 <head>
 <meta charset="UTF-8">
 <title>Duty Dashboard</title>
+
 <link rel="stylesheet" href="style.css">
+
 </head>
 
 <body class="bg">
 
-<h2 style="color:white;text-align:center;">Duty Entry</h2>
+<!-- ===== TITLE ===== -->
+<h2>Duty Entry</h2>
 
+
+<!-- ===== FORM CARD ===== -->
 <div class="card">
 
 <input type="date" id="date">
+
 <input type="time" id="in">
 <input type="time" id="out">
 
 <select id="shift">
-<option>Day</option>
-<option>Night</option>
-<option>Day+Night</option>
+  <option>Day</option>
+  <option>Night</option>
+  <option>Day+Night</option>
 </select>
 
-<label>
-<input type="checkbox" id="double"> Double Duty (OT)
+<label style="font-size:18px;font-weight:800;">
+  <input type="checkbox" id="double">
+  Double Duty (OT)
 </label>
 
 <button onclick="saveData()">Save Entry</button>
 
 </div>
 
-<h3 style="color:white;">Total Hours: <span id="total">0</span></h3>
 
+
+<!-- ===== TOTAL HOURS ===== -->
+<h3>Total Hours: <span id="total">0</span></h3>
+
+
+
+<!-- ===== ENTRY LIST (NICHE DIKHEGA) ===== -->
 <div id="list"></div>
 
+
+
+<!-- ===== LOGOUT ===== -->
 <button onclick="logout()">Logout</button>
 
+
+
+<!-- ===== SCRIPT ===== -->
 <script src="app.js"></script>
 
 </body>
