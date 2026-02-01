@@ -2,95 +2,84 @@
 <html>
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-
-<title>Attendance Register</title>
+<title>Attendance Pro</title>
 
 <style>
 
-/* ===== BODY FIXED (NO SCROLL) ===== */
 body{
   margin:0;
   font-family:Arial;
-  background:#f2f2f2;
   height:100vh;
   overflow:hidden;
+  background:#f2f2f2;
 }
 
-/* ===== CARD CONTAINER ===== */
 .app{
   height:100vh;
   display:flex;
   flex-direction:column;
-  padding:10px;
+  padding:8px;
 }
 
-/* ===== HEADER ===== */
 h2{
   text-align:center;
-  margin:5px 0 10px;
+  margin:4px;
 }
 
 /* ===== FORM ===== */
 .form{
   display:grid;
   grid-template-columns:1fr 1fr;
-  gap:8px;
+  gap:6px;
 }
 
-input,select{
-  padding:10px;
-  font-size:16px;
-  border-radius:6px;
-  border:1px solid #ccc;
+input,select,button{
+  padding:8px;
+  font-size:14px;
 }
 
 button{
-  grid-column:span 2;
-  padding:12px;
-  font-size:18px;
   background:#4CAF50;
   color:white;
   border:none;
   border-radius:6px;
 }
 
-/* ===== COLOR PICKERS ===== */
-.colors{
+/* ===== TOOLS ===== */
+.tools{
   display:flex;
-  gap:10px;
-  margin-top:8px;
+  gap:6px;
+  margin-top:6px;
 }
 
-.colors label{
-  font-size:14px;
+.tools input,.tools select{
+  flex:1;
 }
 
-/* ===== TABLE AREA SCROLL ONLY ===== */
+/* ===== TABLE SCROLL ===== */
 .table-box{
   flex:1;
-  overflow-y:auto;
-  margin-top:10px;
+  overflow:auto;
   background:white;
-  border-radius:8px;
+  margin-top:6px;
 }
 
-/* ===== TABLE ===== */
 table{
   width:100%;
   border-collapse:collapse;
-  font-size:14px;
+  font-size:13px;
 }
 
 th,td{
   border:1px solid #ddd;
-  padding:8px;
+  padding:6px;
   text-align:center;
 }
 
 th{
+  background:#ffd9d9;
   position:sticky;
   top:0;
-  background:#ffd9d9;
 }
 
 .total{
@@ -98,8 +87,8 @@ th{
   font-weight:bold;
 }
 
-.edit{background:#2196F3;color:white;border:none;padding:5px}
-.del{background:#f44336;color:white;border:none;padding:5px}
+.edit{background:#2196F3;color:white;border:none}
+.del{background:#f44336;color:white;border:none}
 
 </style>
 </head>
@@ -109,33 +98,44 @@ th{
 
 <div class="app">
 
-<h2>📋 Attendance Register</h2>
+<h2>📋 Attendance Register PRO</h2>
 
+<!-- ENTRY FORM -->
 <div class="form">
-  <input type="date" id="date">
-  <input type="time" id="in">
+<input type="date" id="date">
+<input type="time" id="in">
+<input type="time" id="out">
 
-  <input type="time" id="out">
+<select id="post">
+<option>ETP</option>
+<option>BOARD 2</option>
+<option>COE</option>
+<option>ACL</option>
+<option>BEBRIG</option>
+</select>
 
-  <select id="post">
-    <option>ETP</option>
-    <option>BOARD 2</option>
-    <option>COE</option>
-    <option>ACL</option>
-    <option>BEBRIG</option>
-  </select>
-
-  <button onclick="save()">SAVE ENTRY</button>
+<button onclick="save()">Save Entry</button>
 </div>
 
-<div class="colors">
-  <label>BG 🎨 <input type="color" id="bg"></label>
-  <label>Font 🎨 <input type="color" id="font"></label>
+
+<!-- TOOLS -->
+<div class="tools">
+<input type="month" id="monthFilter" onchange="render()">
+<input type="text" id="search" placeholder="Search..." onkeyup="render()">
+<button onclick="downloadCSV()">Excel</button>
+<button onclick="window.print()">Print</button>
 </div>
 
+
+<div class="tools">
+<label>BG <input type="color" id="bg"></label>
+<label>Font <input type="color" id="font"></label>
+</div>
+
+
+<!-- TABLE -->
 <div class="table-box">
-
-<table id="tbl">
+<table>
 <thead>
 <tr>
 <th>Date</th>
@@ -159,7 +159,6 @@ th{
 </tfoot>
 
 </table>
-
 </div>
 
 </div>
@@ -168,7 +167,8 @@ th{
 
 <script>
 
-let editRow=null;
+let data = JSON.parse(localStorage.getItem("attData")) || [];
+let editIndex = -1;
 
 /* ===== SAVE ===== */
 function save(){
@@ -178,73 +178,87 @@ function save(){
  let o=out.value;
  let p=post.value;
 
- if(!d||!i||!o){
-   alert("Fill all fields");
-   return;
- }
+ if(!d||!i||!o) return alert("Fill all fields");
 
- let h=hours(i,o);
+ let h=calcHours(i,o);
 
- if(editRow){
-   setRow(editRow,d,i,o,h,p);
-   editRow=null;
+ if(editIndex>=0){
+   data[editIndex]={d,i,o,h,p};
+   editIndex=-1;
  }
  else{
-   let r=body.insertRow();
-   setRow(r,d,i,o,h,p);
+   data.push({d,i,o,h,p});
  }
 
- totalCalc();
+ store();
+ render();
  clear();
 }
 
-/* ===== HOURS ===== */
-function hours(a,b){
+/* ===== HOURS (Night shift support) ===== */
+function calcHours(a,b){
  let x=new Date("2000-01-01 "+a);
  let y=new Date("2000-01-01 "+b);
-
  if(y<x) y.setDate(y.getDate()+1);
-
  return ((y-x)/3600000).toFixed(2);
 }
 
-/* ===== SET ROW ===== */
-function setRow(r,d,i,o,h,p){
+/* ===== RENDER TABLE ===== */
+function render(){
 
- r.innerHTML=
- `<td>${d}</td>
-  <td>${i}</td>
-  <td>${o}</td>
-  <td>${h}</td>
-  <td>${p}</td>
-  <td><button class="edit" onclick="edit(this)">✏️</button></td>
-  <td><button class="del" onclick="del(this)">❌</button></td>`;
+ body.innerHTML="";
+ let totalH=0;
 
+ let month = monthFilter.value;
+ let s = search.value.toLowerCase();
+
+ /* AUTO DATE SORT */
+ data.sort((a,b)=> new Date(a.d)-new Date(b.d));
+
+ data.forEach((row,index)=>{
+
+   if(month && !row.d.startsWith(month)) return;
+
+   let text = (row.d+row.p).toLowerCase();
+   if(s && !text.includes(s)) return;
+
+   totalH += parseFloat(row.h);
+
+   body.innerHTML += `
+   <tr>
+   <td>${row.d}</td>
+   <td>${row.i}</td>
+   <td>${row.o}</td>
+   <td>${row.h}</td>
+   <td>${row.p}</td>
+   <td><button class="edit" onclick="edit(${index})">✏️</button></td>
+   <td><button class="del" onclick="del(${index})">❌</button></td>
+   </tr>`;
+ });
+
+ total.innerText = totalH.toFixed(2);
 }
 
 /* ===== EDIT ===== */
-function edit(b){
- editRow=b.parentNode.parentNode;
-
- date.value=editRow.cells[0].innerText;
- in.value=editRow.cells[1].innerText;
- out.value=editRow.cells[2].innerText;
- post.value=editRow.cells[4].innerText;
+function edit(i){
+ let r=data[i];
+ date.value=r.d;
+ in.value=r.i;
+ out.value=r.o;
+ post.value=r.p;
+ editIndex=i;
 }
 
 /* ===== DELETE ===== */
-function del(b){
- b.parentNode.parentNode.remove();
- totalCalc();
+function del(i){
+ data.splice(i,1);
+ store();
+ render();
 }
 
-/* ===== TOTAL ===== */
-function totalCalc(){
- let t=0;
- for(let r of body.rows){
-  t+=parseFloat(r.cells[3].innerText);
- }
- total.innerText=t.toFixed(2);
+/* ===== LOCAL SAVE ===== */
+function store(){
+ localStorage.setItem("attData",JSON.stringify(data));
 }
 
 /* ===== CLEAR ===== */
@@ -254,11 +268,16 @@ function clear(){
  out.value="";
 }
 
-/* ===== COLOR CUSTOM ===== */
-bg.oninput=()=> tbl.style.background=bg.value;
-font.oninput=()=> tbl.style.color=font.value;
+/* ===== CSV DOWNLOAD ===== */
+function downloadCSV(){
 
-</script>
+ let csv="Date,In,Out,Hours,Post\n";
 
-</body>
-</html>
+ data.forEach(r=>{
+  csv+=`${r.d},${r.i},${r.o},${r.h},${r.p}\n`;
+ });
+
+ let blob=new Blob([csv]);
+ let a=document.createElement("a");
+ a.href=URL.createObjectURL(blob);
+ a.download
