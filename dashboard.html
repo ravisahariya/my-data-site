@@ -2,35 +2,28 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Duty Dashboard</title>
-
-<link rel="stylesheet" href="style.css">
-
+<title>Duty Register</title>
+<link rel="stylesheet" href="style.css?v=10">
 </head>
 
 <body class="bg">
 
-<!-- ===== TITLE ===== -->
-<h2>Duty Entry</h2>
+<h2>Duty Register</h2>
 
-
-<!-- ===== FORM CARD ===== -->
 <div class="card">
 
 <input type="date" id="date">
-
 <input type="time" id="in">
 <input type="time" id="out">
 
 <select id="shift">
-  <option>Day</option>
-  <option>Night</option>
-  <option>Day+Night</option>
+<option>Day</option>
+<option>Night</option>
+<option>Day+Night</option>
 </select>
 
-<label style="font-size:18px;font-weight:800;">
-  <input type="checkbox" id="double">
-  Double Duty (OT)
+<label>
+<input type="checkbox" id="double"> Double Duty (OT)
 </label>
 
 <button onclick="saveData()">Save Entry</button>
@@ -38,23 +31,26 @@
 </div>
 
 
+<div class="card">
 
-<!-- ===== TOTAL HOURS ===== -->
+<input placeholder="Search date / shift..." id="search" onkeyup="loadData()">
+
+<select id="monthFilter" onchange="loadData()">
+<option value="">All Months</option>
+</select>
+
+<button onclick="downloadCSV()">Download Excel</button>
+
+<h3>Total Duty: <span id="count">0</span></h3>
 <h3>Total Hours: <span id="total">0</span></h3>
 
+</div>
 
 
-<!-- ===== ENTRY LIST (NICHE DIKHEGA) ===== -->
 <div id="list"></div>
 
-
-
-<!-- ===== LOGOUT ===== -->
 <button onclick="logout()">Logout</button>
 
-
-
-<!-- ===== SCRIPT ===== -->
 <script src="app.js"></script>
 
 </body>
