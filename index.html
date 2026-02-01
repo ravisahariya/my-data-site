@@ -3,7 +3,7 @@
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
-<title>Attendance Secure PRO</title>
+<title>Attendance Secure MASTER</title>
 
 <style>
 
@@ -13,7 +13,7 @@ body{
   font-family:Arial;
 }
 
-/* ========= LOGIN PAGE ========= */
+/* ========= LOGIN ========= */
 #loginPage{
   height:100vh;
   display:flex;
@@ -26,7 +26,7 @@ body{
   background:white;
   padding:25px;
   width:90%;
-  max-width:320px;
+  max-width:330px;
   border-radius:12px;
   text-align:center;
   box-shadow:0 10px 30px rgba(0,0,0,.3);
@@ -48,16 +48,29 @@ body{
 
 .secret{
   font-size:26px;
-  margin-top:10px;
   cursor:pointer;
+  margin-top:10px;
 }
 
-/* ========= APP PAGE ========= */
+/* ========= APP ========= */
 #app{
   display:none;
   height:100vh;
   background:#f2f2f2;
   flex-direction:column;
+}
+
+.topbar{
+  display:flex;
+  justify-content:space-between;
+  padding:6px;
+}
+
+.logout{
+  background:#f44336;
+  color:white;
+  border:none;
+  padding:6px 12px;
 }
 
 /* ========= FORM ========= */
@@ -66,10 +79,6 @@ body{
   grid-template-columns:1fr 1fr;
   gap:6px;
   padding:6px;
-}
-
-input,select,button{
-  padding:8px;
 }
 
 /* ========= TOOLS ========= */
@@ -113,7 +122,6 @@ th{
 .edit{background:#2196F3;color:white}
 .del{background:#f44336;color:white}
 
-/* ========= PRINT ========= */
 /* print me login hide */
 @media print{
   #loginPage{display:none !important;}
@@ -124,30 +132,35 @@ th{
 
 <body>
 
-
-<!-- ================= LOGIN ================= -->
+<!-- ================= LOGIN PAGE ================= -->
 
 <div id="loginPage">
 
   <div class="loginCard">
+
     <h2>🔐 Admin Login</h2>
 
-    <input type="password" id="password" placeholder="Enter Password">
+    <input id="username" placeholder="Username">
+    <input type="password" id="password" placeholder="Password">
 
     <button onclick="login()">Login</button>
 
     <div class="secret" onclick="unlockSecret()">🔒</div>
+
   </div>
 
 </div>
 
 
 
-<!-- ================= ATTENDANCE ================= -->
+<!-- ================= APP ================= -->
 
 <div id="app">
 
-<h3 style="text-align:center">📋 Attendance MASTER PRO</h3>
+<div class="topbar">
+  <h3>📋 Attendance MASTER</h3>
+  <button class="logout" onclick="logout()">Logout</button>
+</div>
 
 <div class="form">
 <input type="date" id="date">
@@ -168,7 +181,6 @@ th{
 <div class="tools">
 <input type="month" id="monthFilter" onchange="render()">
 <input type="text" id="search" placeholder="Search..." onkeyup="render()">
-
 <button onclick="downloadCSV()">Excel</button>
 <button onclick="window.print()">Print</button>
 </div>
@@ -210,27 +222,47 @@ th{
 
 <script>
 
-/* ========= LOGIN ========= */
+/* ================= LOGIN SYSTEM ================= */
+
+const ADMIN_USER="ravi";
+const ADMIN_PASS="ravi8888";
+
+/* session check */
+if(localStorage.getItem("loggedIn")==="true"){
+ showApp();
+}
 
 function login(){
 
- if(password.value==="ravi8888"){
-   document.getElementById("loginPage").style.display="none";
-   document.getElementById("app").style.display="flex";
+ if(username.value===ADMIN_USER && password.value===ADMIN_PASS){
+   localStorage.setItem("loggedIn","true");
+   showApp();
  }
  else{
-   alert("Wrong password");
+   alert("Wrong login");
  }
 }
 
-/* SECRET FIX */
+function logout(){
+ localStorage.removeItem("loggedIn");
+ location.reload();
+}
+
+function showApp(){
+ loginPage.style.display="none";
+ app.style.display="flex";
+}
+
+/* ===== SECRET ===== */
 function unlockSecret(){
 
  let year=prompt("Enter Secret Year");
 
  if(year==="1995"){
-   password.type="text";
-   alert("Password visible 🔓");
+   alert(
+   "Username: "+ADMIN_USER+
+   "\nPassword: "+ADMIN_PASS
+   );
  }
  else{
    alert("Wrong year");
@@ -239,7 +271,7 @@ function unlockSecret(){
 
 
 
-/* ========= ATTENDANCE ========= */
+/* ================= ATTENDANCE ================= */
 
 let data = JSON.parse(localStorage.getItem("attData")) || [];
 let editIndex=-1;
