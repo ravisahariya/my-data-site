@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html>
 <head>
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-<title>Attendance Pro</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Attendance PRO++</title>
 
 <style>
 
@@ -13,12 +13,6 @@ body{
   display:flex;
   flex-direction:column;
   background:#f2f2f2;
-}
-
-/* ===== HEADER ===== */
-h2{
-  text-align:center;
-  margin:6px;
 }
 
 /* ===== FORM ===== */
@@ -46,6 +40,7 @@ button{
   display:flex;
   gap:6px;
   padding:6px;
+  flex-wrap:wrap;
 }
 
 .tools input,.tools select{
@@ -81,12 +76,15 @@ th{
   font-weight:bold;
 }
 
+.edit{background:#2196F3;color:white}
+.del{background:#f44336;color:white}
+
 </style>
 </head>
 
 <body>
 
-<h2>📋 Attendance Register PRO</h2>
+<h3 style="text-align:center">📋 Attendance Register PRO++</h3>
 
 <!-- ENTRY FORM -->
 <div class="form">
@@ -106,17 +104,21 @@ th{
 </div>
 
 
-<!-- ⭐ TOOLS (NEW OPTIONS HERE) -->
+<!-- TOOLS -->
 <div class="tools">
-<input type="month" id="monthFilter" onchange="render()" placeholder="Month">
+<input type="month" id="monthFilter" onchange="render()">
 <input type="text" id="search" placeholder="Search..." onkeyup="render()">
+
 <button onclick="downloadCSV()">Excel</button>
 <button onclick="window.print()">Print</button>
+
+<label>BG <input type="color" id="bgColor"></label>
+<label>Font <input type="color" id="fontColor"></label>
 </div>
 
 
 <div class="table-box">
-<table>
+<table id="tbl">
 
 <thead>
 <tr>
@@ -134,8 +136,9 @@ th{
 
 <tfoot>
 <tr class="total">
-<td colspan="3">Grand Total</td>
-<td id="total">0</td>
+<td>Total Duty: <span id="dutyCount">0</span></td>
+<td colspan="2">Grand Total Hours</td>
+<td id="totalHours">0</td>
 <td colspan="3"></td>
 </tr>
 </tfoot>
@@ -188,12 +191,13 @@ function calcHours(a,b){
 function render(){
 
  tbody.innerHTML="";
+
  let totalH=0;
+ let duty=0;
 
- let month = monthFilter.value;
- let s = search.value.toLowerCase();
+ let month=monthFilter.value;
+ let s=search.value.toLowerCase();
 
- /* AUTO DATE SORT */
  data.sort((a,b)=> new Date(a.d)-new Date(b.d));
 
  data.forEach((r,i)=>{
@@ -204,6 +208,7 @@ function render(){
    if(s && !txt.includes(s)) return;
 
    totalH+=parseFloat(r.h);
+   duty++;
 
    tbody.innerHTML+=`
    <tr>
@@ -212,12 +217,13 @@ function render(){
    <td>${r.o}</td>
    <td>${r.h}</td>
    <td>${r.p}</td>
-   <td><button onclick="edit(${i})">✏️</button></td>
-   <td><button onclick="del(${i})">❌</button></td>
+   <td><button class="edit" onclick="edit(${i})">✏️</button></td>
+   <td><button class="del" onclick="del(${i})">❌</button></td>
    </tr>`;
  });
 
- total.innerText=totalH.toFixed(2);
+ totalHours.innerText=totalH.toFixed(2);
+ dutyCount.innerText=duty;
 }
 
 
@@ -232,11 +238,13 @@ function edit(i){
 }
 
 
-/* DELETE */
+/* DELETE WITH POPUP */
 function del(i){
- data.splice(i,1);
- store();
- render();
+ if(confirm("Delete this entry?")){
+   data.splice(i,1);
+   store();
+   render();
+ }
 }
 
 
@@ -254,19 +262,23 @@ function clear(){
 }
 
 
-/* CSV DOWNLOAD */
+/* CSV */
 function downloadCSV(){
  let csv="Date,In,Out,Hours,Post\n";
  data.forEach(r=>{
   csv+=`${r.d},${r.i},${r.o},${r.h},${r.p}\n`;
  });
-
  let blob=new Blob([csv]);
  let a=document.createElement("a");
  a.href=URL.createObjectURL(blob);
  a.download="attendance.csv";
  a.click();
 }
+
+
+/* COLOR CUSTOM */
+bgColor.oninput=()=> tbl.style.background=bgColor.value;
+fontColor.oninput=()=> tbl.style.color=fontColor.value;
 
 render();
 
