@@ -2,62 +2,38 @@
 <html>
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Attendance MASTER PRO</title>
+<title>Attendance MASTER FINAL</title>
 
 <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
 
 <style>
 body{margin:0;font-family:Arial;background:#f2f2f2}
-
-#loginPage{
-height:100vh;display:flex;justify-content:center;align-items:center;
-background:linear-gradient(135deg,#667eea,#764ba2);
-}
-.card{background:white;padding:25px;border-radius:10px;text-align:center}
-
-#app{display:none;height:100vh;flex-direction:column}
-
-.topbar{display:flex;justify-content:space-between;padding:8px}
+#app{display:flex;flex-direction:column;height:100vh}
+.top{display:flex;justify-content:space-between;padding:8px}
 .logout{background:#f44336;color:#fff;border:none;padding:6px 12px}
 
-.form{display:flex;flex-wrap:wrap;padding:6px;gap:5px}
+.form{display:flex;flex-wrap:wrap;gap:5px;padding:6px}
 input,select,button{padding:6px}
 
-.table-box{flex:1;overflow:auto;background:white}
+.tableBox{flex:1;overflow:auto;background:#fff}
 table{width:100%;border-collapse:collapse}
-th,td{border:1px solid #ccc;padding:5px;text-align:center}
+th,td{border:1px solid #ccc;padding:6px;text-align:center}
 th{background:#ffd9d9}
 .total{background:#ffeaa7;font-weight:bold}
-
-.editMode{background:#ffeb3b}
 </style>
 </head>
 
 <body>
 
-<!-- LOGIN -->
-<div id="loginPage">
-<div class="card">
-<h2>🔐 Login</h2>
-<input id="username" placeholder="Username">
-<input type="password" id="password" placeholder="Password">
-<button onclick="login()">Login</button>
-<div onclick="unlockSecret()">🔒 Secret</div>
-</div>
-</div>
-
-<!-- APP -->
 <div id="app">
 
-<div class="topbar">
+<div class="top">
 <h3>☁️ Attendance MASTER</h3>
 <button class="logout" onclick="logout()">Logout</button>
 </div>
 
-<!-- ENTRY FORM (EDIT YAHI HOGA) -->
 <div class="form">
-
 <input type="date" id="date">
 <input type="time" id="inTime">
 <input type="time" id="outTime">
@@ -83,20 +59,16 @@ Font <input type="color" id="font" value="#000000">
 
 <button onclick="downloadCSV()">Excel</button>
 <button onclick="window.print()">Print</button>
-
 </div>
 
-
-<div class="table-box">
+<div class="tableBox">
 <table>
 <thead>
 <tr>
-<th>Date</th><th>In</th><th>Out</th><th>Hours</th>
-<th>Post</th><th>Edit</th><th>Delete</th>
+<th>Date</th><th>In</th><th>Out</th><th>Hours</th><th>Post</th><th>Edit</th><th>Delete</th>
 </tr>
 </thead>
 <tbody id="tbody"></tbody>
-
 <tfoot>
 <tr class="total">
 <td>Total Duty: <span id="duty">0</span></td>
@@ -107,8 +79,8 @@ Font <input type="color" id="font" value="#000000">
 </tfoot>
 </table>
 </div>
-</div>
 
+</div>
 
 <script>
 firebase.initializeApp({
@@ -118,14 +90,6 @@ firebase.initializeApp({
 });
 const db=firebase.firestore();
 
-/* LOGIN */
-if(localStorage.getItem("login")) showApp();
-function login(){ if(username.value==="Ravi" && password.value==="Ravi123"){ localStorage.setItem("login","1"); showApp(); }}
-function logout(){ localStorage.removeItem("login"); location.reload(); }
-function showApp(){ loginPage.style.display="none"; app.style.display="flex"; }
-function unlockSecret(){ if(prompt("Year?")==="1995") alert("Username: Ravi\nPassword: Ravi123"); }
-
-/* DATA */
 let data=[];
 let editId=null;
 
@@ -135,15 +99,15 @@ db.collection("attendance").onSnapshot(s=>{
  render();
 });
 
+/* HOURS CALC */
 function calc(i,o){
  let a=new Date("2000 "+i),b=new Date("2000 "+o);
  if(b<a) b.setDate(b.getDate()+1);
  return ((b-a)/3600000).toFixed(2);
 }
 
-/* SAVE OR UPDATE */
+/* SAVE */
 function save(){
-
  let obj={
   d:date.value,
   i:inTime.value,
@@ -165,46 +129,48 @@ function save(){
 
 function clearForm(){
  editId=null;
- document.querySelector(".form").classList.remove("editMode");
- date.value=""; inTime.value=""; outTime.value=""; post.value="";
+ date.value="";inTime.value="";outTime.value="";post.value="";
 }
 
-/* EDIT -> FORM ME DATA */
+/* EDIT */
 function edit(id){
  let r=data.find(x=>x.id===id);
-
  editId=id;
-
  date.value=r.d;
  inTime.value=r.i;
  outTime.value=r.o;
  post.value=r.p;
  bg.value=r.bg;
  font.value=r.font;
-
- document.querySelector(".form").classList.add("editMode");
-
  window.scrollTo(0,0);
 }
 
+/* DELETE */
 function del(id){
- if(confirm("Delete?"))
+ if(confirm("Delete entry?"))
   db.collection("attendance").doc(id).delete();
 }
 
-/* RENDER */
+/* ⭐⭐⭐ AUTO DATE SORT FIX HERE ⭐⭐⭐ */
 function render(){
- tbody.innerHTML="";
- let th=0,td=0;
 
- let m=monthFilter.value;
+ tbody.innerHTML="";
+
+ let month=monthFilter.value;
  let s=search.value.toLowerCase();
 
- data.forEach(r=>{
-  if(m!=="all" && r.d.split("-")[1]!==m) return;
+ /* DATE SORT */
+ let sorted=[...data].sort((a,b)=> new Date(a.d)-new Date(b.d));
+
+ let totalH=0,totalD=0;
+
+ sorted.forEach(r=>{
+
+  if(month!=="all" && r.d.split("-")[1]!==month) return;
   if(s && !(r.d+r.p).toLowerCase().includes(s)) return;
 
-  th+=+r.h; td++;
+  totalH+=+r.h;
+  totalD++;
 
   tbody.innerHTML+=`
   <tr style="background:${r.bg};color:${r.font}">
@@ -218,8 +184,8 @@ function render(){
   </tr>`;
  });
 
- hours.innerText=th.toFixed(2);
- duty.innerText=td;
+ duty.innerText=totalD;
+ hours.innerText=totalH.toFixed(2);
 }
 
 /* CSV */
@@ -232,6 +198,9 @@ function downloadCSV(){
  a.download="attendance.csv";
  a.click();
 }
+
+function logout(){ location.reload(); }
 </script>
+
 </body>
 </html>
