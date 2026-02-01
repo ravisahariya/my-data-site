@@ -1,27 +1,32 @@
 <!DOCTYPE html>
 <html>
 <head>
-<meta name="viewport" content="width=device-width, initial-scale=1">
-
-<title>Attendance Register</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>Attendance Pro</title>
 
 <style>
 
 body{
   margin:0;
   font-family:Arial;
-  background:#f2f2f2;
   height:100vh;
   display:flex;
   flex-direction:column;
+  background:#f2f2f2;
 }
 
-/* FORM */
+/* ===== HEADER ===== */
+h2{
+  text-align:center;
+  margin:6px;
+}
+
+/* ===== FORM ===== */
 .form{
   display:grid;
   grid-template-columns:1fr 1fr;
   gap:6px;
-  padding:8px;
+  padding:6px;
 }
 
 input,select,button{
@@ -33,9 +38,21 @@ button{
   background:#4CAF50;
   color:white;
   border:none;
+  border-radius:4px;
 }
 
-/* TABLE */
+/* ===== TOOLBAR ===== */
+.tools{
+  display:flex;
+  gap:6px;
+  padding:6px;
+}
+
+.tools input,.tools select{
+  flex:1;
+}
+
+/* ===== TABLE ===== */
 .table-box{
   flex:1;
   overflow:auto;
@@ -67,11 +84,11 @@ th{
 </style>
 </head>
 
-
 <body>
 
-<h3 style="text-align:center">📋 Attendance Register</h3>
+<h2>📋 Attendance Register PRO</h2>
 
+<!-- ENTRY FORM -->
 <div class="form">
 <input type="date" id="date">
 <input type="time" id="inTime">
@@ -85,12 +102,22 @@ th{
 <option>BEBRIG</option>
 </select>
 
-<button onclick="save()">SAVE</button>
+<button onclick="save()">Save</button>
+</div>
+
+
+<!-- ⭐ TOOLS (NEW OPTIONS HERE) -->
+<div class="tools">
+<input type="month" id="monthFilter" onchange="render()" placeholder="Month">
+<input type="text" id="search" placeholder="Search..." onkeyup="render()">
+<button onclick="downloadCSV()">Excel</button>
+<button onclick="window.print()">Print</button>
 </div>
 
 
 <div class="table-box">
 <table>
+
 <thead>
 <tr>
 <th>Date</th>
@@ -120,9 +147,10 @@ th{
 <script>
 
 let data = JSON.parse(localStorage.getItem("attData")) || [];
-let editIndex = -1;
+let editIndex=-1;
 
-/* SAVE ENTRY */
+
+/* SAVE */
 function save(){
 
  let d=date.value;
@@ -130,69 +158,66 @@ function save(){
  let o=outTime.value;
  let p=post.value;
 
- if(!d||!i||!o){
-   alert("Fill all fields");
-   return;
- }
+ if(!d||!i||!o) return alert("Fill all fields");
 
  let h=calcHours(i,o);
 
  if(editIndex>=0){
    data[editIndex]={d,i,o,h,p};
    editIndex=-1;
- }
- else{
+ }else{
    data.push({d,i,o,h,p});
  }
 
- localStorage.setItem("attData",JSON.stringify(data));
-
- render();   /* ⭐ MOST IMPORTANT FIX */
-
- clearForm();
+ store();
+ render();
+ clear();
 }
 
 
-/* HOURS CALC */
+/* HOURS */
 function calcHours(a,b){
  let x=new Date("2000-01-01 "+a);
  let y=new Date("2000-01-01 "+b);
-
  if(y<x) y.setDate(y.getDate()+1);
-
  return ((y-x)/3600000).toFixed(2);
 }
 
 
-/* RENDER TABLE */
+/* RENDER */
 function render(){
 
- let tbody=document.getElementById("tbody");
  tbody.innerHTML="";
-
  let totalH=0;
+
+ let month = monthFilter.value;
+ let s = search.value.toLowerCase();
+
+ /* AUTO DATE SORT */
+ data.sort((a,b)=> new Date(a.d)-new Date(b.d));
 
  data.forEach((r,i)=>{
 
-  totalH+=parseFloat(r.h);
+   if(month && !r.d.startsWith(month)) return;
 
-  let tr=document.createElement("tr");
+   let txt=(r.d+r.p).toLowerCase();
+   if(s && !txt.includes(s)) return;
 
-  tr.innerHTML=`
-  <td>${r.d}</td>
-  <td>${r.i}</td>
-  <td>${r.o}</td>
-  <td>${r.h}</td>
-  <td>${r.p}</td>
-  <td><button onclick="edit(${i})">✏️</button></td>
-  <td><button onclick="del(${i})">❌</button></td>
-  `;
+   totalH+=parseFloat(r.h);
 
-  tbody.appendChild(tr);
-
+   tbody.innerHTML+=`
+   <tr>
+   <td>${r.d}</td>
+   <td>${r.i}</td>
+   <td>${r.o}</td>
+   <td>${r.h}</td>
+   <td>${r.p}</td>
+   <td><button onclick="edit(${i})">✏️</button></td>
+   <td><button onclick="del(${i})">❌</button></td>
+   </tr>`;
  });
 
- document.getElementById("total").innerText=totalH.toFixed(2);
+ total.innerText=totalH.toFixed(2);
 }
 
 
@@ -210,20 +235,39 @@ function edit(i){
 /* DELETE */
 function del(i){
  data.splice(i,1);
- localStorage.setItem("attData",JSON.stringify(data));
+ store();
  render();
 }
 
 
+/* LOCAL SAVE */
+function store(){
+ localStorage.setItem("attData",JSON.stringify(data));
+}
+
+
 /* CLEAR */
-function clearForm(){
+function clear(){
  date.value="";
  inTime.value="";
  outTime.value="";
 }
 
 
-/* LOAD ON START */
+/* CSV DOWNLOAD */
+function downloadCSV(){
+ let csv="Date,In,Out,Hours,Post\n";
+ data.forEach(r=>{
+  csv+=`${r.d},${r.i},${r.o},${r.h},${r.p}\n`;
+ });
+
+ let blob=new Blob([csv]);
+ let a=document.createElement("a");
+ a.href=URL.createObjectURL(blob);
+ a.download="attendance.csv";
+ a.click();
+}
+
 render();
 
 </script>
