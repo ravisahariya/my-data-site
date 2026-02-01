@@ -2,164 +2,112 @@
 <html>
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1">
-
-<title>Attendance Secure MASTER</title>
+<title>Attendance MASTER FINAL</title>
 
 <style>
+body{margin:0;font-family:Arial}
 
-/* ========= GLOBAL ========= */
-body{
-  margin:0;
-  font-family:Arial;
-}
-
-/* ========= LOGIN ========= */
+/* ===== LOGIN ===== */
 #loginPage{
-  height:100vh;
-  display:flex;
-  justify-content:center;
-  align-items:center;
-  background:linear-gradient(135deg,#667eea,#764ba2);
+height:100vh;
+display:flex;
+justify-content:center;
+align-items:center;
+background:linear-gradient(135deg,#667eea,#764ba2);
 }
 
 .loginCard{
-  background:white;
-  padding:25px;
-  width:90%;
-  max-width:330px;
-  border-radius:12px;
-  text-align:center;
-  box-shadow:0 10px 30px rgba(0,0,0,.3);
+background:white;
+padding:25px;
+width:90%;
+max-width:320px;
+border-radius:12px;
+text-align:center;
 }
 
 .loginCard input{
-  width:100%;
-  padding:10px;
-  margin:8px 0;
+width:100%;
+padding:10px;
+margin:6px 0;
 }
 
 .loginCard button{
-  width:100%;
-  padding:10px;
-  background:#4CAF50;
-  color:white;
-  border:none;
+width:100%;
+padding:10px;
+background:#4CAF50;
+color:white;
+border:none;
 }
 
-.secret{
-  font-size:26px;
-  cursor:pointer;
-  margin-top:10px;
-}
+.secret{font-size:24px;cursor:pointer;margin-top:8px}
 
-/* ========= APP ========= */
-#app{
-  display:none;
-  height:100vh;
-  background:#f2f2f2;
-  flex-direction:column;
-}
+/* ===== APP ===== */
+#app{display:none;height:100vh;background:#f2f2f2;flex-direction:column}
 
 .topbar{
-  display:flex;
-  justify-content:space-between;
-  padding:6px;
+display:flex;
+justify-content:space-between;
+padding:6px;
 }
 
 .logout{
-  background:#f44336;
-  color:white;
-  border:none;
-  padding:6px 12px;
+background:#f44336;
+color:white;
+border:none;
+padding:6px 12px;
 }
 
-/* ========= FORM ========= */
+/* ===== FORM ===== */
 .form{
-  display:grid;
-  grid-template-columns:1fr 1fr;
-  gap:6px;
-  padding:6px;
+display:grid;
+grid-template-columns:1fr 1fr;
+gap:6px;
+padding:6px;
 }
 
-/* ========= TOOLS ========= */
-.tools{
-  display:flex;
-  gap:6px;
-  padding:6px;
-  flex-wrap:wrap;
-}
+input,select,button{padding:8px}
 
-/* ========= TABLE ========= */
-.table-box{
-  flex:1;
-  overflow:auto;
-  background:white;
-}
+/* ===== TABLE ===== */
+.table-box{flex:1;overflow:auto;background:white}
 
-table{
-  width:100%;
-  border-collapse:collapse;
-}
+table{width:100%;border-collapse:collapse}
 
 th,td{
-  border:1px solid #ccc;
-  padding:6px;
-  text-align:center;
-  white-space:nowrap;
+border:1px solid #ccc;
+padding:6px;
+text-align:center;
+white-space:nowrap;
 }
 
-th{
-  background:#ffd9d9;
-  position:sticky;
-  top:0;
-}
-
-.total{
-  background:#ffeaa7;
-  font-weight:bold;
-}
+th{background:#ffd9d9;position:sticky;top:0}
+.total{background:#ffeaa7;font-weight:bold}
 
 .edit{background:#2196F3;color:white}
 .del{background:#f44336;color:white}
-
-/* print me login hide */
-@media print{
-  #loginPage{display:none !important;}
-}
 
 </style>
 </head>
 
 <body>
 
-<!-- ================= LOGIN PAGE ================= -->
-
+<!-- LOGIN -->
 <div id="loginPage">
-
   <div class="loginCard">
-
-    <h2>🔐 Admin Login</h2>
-
+    <h2>🔐 Login</h2>
     <input id="username" placeholder="Username">
     <input type="password" id="password" placeholder="Password">
-
     <button onclick="login()">Login</button>
-
     <div class="secret" onclick="unlockSecret()">🔒</div>
-
   </div>
-
 </div>
 
 
-
-<!-- ================= APP ================= -->
-
+<!-- APP -->
 <div id="app">
 
 <div class="topbar">
-  <h3>📋 Attendance MASTER</h3>
-  <button class="logout" onclick="logout()">Logout</button>
+<h3>📋 Attendance MASTER</h3>
+<button class="logout" onclick="logout()">Logout</button>
 </div>
 
 <div class="form">
@@ -167,18 +115,21 @@ th{
 <input type="time" id="inTime">
 <input type="time" id="outTime">
 
-<select id="post">
-<option>ETP</option>
-<option>BOARD 2</option>
-<option>COE</option>
-<option>ACL</option>
-<option>BEBRIG</option>
-</select>
+<!-- ⭐ CUSTOM POST FIELD -->
+<input list="postList" id="post" placeholder="Select or Type Post">
+
+<datalist id="postList">
+<option value="ETP">
+<option value="BOARD 2">
+<option value="COE">
+<option value="ACL">
+<option value="BEBRIG">
+</datalist>
 
 <button onclick="save()">Save</button>
 </div>
 
-<div class="tools">
+<div style="padding:6px">
 <input type="month" id="monthFilter" onchange="render()">
 <input type="text" id="search" placeholder="Search..." onkeyup="render()">
 <button onclick="downloadCSV()">Excel</button>
@@ -222,25 +173,21 @@ th{
 
 <script>
 
-/* ================= LOGIN SYSTEM ================= */
+/* ===== LOGIN DATA ===== */
+const ADMIN_USER="Ravi";
+const ADMIN_PASS="Ravi123";
 
-const ADMIN_USER="ravi";
-const ADMIN_PASS="ravi8888";
-
-/* session check */
+/* ===== SESSION ===== */
 if(localStorage.getItem("loggedIn")==="true"){
  showApp();
 }
 
 function login(){
-
  if(username.value===ADMIN_USER && password.value===ADMIN_PASS){
    localStorage.setItem("loggedIn","true");
    showApp();
  }
- else{
-   alert("Wrong login");
- }
+ else alert("Wrong Login");
 }
 
 function logout(){
@@ -255,25 +202,14 @@ function showApp(){
 
 /* ===== SECRET ===== */
 function unlockSecret(){
-
  let year=prompt("Enter Secret Year");
-
  if(year==="1995"){
-   alert(
-   "Username: "+ADMIN_USER+
-   "\nPassword: "+ADMIN_PASS
-   );
- }
- else{
-   alert("Wrong year");
+   alert("Username: Ravi\nPassword: Ravi123");
  }
 }
 
-
-
-/* ================= ATTENDANCE ================= */
-
-let data = JSON.parse(localStorage.getItem("attData")) || [];
+/* ===== ATTENDANCE ===== */
+let data=JSON.parse(localStorage.getItem("attData"))||[];
 let editIndex=-1;
 
 function save(){
@@ -283,7 +219,7 @@ function save(){
  let o=outTime.value;
  let p=post.value;
 
- if(!d||!i||!o) return;
+ if(!d||!i||!o||!p) return alert("Fill all");
 
  let h=calcHours(i,o);
 
@@ -295,15 +231,13 @@ function save(){
    data.push({d,i,o,h,p,bg:"#fffacd",font:"#000"});
  }
 
- store();
- render();
- clear();
+ store(); render(); clear();
 }
 
 function calcHours(a,b){
- let x=new Date("2000-01-01 "+a);
- let y=new Date("2000-01-01 "+b);
- if(y<x) y.setDate(y.getDate()+1);
+ let x=new Date("2000 "+a);
+ let y=new Date("2000 "+b);
+ if(y<x)y.setDate(y.getDate()+1);
  return ((y-x)/3600000).toFixed(2);
 }
 
@@ -316,26 +250,25 @@ function render(){
 
  data.forEach((r,i)=>{
 
-   totalH+=parseFloat(r.h);
-   duty++;
+  totalH+=+r.h; duty++;
 
-   let tr=document.createElement("tr");
-   tr.style.background=r.bg;
-   tr.style.color=r.font;
+  let tr=document.createElement("tr");
+  tr.style.background=r.bg;
+  tr.style.color=r.font;
 
-   tr.innerHTML=`
-   <td>${r.d}</td>
-   <td>${r.i}</td>
-   <td>${r.o}</td>
-   <td>${r.h}</td>
-   <td>${r.p}</td>
-   <td><input type="color" value="${r.bg}" onchange="setBg(${i},this.value)"></td>
-   <td><input type="color" value="${r.font}" onchange="setFont(${i},this.value)"></td>
-   <td><button class="edit" onclick="edit(${i})">✏️</button></td>
-   <td><button class="del" onclick="del(${i})">❌</button></td>
-   `;
+  tr.innerHTML=`
+  <td>${r.d}</td>
+  <td>${r.i}</td>
+  <td>${r.o}</td>
+  <td>${r.h}</td>
+  <td>${r.p}</td>
+  <td><input type="color" value="${r.bg}" onchange="setBg(${i},this.value)"></td>
+  <td><input type="color" value="${r.font}" onchange="setFont(${i},this.value)"></td>
+  <td><button class="edit" onclick="edit(${i})">✏️</button></td>
+  <td><button class="del" onclick="del(${i})">❌</button></td>
+  `;
 
-   tbody.appendChild(tr);
+  tbody.appendChild(tr);
  });
 
  totalHours.innerText=totalH.toFixed(2);
@@ -346,19 +279,14 @@ function setBg(i,c){data[i].bg=c;store();render();}
 function setFont(i,c){data[i].font=c;store();render();}
 
 function del(i){
- if(confirm("Delete entry?")){
-   data.splice(i,1);
-   store();
-   render();
+ if(confirm("Delete?")){
+  data.splice(i,1); store(); render();
  }
 }
 
 function edit(i){
  let r=data[i];
- date.value=r.d;
- inTime.value=r.i;
- outTime.value=r.o;
- post.value=r.p;
+ date.value=r.d; inTime.value=r.i; outTime.value=r.o; post.value=r.p;
  editIndex=i;
 }
 
@@ -367,9 +295,7 @@ function store(){
 }
 
 function clear(){
- date.value="";
- inTime.value="";
- outTime.value="";
+ date.value=""; inTime.value=""; outTime.value=""; post.value="";
 }
 
 function downloadCSV(){
