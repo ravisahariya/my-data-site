@@ -3,20 +3,18 @@
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
-<title>Attendance Secure App</title>
+<title>Attendance Secure PRO</title>
 
 <style>
 
-/* ===== BODY ===== */
+/* ========= GLOBAL ========= */
 body{
   margin:0;
   font-family:Arial;
-  height:100vh;
 }
 
-/* ================= LOGIN PAGE ================= */
-
-.loginPage{
+/* ========= LOGIN PAGE ========= */
+#loginPage{
   height:100vh;
   display:flex;
   justify-content:center;
@@ -24,31 +22,25 @@ body{
   background:linear-gradient(135deg,#667eea,#764ba2);
 }
 
-.card{
-  width:90%;
-  max-width:350px;
+.loginCard{
   background:white;
   padding:25px;
+  width:90%;
+  max-width:320px;
   border-radius:12px;
-  box-shadow:0 10px 30px rgba(0,0,0,.3);
   text-align:center;
+  box-shadow:0 10px 30px rgba(0,0,0,.3);
 }
 
-.card h2{
-  margin-bottom:20px;
-}
-
-.card input{
+.loginCard input{
   width:100%;
   padding:10px;
   margin:8px 0;
-  font-size:16px;
 }
 
-.card button{
+.loginCard button{
   width:100%;
   padding:10px;
-  font-size:16px;
   background:#4CAF50;
   color:white;
   border:none;
@@ -56,20 +48,19 @@ body{
 
 .secret{
   font-size:26px;
-  cursor:pointer;
   margin-top:10px;
+  cursor:pointer;
 }
 
-/* ================= ATTENDANCE ================= */
-
-.app{
+/* ========= APP PAGE ========= */
+#app{
   display:none;
   height:100vh;
   background:#f2f2f2;
-  display:flex;
   flex-direction:column;
 }
 
+/* ========= FORM ========= */
 .form{
   display:grid;
   grid-template-columns:1fr 1fr;
@@ -77,10 +68,11 @@ body{
   padding:6px;
 }
 
-input,select{
+input,select,button{
   padding:8px;
 }
 
+/* ========= TOOLS ========= */
 .tools{
   display:flex;
   gap:6px;
@@ -88,6 +80,7 @@ input,select{
   flex-wrap:wrap;
 }
 
+/* ========= TABLE ========= */
 .table-box{
   flex:1;
   overflow:auto;
@@ -120,23 +113,29 @@ th{
 .edit{background:#2196F3;color:white}
 .del{background:#f44336;color:white}
 
+/* ========= PRINT ========= */
+/* print me login hide */
+@media print{
+  #loginPage{display:none !important;}
+}
+
 </style>
 </head>
 
 <body>
 
+
 <!-- ================= LOGIN ================= -->
 
-<div class="loginPage" id="loginPage">
+<div id="loginPage">
 
-  <div class="card">
+  <div class="loginCard">
     <h2>🔐 Admin Login</h2>
 
     <input type="password" id="password" placeholder="Enter Password">
 
     <button onclick="login()">Login</button>
 
-    <!-- secret icon -->
     <div class="secret" onclick="unlockSecret()">🔒</div>
   </div>
 
@@ -146,7 +145,7 @@ th{
 
 <!-- ================= ATTENDANCE ================= -->
 
-<div class="app" id="app">
+<div id="app">
 
 <h3 style="text-align:center">📋 Attendance MASTER PRO</h3>
 
@@ -211,37 +210,39 @@ th{
 
 <script>
 
-/* ================= LOGIN LOGIC ================= */
+/* ========= LOGIN ========= */
 
 function login(){
- let pass=password.value;
 
- if(pass==="ravi8888"){
-   loginPage.style.display="none";
-   app.style.display="flex";
- }else{
-   alert("Wrong Password");
+ if(password.value==="ravi8888"){
+   document.getElementById("loginPage").style.display="none";
+   document.getElementById("app").style.display="flex";
+ }
+ else{
+   alert("Wrong password");
  }
 }
 
-/* secret unlock */
+/* SECRET FIX */
 function unlockSecret(){
 
  let year=prompt("Enter Secret Year");
 
  if(year==="1995"){
    password.type="text";
-   alert("Password Visible 🔓");
+   alert("Password visible 🔓");
+ }
+ else{
+   alert("Wrong year");
  }
 }
 
 
 
-/* ================= ATTENDANCE SYSTEM ================= */
+/* ========= ATTENDANCE ========= */
 
 let data = JSON.parse(localStorage.getItem("attData")) || [];
 let editIndex=-1;
-
 
 function save(){
 
@@ -250,7 +251,7 @@ function save(){
  let o=outTime.value;
  let p=post.value;
 
- if(!d||!i||!o) return alert("Fill all fields");
+ if(!d||!i||!o) return;
 
  let h=calcHours(i,o);
 
@@ -287,7 +288,6 @@ function render(){
    duty++;
 
    let tr=document.createElement("tr");
-
    tr.style.background=r.bg;
    tr.style.color=r.font;
 
@@ -343,7 +343,6 @@ function clear(){
 function downloadCSV(){
  let csv="Date,In,Out,Hours,Post\n";
  data.forEach(r=> csv+=`${r.d},${r.i},${r.o},${r.h},${r.p}\n`);
-
  let blob=new Blob([csv]);
  let a=document.createElement("a");
  a.href=URL.createObjectURL(blob);
