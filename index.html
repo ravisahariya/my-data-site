@@ -2,21 +2,25 @@
 <html>
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Attendance MASTER FINAL</title>
+<title>Attendance MASTER FINAL PRO</title>
 
 <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
 
 <style>
 body{margin:0;font-family:Arial;background:#f2f2f2}
-#app{display:flex;flex-direction:column;height:100vh}
+#login{height:100vh;display:flex;justify-content:center;align-items:center;background:linear-gradient(135deg,#667eea,#764ba2)}
+.card{background:white;padding:25px;border-radius:10px;text-align:center}
+
+#app{display:none;flex-direction:column;height:100vh}
+
 .top{display:flex;justify-content:space-between;padding:8px}
 .logout{background:#f44336;color:#fff;border:none;padding:6px 12px}
 
 .form{display:flex;flex-wrap:wrap;gap:5px;padding:6px}
 input,select,button{padding:6px}
 
-.tableBox{flex:1;overflow:auto;background:#fff}
+.tableBox{flex:1;overflow:auto;background:white}
 table{width:100%;border-collapse:collapse}
 th,td{border:1px solid #ccc;padding:6px;text-align:center}
 th{background:#ffd9d9}
@@ -26,6 +30,18 @@ th{background:#ffd9d9}
 
 <body>
 
+<!-- LOGIN -->
+<div id="login">
+<div class="card">
+<h3>🔐 Login</h3>
+<input id="user" placeholder="Username"><br><br>
+<input type="password" id="pass" placeholder="Password"><br><br>
+<button onclick="login()">Login</button>
+</div>
+</div>
+
+
+<!-- APP -->
 <div id="app">
 
 <div class="top">
@@ -45,15 +61,7 @@ Font <input type="color" id="font" value="#000000">
 <button onclick="save()">Save</button>
 <button onclick="clearForm()">Clear</button>
 
-<select id="monthFilter" onchange="render()">
-<option value="all">All</option>
-<option value="01">Jan</option><option value="02">Feb</option>
-<option value="03">Mar</option><option value="04">Apr</option>
-<option value="05">May</option><option value="06">Jun</option>
-<option value="07">Jul</option><option value="08">Aug</option>
-<option value="09">Sep</option><option value="10">Oct</option>
-<option value="11">Nov</option><option value="12">Dec</option>
-</select>
+<select id="monthFilter" onchange="render()"></select>
 
 <input id="search" placeholder="Search" onkeyup="render()">
 
@@ -82,7 +90,27 @@ Font <input type="color" id="font" value="#000000">
 
 </div>
 
+
 <script>
+/* LOGIN */
+if(localStorage.getItem("login")) showApp();
+
+function login(){
+ if(user.value==="Ravi" && pass.value==="Ravi123"){
+  localStorage.setItem("login","1");
+  showApp();
+ }
+}
+function logout(){
+ localStorage.removeItem("login");
+ location.reload();
+}
+function showApp(){
+ login.style.display="none";
+ app.style.display="flex";
+}
+
+/* FIREBASE */
 firebase.initializeApp({
  apiKey:"AIzaSyD71mpolAsmejtU2icecQQcX07iCW_is0Y",
  authDomain:"ravicardmaker.firebaseapp.com",
@@ -99,7 +127,17 @@ db.collection("attendance").onSnapshot(s=>{
  render();
 });
 
-/* HOURS CALC */
+/* MONTH DROPDOWN (CURRENT DEFAULT) */
+const months=["All","Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+months.forEach((m,i)=>{
+ let op=document.createElement("option");
+ op.value=i===0?"all":String(i).padStart(2,"0");
+ op.text=m;
+ monthFilter.appendChild(op);
+});
+monthFilter.value=String(new Date().getMonth()+1).padStart(2,"0");
+
+/* HOURS */
 function calc(i,o){
  let a=new Date("2000 "+i),b=new Date("2000 "+o);
  if(b<a) b.setDate(b.getDate()+1);
@@ -118,19 +156,13 @@ function save(){
   h:calc(inTime.value,outTime.value)
  };
 
- if(editId){
-  db.collection("attendance").doc(editId).update(obj);
- }else{
-  db.collection("attendance").add(obj);
- }
+ if(editId) db.collection("attendance").doc(editId).update(obj);
+ else db.collection("attendance").add(obj);
 
  clearForm();
 }
 
-function clearForm(){
- editId=null;
- date.value="";inTime.value="";outTime.value="";post.value="";
-}
+function clearForm(){ editId=null; }
 
 /* EDIT */
 function edit(id){
@@ -151,26 +183,26 @@ function del(id){
   db.collection("attendance").doc(id).delete();
 }
 
-/* ⭐⭐⭐ AUTO DATE SORT FIX HERE ⭐⭐⭐ */
+/* ⭐⭐⭐ SMART SORT FIX ⭐⭐⭐ */
 function render(){
 
  tbody.innerHTML="";
-
- let month=monthFilter.value;
+ let m=monthFilter.value;
  let s=search.value.toLowerCase();
 
- /* DATE SORT */
- let sorted=[...data].sort((a,b)=> new Date(a.d)-new Date(b.d));
+ let sorted=[...data].sort((a,b)=>{
+   let da=new Date(a.d+" "+a.i);
+   let dbb=new Date(b.d+" "+b.i);
+   return da-dbb;
+ });
 
- let totalH=0,totalD=0;
+ let th=0,td=0;
 
  sorted.forEach(r=>{
-
-  if(month!=="all" && r.d.split("-")[1]!==month) return;
+  if(m!=="all" && r.d.split("-")[1]!==m) return;
   if(s && !(r.d+r.p).toLowerCase().includes(s)) return;
 
-  totalH+=+r.h;
-  totalD++;
+  th+=+r.h; td++;
 
   tbody.innerHTML+=`
   <tr style="background:${r.bg};color:${r.font}">
@@ -184,8 +216,8 @@ function render(){
   </tr>`;
  });
 
- duty.innerText=totalD;
- hours.innerText=totalH.toFixed(2);
+ duty.innerText=td;
+ hours.innerText=th.toFixed(2);
 }
 
 /* CSV */
@@ -198,8 +230,6 @@ function downloadCSV(){
  a.download="attendance.csv";
  a.click();
 }
-
-function logout(){ location.reload(); }
 </script>
 
 </body>
