@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Attendance MASTER PRO MAX</title>
+<title>Attendance MASTER ULTIMATE</title>
 
 <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
@@ -10,7 +10,7 @@
 <style>
 body{margin:0;font-family:Arial;background:#f2f2f2}
 
-/* LOGIN BIG CARD */
+/* LOGIN */
 #loginPage{
 height:100vh;
 display:flex;
@@ -19,40 +19,57 @@ align-items:center;
 background:linear-gradient(135deg,#667eea,#764ba2);
 }
 .loginCard{
-background:white;
-width:90%;
+background:#fff;
+width:92%;
 max-width:420px;
 padding:35px;
 border-radius:15px;
-box-shadow:0 10px 25px rgba(0,0,0,.3);
 text-align:center;
-}
-.loginCard input{
-width:100%;
-margin:8px 0;
-padding:12px;
-font-size:16px;
-}
-.loginCard button{
-width:100%;
-padding:12px;
-font-size:16px;
+box-shadow:0 10px 25px rgba(0,0,0,.3);
 }
 
-/* APP */
-#app{display:none;height:100vh;flex-direction:column}
+/* APP LAYOUT */
+#app{
+display:none;
+height:100vh;
+flex-direction:column;
+}
 
-.top{display:flex;justify-content:space-between;padding:8px}
-.logout{background:#f44336;color:#fff;border:none;padding:8px 14px}
+/* FIXED TOP */
+.topFixed{
+background:#fff;
+padding:6px;
+box-shadow:0 2px 6px rgba(0,0,0,.15);
+position:sticky;
+top:0;
+z-index:5;
+}
 
-.form{display:flex;flex-wrap:wrap;gap:6px;padding:6px}
-input,select,button{padding:6px}
+/* FIXED FOOTER */
+.bottomFixed{
+background:#ffeaa7;
+padding:6px;
+position:sticky;
+bottom:0;
+font-weight:bold;
+}
 
-.tableBox{flex:1;overflow:auto;background:white}
+/* ONLY TABLE SCROLL */
+.tableBox{
+flex:1;
+overflow:auto;
+background:#fff;
+}
+
 table{width:100%;border-collapse:collapse}
 th,td{border:1px solid #ccc;padding:6px;text-align:center}
 th{background:#ffd9d9}
-.total{background:#ffeaa7;font-weight:bold}
+
+.form{display:flex;flex-wrap:wrap;gap:5px}
+input,select,button{padding:6px}
+
+.logout{background:#f44336;color:#fff;border:none}
+.secret{margin-top:8px;color:#666;cursor:pointer}
 </style>
 </head>
 
@@ -61,18 +78,24 @@ th{background:#ffd9d9}
 <!-- LOGIN -->
 <div id="loginPage">
 <div class="loginCard">
-<h2>🔐 Admin Login</h2>
-<input id="username" placeholder="Username">
-<input type="password" id="password" placeholder="Password">
+<h2>🔐 Login</h2>
+<input id="username" placeholder="Username"><br><br>
+<input type="password" id="password" placeholder="Password"><br><br>
 <button onclick="doLogin()">Login</button>
+
+<div class="secret" onclick="secretBox()">🔒 Secret</div>
 </div>
 </div>
+
 
 <!-- APP -->
 <div id="app">
 
-<div class="top">
-<h3>☁️ Attendance MASTER</h3>
+<!-- TOP FIXED -->
+<div class="topFixed">
+
+<div style="display:flex;justify-content:space-between">
+<b>☁️ Attendance MASTER</b>
 <button class="logout" onclick="logout()">Logout</button>
 </div>
 
@@ -89,32 +112,38 @@ Font <input type="color" id="font" value="#000000">
 <button onclick="clearForm()">Clear</button>
 
 <select id="monthFilter" onchange="render()"></select>
-<input id="search" placeholder="Search" onkeyup="render()">
+<input id="search" placeholder="Search Post..." onkeyup="render()">
 
 <button onclick="downloadCSV()">Excel</button>
 <button onclick="window.print()">Print</button>
 </div>
 
+</div>
+
+
+<!-- TABLE SCROLL -->
 <div class="tableBox">
 <table>
 <thead>
 <tr>
-<th>Date</th><th>In</th><th>Out</th><th>Hours</th><th>Post</th><th>Edit</th><th>Delete</th>
+<th>Date</th><th>In</th><th>Out</th><th>Hours</th>
+<th>Post</th><th>Edit</th><th>Delete</th>
 </tr>
 </thead>
 <tbody id="tbody"></tbody>
-<tfoot>
-<tr class="total">
-<td>Total Duty: <span id="duty">0</span></td>
-<td colspan="2">Total Hours</td>
-<td id="hours">0</td>
-<td colspan="3"></td>
-</tr>
-</tfoot>
 </table>
 </div>
 
+
+<!-- BOTTOM FIXED -->
+<div class="bottomFixed">
+Total Duty: <span id="duty">0</span>
+&nbsp;&nbsp;&nbsp;
+Total Hours: <span id="hours">0</span>
 </div>
+
+</div>
+
 
 <script>
 /* LOGIN */
@@ -124,18 +153,26 @@ function doLogin(){
  if(username.value==="Ravi" && password.value==="Ravi123"){
   localStorage.setItem("login","1");
   showApp();
- }else{
-  alert("Wrong login");
- }
+ }else alert("Wrong login");
 }
+
 function logout(){
  localStorage.removeItem("login");
  location.reload();
 }
+
 function showApp(){
  loginPage.style.display="none";
  app.style.display="flex";
 }
+
+/* SECRET */
+function secretBox(){
+ let y=prompt("Enter secret year");
+ if(y==="1995")
+  alert("Username: Ravi\nPassword: Ravi123");
+}
+
 
 /* FIREBASE */
 firebase.initializeApp({
@@ -153,15 +190,17 @@ db.collection("attendance").onSnapshot(s=>{
  render();
 });
 
-/* MONTH */
-const m=["All","Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
-m.forEach((x,i)=>{
+
+/* MONTH DROPDOWN */
+const months=["All","Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+months.forEach((m,i)=>{
  let op=document.createElement("option");
- op.value=i==0?"all":String(i).padStart(2,"0");
- op.text=x;
+ op.value=i===0?"all":String(i).padStart(2,"0");
+ op.text=m;
  monthFilter.appendChild(op);
 });
 monthFilter.value=String(new Date().getMonth()+1).padStart(2,"0");
+
 
 /* HOURS */
 function calc(i,o){
@@ -169,6 +208,7 @@ function calc(i,o){
  if(b<a)b.setDate(b.getDate()+1);
  return ((b-a)/3600000).toFixed(2);
 }
+
 
 /* SAVE */
 function save(){
@@ -183,7 +223,8 @@ function save(){
 
  clearForm();
 }
-function clearForm(){ editId=null }
+function clearForm(){ editId=null; }
+
 
 /* EDIT */
 function edit(id){
@@ -198,16 +239,21 @@ function edit(id){
  window.scrollTo(0,0);
 }
 
+
 /* DELETE */
 function del(id){
- if(confirm("Delete entry?"))
+ if(confirm("Delete?"))
   db.collection("attendance").doc(id).delete();
 }
 
-/* SORT + RENDER */
+
+/* SORT + FILTER + COUNT */
 function render(){
+
  tbody.innerHTML="";
- let m=monthFilter.value,s=search.value.toLowerCase();
+
+ let m=monthFilter.value;
+ let s=search.value.toLowerCase();
 
  let sorted=[...data].sort((a,b)=> new Date(a.d+" "+a.i)-new Date(b.d+" "+b.i));
 
@@ -215,9 +261,9 @@ function render(){
 
  sorted.forEach(r=>{
   if(m!=="all" && r.d.split("-")[1]!==m) return;
-  if(s && !(r.d+r.p).toLowerCase().includes(s)) return;
+  if(s && !r.p.toLowerCase().includes(s)) return;
 
-  th+=+r.h; td++;
+  td++; th+=+r.h;
 
   tbody.innerHTML+=`
   <tr style="background:${r.bg};color:${r.font}">
@@ -235,6 +281,7 @@ function render(){
  hours.innerText=th.toFixed(2);
 }
 
+
 /* CSV */
 function downloadCSV(){
  let csv="Date,In,Out,Hours,Post\n";
@@ -246,5 +293,6 @@ function downloadCSV(){
  a.click();
 }
 </script>
+
 </body>
 </html>
