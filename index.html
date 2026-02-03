@@ -2,73 +2,52 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Attendance MASTER PRO</title>
+<title>Attendance Master</title>
 
 <style>
 body{
 margin:0;
 font-family:Arial;
-background:#eef1f6;
 }
 
-/* ========= LOGIN ========= */
-
-#loginPage{
+/* LOGIN */
+#login{
 height:100vh;
 display:flex;
 align-items:center;
 justify-content:center;
-background:linear-gradient(135deg,#6a6cff,#9c6cff);
+background:linear-gradient(135deg,#6c63ff,#8e7bff);
 }
 
-.loginCard{
-width:420px;
-padding:45px;
-background:white;
-border-radius:20px;
+.card{
+background:#fff;
+padding:40px;
+border-radius:18px;
+width:360px;
 text-align:center;
-box-shadow:0 15px 40px rgba(0,0,0,.3);
+box-shadow:0 10px 30px rgba(0,0,0,.3);
 }
 
-.loginCard h2{margin-bottom:20px;}
-
-.loginCard input{
+.card input{
 width:90%;
 padding:10px;
 margin:8px 0;
 }
 
-.secret{
-cursor:pointer;
-font-size:14px;
-margin-top:10px;
-}
+button{padding:8px 15px;margin:5px;cursor:pointer}
 
-/* ========= APP ========= */
-
-#app{display:none;height:100vh;flex-direction:column;}
+/* APP */
+#app{display:none;height:100vh;flex-direction:column}
 
 header{
 background:#fff;
 padding:8px;
+box-shadow:0 2px 5px #ccc;
 position:sticky;
 top:0;
-z-index:10;
-box-shadow:0 2px 5px rgba(0,0,0,.2);
 }
 
-footer{
-background:#ffe7a1;
-padding:8px;
-position:sticky;
-bottom:0;
-font-weight:bold;
-}
-
-.tableWrap{
-flex:1;
-overflow:auto;
-}
+.tableWrap{flex:1;overflow:auto}
 
 table{
 width:100%;
@@ -81,67 +60,44 @@ padding:6px;
 text-align:center;
 }
 
-th{
-background:#ffdede;
-position:sticky;
-top:0;
-}
+th{background:#ffdede}
 
-button{cursor:pointer}
-
-.logout{
-background:#ff3b30;
-color:white;
-float:right;
+footer{
+background:#ffe8a3;
+padding:8px;
+font-weight:bold;
 }
 </style>
 </head>
 
 <body>
 
-<!-- ================= LOGIN ================= -->
-<div id="loginPage">
-<div class="loginCard">
-
+<!-- LOGIN -->
+<div id="login">
+<div class="card">
 <h2>👆 Attendance Login</h2>
 
-<input id="user" placeholder="User">
-<input id="pass" type="password" placeholder="Password">
+<input id="u" placeholder="User">
+<input id="p" type="password" placeholder="Password">
 
-<button onclick="login()">Login</button>
-
-<div class="secret" onclick="secretBox()">🔒 Secret</div>
-
+<button onclick="doLogin()">Login</button>
+<br>
+<small onclick="secret()">🔒 Secret</small>
 </div>
 </div>
 
 
-<!-- ================= APP ================= -->
+<!-- APP -->
 <div id="app">
 
 <header>
-
-Date <input type="date" id="date">
-In <input type="time" id="in">
-Out <input type="time" id="out">
-
+Date <input type="date" id="d">
+In <input type="time" id="i">
+Out <input type="time" id="o">
 Post <input id="post">
 
-BG <input type="color" id="bg">
-Font <input type="color" id="font">
-
 <button onclick="save()">Save</button>
-<button onclick="clearForm()">Clear</button>
-
-<select id="monthFilter" onchange="render()"></select>
-
-<input id="search" placeholder="Search" onkeyup="render()">
-
-<button onclick="exportExcel()">Excel</button>
-<button onclick="window.print()">Print</button>
-
-<button class="logout" onclick="logout()">Logout</button>
-
+<button onclick="logout()" style="background:red;color:#fff">Logout</button>
 </header>
 
 <div class="tableWrap">
@@ -153,202 +109,108 @@ Font <input type="color" id="font">
 <th>Out</th>
 <th>Hours</th>
 <th>Post</th>
-<th>Edit</th>
 <th>Delete</th>
 </tr>
 </thead>
-<tbody id="tbody"></tbody>
+<tbody id="tb"></tbody>
 </table>
 </div>
 
-<footer id="footer"></footer>
+<footer id="foot"></footer>
 
 </div>
 
 
 <script>
 
-/* ========= LOGIN ========= */
+/* LOGIN */
+function doLogin(){
+if(u.value=="9823087" && p.value=="7284"){
+localStorage.setItem("ok","1");
+start();
+}else alert("Wrong Login");
+}
 
-function login(){
-if(user.value==="9823087" && pass.value==="7284"){
-localStorage.setItem("login","1");
-showApp();
-}else alert("Wrong login");
+function secret(){
+var y=prompt("Year?");
+if(y=="1995") alert("User: 9823087\nPass: 7284");
 }
 
 function logout(){
-localStorage.removeItem("login");
+localStorage.removeItem("ok");
 location.reload();
 }
 
-function showApp(){
-loginPage.style.display="none";
+if(localStorage.getItem("ok")) start();
+
+function start(){
+login.style.display="none";
 app.style.display="flex";
-initMonth();
 render();
 }
 
-if(localStorage.getItem("login")) showApp();
 
-function secretBox(){
-let y=prompt("Enter year");
-if(y==="1995") alert("User: 9823087\nPassword: 7284");
-}
-
-
-/* ========= DATA ========= */
-
-let data=JSON.parse(localStorage.getItem("attData")||"[]");
+/* DATA */
+var data = JSON.parse(localStorage.getItem("data")||"[]");
 
 function saveData(){
-localStorage.setItem("attData",JSON.stringify(data));
+localStorage.setItem("data",JSON.stringify(data));
 }
 
-function hours(a,b){
-let s=new Date("2020-01-01 "+a);
-let e=new Date("2020-01-01 "+b);
+function calc(a,b){
+var s=new Date("2020-01-01 "+a);
+var e=new Date("2020-01-01 "+b);
 if(e<s)e.setDate(e.getDate()+1);
 return ((e-s)/3600000).toFixed(2);
 }
 
 function save(){
+if(!d.value)return;
 
-let obj={
-id:Date.now(),
-date:date.value,
-in:in.value,
-out:out.value,
-post:post.value,
-bg:bg.value,
-font:font.value
-};
-
-let i=data.findIndex(x=>x.editing);
-if(i>=0)data[i]=obj;
-else data.push(obj);
-
-data.forEach(x=>delete x.editing);
+data.push({
+date:d.value,
+in:i.value,
+out:o.value,
+post:post.value
+});
 
 saveData();
 render();
-clearForm();
 }
 
-function clearForm(){
-date.value="";
-in.value="";
-out.value="";
-post.value="";
+function del(x){
+data.splice(x,1);
+saveData();
+render();
 }
-
-
-/* ========= RENDER ========= */
 
 function render(){
 
-let m=monthFilter.value;
-let s=search.value.toLowerCase();
+tb.innerHTML="";
+var total=0;
 
-let arr=data.filter(x=>{
-let ok=true;
+data.sort((a,b)=>a.date.localeCompare(b.date));
 
-if(m!=="all") ok=x.date.slice(5,7)===m;
-if(s) ok=x.post.toLowerCase().includes(s);
+data.forEach((r,idx)=>{
 
-return ok;
-});
-
-arr.sort((a,b)=>{
-if(a.date===b.date) return a.in.localeCompare(b.in);
-return a.date.localeCompare(b.date);
-});
-
-tbody.innerHTML="";
-
-let total=0;
-
-arr.forEach(r=>{
-
-let h=hours(r.in,r.out);
+var h=calc(r.in,r.out);
 total+=+h;
 
-let tr=document.createElement("tr");
-tr.style.background=r.bg;
-tr.style.color=r.font;
-
-tr.innerHTML=`
+tb.innerHTML+=`
+<tr>
 <td>${r.date}</td>
 <td>${r.in}</td>
 <td>${r.out}</td>
 <td>${h}</td>
 <td>${r.post}</td>
-<td><button onclick="edit(${r.id})">✏️</button></td>
-<td><button onclick="del(${r.id})">❌</button></td>
-`;
-
-tbody.appendChild(tr);
+<td><button onclick="del(${idx})">❌</button></td>
+</tr>`;
 });
 
-footer.innerText="Total Duty: "+arr.length+" | Total Hours: "+total.toFixed(2);
-}
-
-
-/* ========= EDIT DELETE ========= */
-
-function edit(id){
-let r=data.find(x=>x.id===id);
-
-date.value=r.date;
-in.value=r.in;
-out.value=r.out;
-post.value=r.post;
-bg.value=r.bg;
-font.value=r.font;
-
-data.forEach(x=>delete x.editing);
-r.editing=true;
-}
-
-function del(id){
-if(confirm("Delete entry?")){
-data=data.filter(x=>x.id!==id);
-saveData();
-render();
-}
-}
-
-
-/* ========= MONTH ========= */
-
-function initMonth(){
-let cur=new Date().getMonth()+1;
-
-monthFilter.innerHTML='<option value="all">All</option>';
-
-for(let i=1;i<=12;i++){
-let mm=i.toString().padStart(2,'0');
-let o=document.createElement("option");
-o.value=mm;
-o.text=mm;
-if(i===cur)o.selected=true;
-monthFilter.appendChild(o);
-}
-}
-
-
-/* ========= EXCEL ========= */
-
-function exportExcel(){
-let rows=[...document.querySelectorAll("table tr")];
-let csv=rows.map(r=>[...r.children].map(c=>c.innerText).join(",")).join("\n");
-let blob=new Blob([csv]);
-let a=document.createElement("a");
-a.href=URL.createObjectURL(blob);
-a.download="attendance.csv";
-a.click();
+foot.innerText="Total Duty: "+data.length+" | Hours: "+total.toFixed(2);
 }
 
 </script>
+
 </body>
 </html>
