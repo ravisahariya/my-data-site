@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Attendance MASTER</title>
+
+<style>
+body{
+  margin:0;
+  font-family:Arial;
+  background:linear-gradient(135deg,#5f6dff,#7b3ff2);
+}
+
+/* LOGIN */
+#loginPage{
+  height:100vh;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+.loginCard{
+  background:#fff;
+  padding:40px;
+  width:90%;
+  max-width:520px;
+  border-radius:20px;
+  box-shadow:0 20px 40px rgba(0,0,0,.3);
+  text-align:center;
+}
+.loginCard h2{margin-bottom:20px}
+.loginCard input{
+  width:100%;
+  padding:12px;
+  margin:10px 0;
+  font-size:16px;
+}
+.loginCard button{
+  padding:10px 25px;
+  cursor:pointer;
+}
+
+/* DASHBOARD */
+#app{display:none;height:100vh;flex-direction:column;background:#fff}
+
+.header{
+  position:fixed;
+  top:0;
+  width:100%;
+  background:#eee;
+  padding:10px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  z-index:10;
+}
+
+.controls{
+  margin-top:70px;
+  padding:10px;
+  background:#fafafa;
+  display:flex;
+  flex-wrap:wrap;
+  gap:5px;
+}
+
+.controls input,.controls select{
+  padding:6px;
+}
+
+.tableWrap{
+  flex:1;
+  overflow:auto;
+}
+
+table{
+  width:100%;
+  border-collapse:collapse;
+}
+th,td{
+  border:1px solid #ccc;
+  padding:6px;
+  text-align:center;
+}
+th{
+  background:#ffdede;
+  position:sticky;
+  top:0;
+}
+
+tfoot{
+  background:#ffe9a9;
+  font-weight:bold;
+}
+</style>
+</head>
+
+<body>
+
+<!-- LOGIN -->
+<div id="loginPage">
+  <div class="loginCard">
+    <h2>👉 Attendance Login</h2>
+
+    <input id="user" placeholder="User (9823087)">
+    <input id="pass" type="password" placeholder="Password (7284)">
+
+    <button onclick="login()">Login</button>
+    <br><br>
+
+    <button onclick="secret()">🔒 Secret</button>
+  </div>
+</div>
+
+
+<!-- DASHBOARD -->
+<div id="app">
+
+<div class="header">
+  <h3>Attendance MASTER</h3>
+  <button onclick="logout()">Logout</button>
+</div>
+
+<div class="controls">
+  <input type="date" id="date">
+  <input type="time" id="in">
+  <input type="time" id="out">
+  <input id="post" placeholder="Post">
+
+  <button onclick="save()">Save</button>
+  <button onclick="clearForm()">Clear</button>
+
+  <select id="month" onchange="render()"></select>
+
+  <input id="search" placeholder="Search" oninput="render()">
+
+  <button onclick="excel()">Excel</button>
+  <button onclick="window.print()">Print</button>
+</div>
+
+<div class="tableWrap">
+<table>
+<thead>
+<tr>
+<th>Date</th>
+<th>In</th>
+<th>Out</th>
+<th>Hours</th>
+<th>Post</th>
+<th>Edit</th>
+<th>Delete</th>
+</tr>
+</thead>
+
+<tbody id="tbody"></tbody>
+
+<tfoot>
+<tr>
+<td id="totalDuty"></td>
+<td colspan="2">Total Hours</td>
+<td id="totalHours"></td>
+<td colspan="3"></td>
+</tr>
+</tfoot>
+
+</table>
+</div>
+</div>
+
+
+<script>
+
+const USER="9823087";
+const PASS="7284";
+
+let editIndex=-1;
+
+function login(){
+ if(user.value===USER && pass.value===PASS){
+   loginPage.style.display="none";
+   app.style.display="flex";
+   render();
+ } else alert("Wrong login");
+}
+
+function logout(){
+ app.style.display="none";
+ loginPage.style.display="flex";
+}
+
+function secret(){
+ let y=prompt("Year?");
+ if(y==="1995"){
+   alert("User: "+USER+"\nPass: "+PASS);
+ }
+}
+
+/* DATA */
+function getData(){
+ return JSON.parse(localStorage.getItem("att")||"[]");
+}
+function setData(d){
+ localStorage.setItem("att",JSON.stringify(d));
+}
+
+/* SAVE */
+function save(){
+ if(!date.value||!in.value||!out.value) return;
+
+ let d=getData();
+
+ let h=(new Date("2000-01-01 "+out.value)-new Date("2000-01-01 "+in.value))/3600000;
+ if(h<0)h+=24;
+
+ let obj={
+  date:date.value,
+  in:in.value,
+  out:out.value,
+  hours:h.toFixed(2),
+  post:post.value
+ };
+
+ if(editIndex>=0){
+  d[editIndex]=obj;
+  editIndex=-1;
+ }else d.push(obj);
+
+ setData(d);
+ clearForm();
+ render();
+}
+
+function clearForm(){
+ date.value="";
+ in.value="";
+ out.value="";
+ post.value="";
+}
+
+/* RENDER */
+function render(){
+ let d=getData();
+
+ d.sort((a,b)=>new Date(a.date)-new Date(b.date));
+
+ let m=month.value||new Date().getMonth()+1;
+ let s=search.value.toLowerCase();
+
+ let body="";
+ let th=0,td=0;
+
+ d.forEach((x,i)=>{
+   let mm=new Date(x.date).getMonth()+1;
+
+   if((m!="All" && mm!=m) || !x.post.toLowerCase().includes(s)) return;
+
+   td++;
+   th+=+x.hours;
+
+   body+=`
+   <tr>
+   <td>${x.date}</td>
+   <td>${x.in}</td>
+   <td>${x.out}</td>
+   <td>${x.hours}</td>
+   <td>${x.post}</td>
+   <td><button onclick="edit(${i})">✏️</button></td>
+   <td><button onclick="del(${i})">❌</button></td>
+   </tr>`;
+ });
+
+ tbody.innerHTML=body;
+ totalDuty.innerText="Total Duty: "+td;
+ totalHours.innerText=th.toFixed(2);
+}
+
+function edit(i){
+ let d=getData()[i];
+ date.value=d.date;
+ in.value=d.in;
+ out.value=d.out;
+ post.value=d.post;
+ editIndex=i;
+}
+
+function del(i){
+ let d=getData();
+ d.splice(i,1);
+ setData(d);
+ render();
+}
+
+/* MONTH */
+for(let i=1;i<=12;i++){
+ month.innerHTML+=`<option>${i}</option>`;
+}
+month.innerHTML+='<option>All</option>';
+month.value=new Date().getMonth()+1;
+
+/* EXCEL */
+function excel(){
+ let rows=[...document.querySelectorAll("table tr")];
+ let csv=rows.map(r=>[...r.children].map(c=>c.innerText).join(",")).join("\n");
+
+ let a=document.createElement("a");
+ a.href="data:text/csv;charset=utf-8,"+encodeURIComponent(csv);
+ a.download="attendance.csv";
+ a.click();
+}
+
+render();
+</script>
+
+</body>
+</html>
