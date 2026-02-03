@@ -2,296 +2,132 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Attendance MASTER</title>
-
-<!-- PWA -->
-<link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#1976d2">
+<title>Attendance Login</title>
 
 <style>
-body{margin:0;font-family:Arial;background:#f2f2f2}
-
-/* HEADER */
-header{
-position:fixed;
-top:0;
-width:100%;
-background:#1976d2;
-color:#fff;
-padding:12px;
-text-align:center;
-font-weight:bold;
-z-index:2;
+body{
+  margin:0;
+  font-family:Arial;
+  height:100vh;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  background:linear-gradient(45deg,#667eea,#764ba2);
 }
 
-/* FOOTER */
-footer{
-position:fixed;
-bottom:0;
-width:100%;
-background:#ffd54f;
-padding:8px;
-font-weight:bold;
-}
-
-/* TABLE SCROLL ONLY */
-.table-box{
-margin-top:120px;
-margin-bottom:60px;
-height:55vh;
-overflow:auto;
-}
-
-/* LOGIN */
-.login{
-display:flex;
-height:100vh;
-justify-content:center;
-align-items:center;
-background:linear-gradient(45deg,#667eea,#764ba2);
-}
-
+/* LOGIN CARD */
 .card{
-background:white;
-width:95%;
-max-width:420px;
-padding:30px;
-border-radius:15px;
-text-align:center;
-box-shadow:0 0 20px #0003;
+  background:white;
+  width:95%;
+  max-width:420px;
+  padding:35px;
+  border-radius:18px;
+  text-align:center;
+  box-shadow:0 10px 25px rgba(0,0,0,0.25);
 }
 
-input,select,button{
-padding:8px;
-margin:4px;
+h2{
+  margin-bottom:25px;
 }
 
-table{
-width:100%;
-border-collapse:collapse;
-background:white;
+input{
+  width:95%;
+  padding:12px;
+  margin:8px 0;
+  font-size:16px;
 }
 
-th,td{
-border:1px solid #ccc;
-padding:6px;
-text-align:center;
+button{
+  padding:10px 25px;
+  margin-top:10px;
+  font-size:16px;
+  cursor:pointer;
 }
 
-th{background:#ffebee}
-tr:hover{background:#e3f2fd}
+.secret-btn{
+  margin-top:12px;
+  background:none;
+  border:none;
+  color:#555;
+  font-weight:bold;
+}
 
+/* secret panel */
+#secretPanel{
+  display:none;
+  margin-top:15px;
+  background:#f2f2f2;
+  padding:10px;
+  border-radius:10px;
+}
 </style>
 </head>
 
 <body>
 
-<!-- ================= LOGIN ================= -->
-<div class="login" id="loginPage">
 <div class="card">
 
-<h2>🔐 Login</h2>
-<div id="clock"></div>
+  <h2>🔐 Attendance Login</h2>
 
-<input id="user"><br>
-<input id="pass" type="password"><br>
+  <input id="user" placeholder="Username">
+  <input id="pass" type="password" placeholder="Password">
 
-<button onclick="login()">Login</button><br>
+  <button onclick="login()">Login</button>
 
-<input id="secret" placeholder="Secret">
-<button onclick="openSecret()">🔒</button>
+  <br>
 
-<div id="panel" style="display:none">
-<hr>
-User: <span id="showU"></span><br>
-Pass: <span id="showP"></span><br>
-<input id="newPass" placeholder="New password">
-<button onclick="changePass()">Change</button>
-</div>
+  <button class="secret-btn" onclick="openSecret()">🔒 Secret</button>
 
-</div>
-</div>
+  <!-- secret panel -->
+  <div id="secretPanel">
+    <p>User: <span id="showU"></span></p>
+    <p>Pass: <span id="showP"></span></p>
 
-<!-- ================= APP ================= -->
-<div id="app" style="display:none">
-
-<header>Attendance MASTER</header>
-
-<div style="margin-top:60px;padding:5px;text-align:center">
-
-<input type="date" id="date">
-<input type="time" id="in">
-<input type="time" id="out">
-
-<select id="post">
-<option>ETP</option>
-<option>BORD 2</option>
-<option>COE</option>
-<option>ABEER</option>
-</select>
-
-BG <input type="color" id="bg">
-Font <input type="color" id="font">
-
-<button onclick="save()">Save</button>
-<button onclick="downloadCSV()">Excel</button>
-<button onclick="window.print()">Print</button>
-
-<select id="month" onchange="filterMonth()"></select>
-
-<button onclick="logout()">Logout</button>
-</div>
-
-<div class="table-box">
-<table id="tbl">
-<thead>
-<tr>
-<th>Date</th><th>In</th><th>Out</th>
-<th>Hours</th><th>Post</th>
-<th>Edit</th><th>Delete</th>
-</tr>
-</thead>
-<tbody></tbody>
-</table>
-</div>
-
-<footer>
-Total Duty: <span id="duty">0</span> |
-Total Hours: <span id="hours">0</span>
-</footer>
+    <input id="newPass" placeholder="New Password">
+    <button onclick="changePass()">Change Password</button>
+  </div>
 
 </div>
-
-<!-- ================= FIREBASE ================= -->
-<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js"></script>
 
 <script>
 
-/* ========= 🔥 Firebase CONFIG (APNA DALNA) ========= */
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-
-const firebaseConfig = {
-  apiKey: "XXXX",
-  authDomain: "XXXX",
-  projectId: "XXXX"
+/* default login */
+let userData = JSON.parse(localStorage.getItem("userData")) || {
+  user:"admin",
+  pass:"1234"
 };
 
-const appF = initializeApp(firebaseConfig);
-const db = getFirestore(appF);
+user.value = userData.user;
+pass.value = userData.pass;
 
-/* ========= LOGIN ========= */
-let userData = JSON.parse(localStorage.getItem("userData")) || {u:"admin",p:"1234"};
-user.value=userData.u;
-pass.value=userData.p;
-
-setInterval(()=>clock.innerText=new Date().toLocaleString(),1000);
-
-window.login=()=>{
- if(user.value==userData.u && pass.value==userData.p){
-  loginPage.style.display="none";
-  app.style.display="block";
-  load();
- }else alert("Wrong login");
+/* login */
+function login(){
+  if(user.value === userData.user && pass.value === userData.pass){
+    alert("Login Success ✅");
+  }else{
+    alert("Wrong Login ❌");
+  }
 }
 
-window.openSecret=()=>{
- if(secret.value=="1995"){
-  panel.style.display="block";
-  showU.innerText=userData.u;
-  showP.innerText=userData.p;
- }
+/* secret open */
+function openSecret(){
+  let code = prompt("Enter Secret Code");
+
+  if(code === "1995"){
+    secretPanel.style.display="block";
+    showU.innerText = userData.user;
+    showP.innerText = userData.pass;
+  }
 }
 
-window.changePass=()=>{
- userData.p=newPass.value;
- localStorage.setItem("userData",JSON.stringify(userData));
- alert("Changed");
- location.reload();
-}
-
-window.logout=()=>location.reload();
-
-/* ========= ENTRY ========= */
-
-function calcHours(a,b){
- let s=new Date("2000 "+a);
- let e=new Date("2000 "+b);
- if(e<s)e.setDate(e.getDate()+1); // night shift
- return ((e-s)/3600000).toFixed(2);
-}
-
-window.save=async()=>{
- let h=calcHours(in.value,out.value);
-
- await addDoc(collection(db,"att"),{
-  date:date.value,
-  in:in.value,
-  out:out.value,
-  hours:h,
-  post:post.value,
-  bg:bg.value,
-  font:font.value
- });
-
- load();
-}
-
-/* ========= LOAD TABLE ========= */
-
-async function load(){
- let snap=await getDocs(collection(db,"att"));
- let tb=tbl.querySelector("tbody");
- tb.innerHTML="";
- let total=0,c=0;
-
- snap.forEach(d=>{
-  let r=d.data();
-  total+=parseFloat(r.hours);
-  c++;
-
-  tb.innerHTML+=`
-  <tr style="background:${r.bg};color:${r.font}">
-  <td>${r.date}</td>
-  <td>${r.in}</td>
-  <td>${r.out}</td>
-  <td>${r.hours}</td>
-  <td>${r.post}</td>
-  <td><button onclick="del('${d.id}')">✏️</button></td>
-  <td><button onclick="del('${d.id}')">❌</button></td>
-  </tr>`
- });
-
- duty.innerText=c;
- hours.innerText=total.toFixed(2);
-}
-
-window.del=async(id)=>{
- if(confirm("Delete?")){
-  await deleteDoc(doc(db,"att",id));
-  load();
- }
-}
-
-/* ========= MONTH FILTER ========= */
-
-let months=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
-months.forEach((m,i)=>{
- month.innerHTML+=`<option value="${i}">${m}</option>`;
-});
-month.value=new Date().getMonth();
-
-/* ========= CSV ========= */
-window.downloadCSV=()=>{
- let rows=[...tbl.rows];
- let csv=[...rows].map(r=>[...r.cells].map(c=>c.innerText).join(",")).join("\n");
- let a=document.createElement("a");
- a.href="data:text/csv;charset=utf-8,"+csv;
- a.download="attendance.csv";
- a.click();
+/* change password */
+function changePass(){
+  userData.pass = newPass.value;
+  localStorage.setItem("userData", JSON.stringify(userData));
+  alert("Password Changed ✅");
 }
 
 </script>
+
 </body>
 </html>
