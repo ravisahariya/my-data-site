@@ -15,37 +15,57 @@ background:#f2f2f2;
 }
 
 /* ================= LOGIN ================= */
+
 #loginPage{
 height:100vh;
 display:flex;
 justify-content:center;
 align-items:center;
-background:linear-gradient(135deg,#667eea,#764ba2);
+background:linear-gradient(135deg,#5f72ff,#9b23ea);
 }
 
 .loginCard{
 background:#fff;
 width:95%;
 max-width:520px;
-padding:40px;
-border-radius:18px;
+padding:45px;
+border-radius:20px;
 text-align:center;
-box-shadow:0 10px 25px rgba(0,0,0,.3);
+box-shadow:0 15px 40px rgba(0,0,0,.3);
+}
+
+.loginCard h2{
+font-size:32px;
+margin-bottom:15px;
+}
+
+.clock{
+font-size:20px;
+font-weight:bold;
+color:#444;
+margin-bottom:25px;
 }
 
 input,select,button{
-padding:7px;
-margin:3px;
+padding:8px;
+font-size:14px;
+}
+
+.secret{
+margin-top:12px;
+color:#666;
+cursor:pointer;
 }
 
 /* ================= APP ================= */
+
 #app{
 display:none;
 height:100vh;
 flex-direction:column;
 }
 
-/* BLUE HEADER */
+/* HEADER BLUE */
 .topFixed{
 background:#1976d2;
 color:#fff;
@@ -53,23 +73,34 @@ padding:8px;
 position:sticky;
 top:0;
 z-index:5;
-box-shadow:0 2px 6px rgba(0,0,0,.3);
+}
+
+.headerRow{
+display:flex;
+justify-content:space-between;
+align-items:center;
+}
+
+.form{
+display:flex;
+flex-wrap:wrap;
+gap:5px;
+margin-top:6px;
 }
 
 .logout{
 background:#f44336;
 color:#fff;
 border:none;
-padding:6px 10px;
 }
 
+/* TABLE SCROLL */
 .tableBox{
 flex:1;
 overflow:auto;
 background:#fff;
 }
 
-/* TABLE */
 table{
 width:100%;
 border-collapse:collapse;
@@ -85,15 +116,15 @@ th{
 background:#ffd9d9;
 }
 
-/* OT highlight */
-.otRow{
-background:#cfe8ff !important;
+/* ONLY NIGHT HIGHLIGHT */
+.night{
+background:#d6ecff;
 }
 
 /* FOOTER */
 .bottomFixed{
 background:#ffeaa7;
-padding:6px;
+padding:8px;
 font-weight:bold;
 position:sticky;
 bottom:0;
@@ -103,33 +134,47 @@ bottom:0;
 
 <body>
 
-<!-- LOGIN -->
+<!-- ================= LOGIN ================= -->
+
 <div id="loginPage">
 <div class="loginCard">
+
 <h2>🔐 Attendance Login</h2>
-<input id="username" placeholder="Username"><br>
-<input type="password" id="password" placeholder="Password"><br>
-<button onclick="doLogin()">Login</button>
+
+<div class="clock" id="clock"></div>
+
+<input id="username" placeholder="Username"><br><br>
+<input type="password" id="password" placeholder="Password"><br><br>
+
+<button onclick="login()">Login</button>
+
+<div class="secret" onclick="openSecret()">🔒 Secret</div>
+
 </div>
 </div>
 
 
-<!-- APP -->
+<!-- ================= APP ================= -->
+
 <div id="app">
 
-<!-- HEADER -->
 <div class="topFixed">
 
-<div style="display:flex;justify-content:space-between">
+<div class="headerRow">
 <b>☁️ Attendance MASTER</b>
 <button class="logout" onclick="logout()">Logout</button>
 </div>
 
-<div>
+<div class="form">
+
 <input type="date" id="date">
 <input type="time" id="inTime">
 <input type="time" id="outTime">
+
 <input id="post" placeholder="Post">
+
+BG <input type="color" id="bg" value="#ffffff">
+Font <input type="color" id="font" value="#000000">
 
 <button onclick="save()">Save</button>
 
@@ -137,12 +182,11 @@ bottom:0;
 
 <button onclick="downloadCSV()">Excel</button>
 <button onclick="window.print()">Print</button>
-</div>
 
 </div>
+</div>
 
 
-<!-- TABLE -->
 <div class="tableBox">
 <table>
 <thead>
@@ -170,158 +214,197 @@ Total Hours: <span id="hours">0</span>
 
 
 <script>
-/* LOGIN */
+
+/* ================= CLOCK ================= */
+
+function updateClock(){
+let d=new Date();
+
+let day=d.toLocaleDateString('en-IN',{weekday:'long'});
+let date=d.toLocaleDateString('en-IN');
+let time=d.toLocaleTimeString('en-IN');
+
+clock.innerText = day+" | "+date+" | "+time;
+}
+setInterval(updateClock,1000);
+updateClock();
+
+/* ================= LOGIN ================= */
+
 if(localStorage.getItem("login")) showApp();
 
-function doLogin(){
- if(username.value==="Ravi" && password.value==="Ravi123"){
-  localStorage.setItem("login","1");
-  showApp();
- }else alert("Wrong login");
+function login(){
+let u=localStorage.getItem("user")||"Ravi";
+let p=localStorage.getItem("pass")||"Ravi123";
+
+if(username.value===u && password.value===p){
+localStorage.setItem("login","1");
+showApp();
+}else alert("Wrong Login");
 }
 
 function logout(){
- localStorage.removeItem("login");
- location.reload();
+localStorage.removeItem("login");
+location.reload();
 }
 
 function showApp(){
- loginPage.style.display="none";
- app.style.display="flex";
+loginPage.style.display="none";
+app.style.display="flex";
 }
 
+/* ================= SECRET ================= */
 
-/* FIREBASE */
+function openSecret(){
+let code=prompt("Enter Secret Code");
+if(code!=="1995") return;
+
+let u=localStorage.getItem("user")||"Ravi";
+let p=localStorage.getItem("pass")||"Ravi123";
+
+let newUser=prompt("Current Username: "+u+"\nEnter New Username:");
+let newPass=prompt("Enter New Password:");
+
+if(newUser && newPass){
+localStorage.setItem("user",newUser);
+localStorage.setItem("pass",newPass);
+alert("Updated!");
+}
+}
+
+/* ================= FIREBASE ================= */
+
 firebase.initializeApp({
- apiKey:"AIzaSyD71mpolAsmejtU2icecQQcX07iCW_is0Y",
- authDomain:"ravicardmaker.firebaseapp.com",
- projectId:"ravicardmaker"
+apiKey:"AIzaSyD71mpolAsmejtU2icecQQcX07iCW_is0Y",
+authDomain:"ravicardmaker.firebaseapp.com",
+projectId:"ravicardmaker"
 });
-
 const db=firebase.firestore();
-let data=[], editId=null;
+
+let data=[],editId=null;
 
 db.collection("attendance").onSnapshot(s=>{
- data=[];
- s.forEach(d=>data.push({id:d.id,...d.data()}));
- render();
+data=[];
+s.forEach(d=>data.push({id:d.id,...d.data()}));
+render();
 });
 
+/* ================= MONTH ================= */
 
-/* MONTH NAMES */
-const monthNames=[
-"All",
-"January","February","March","April","May","June",
-"July","August","September","October","November","December"
-];
+const names=["All","Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
 
-monthNames.forEach((m,i)=>{
- let op=document.createElement("option");
- op.value=i===0?"all":String(i).padStart(2,"0");
- op.text=m;
- monthFilter.appendChild(op);
+names.forEach((m,i)=>{
+let o=document.createElement("option");
+o.value=i===0?"all":String(i).padStart(2,"0");
+o.text=m;
+monthFilter.appendChild(o);
 });
 
 monthFilter.value=String(new Date().getMonth()+1).padStart(2,"0");
 
+/* ================= HOURS ================= */
 
-/* HOURS */
 function calc(i,o){
- let a=new Date("2000 "+i),b=new Date("2000 "+o);
- if(b<a) b.setDate(b.getDate()+1);
- return ((b-a)/3600000).toFixed(2);
+let a=new Date("2000 "+i);
+let b=new Date("2000 "+o);
+if(b<a)b.setDate(b.getDate()+1);
+return ((b-a)/3600000).toFixed(2);
 }
 
+/* ================= SAVE ================= */
 
-/* SAVE */
 function save(){
- let obj={
-  d:date.value,
-  i:inTime.value,
-  o:outTime.value,
-  p:post.value,
-  h:calc(inTime.value,outTime.value)
- };
 
- if(editId) db.collection("attendance").doc(editId).update(obj);
- else db.collection("attendance").add(obj);
+let obj={
+d:date.value,
+i:inTime.value,
+o:outTime.value,
+p:post.value,
+bg:bg.value,
+font:font.value,
+h:calc(inTime.value,outTime.value)
+};
 
- editId=null;
+if(editId)
+db.collection("attendance").doc(editId).update(obj);
+else
+db.collection("attendance").add(obj);
+
+editId=null;
 }
 
+/* ================= EDIT ================= */
 
-/* EDIT */
 function edit(id){
- let r=data.find(x=>x.id===id);
- editId=id;
- date.value=r.d;
- inTime.value=r.i;
- outTime.value=r.o;
- post.value=r.p;
+let r=data.find(x=>x.id===id);
+editId=id;
+
+date.value=r.d;
+inTime.value=r.i;
+outTime.value=r.o;
+post.value=r.p;
+bg.value=r.bg;
+font.value=r.font;
 }
 
+/* ================= DELETE ================= */
 
-/* DELETE */
 function del(id){
- if(confirm("Delete?"))
-  db.collection("attendance").doc(id).delete();
+if(confirm("Delete?"))
+db.collection("attendance").doc(id).delete();
 }
 
+/* ================= RENDER ================= */
 
-/* RENDER + OT HIGHLIGHT */
+function format(t){
+let d=new Date("2000-01-01T"+t);
+return d.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',hour12:true});
+}
+
 function render(){
 
- tbody.innerHTML="";
+tbody.innerHTML="";
 
- let m=monthFilter.value;
+let m=monthFilter.value;
 
- let sorted=[...data].sort((a,b)=> new Date(a.d+" "+a.i)-new Date(b.d+" "+b.i));
+let sorted=[...data].sort((a,b)=> new Date(a.d+" "+a.i)-new Date(b.d+" "+b.i));
 
- let seenDates={};
- let td=0, th=0;
+let th=0,td=0;
 
- sorted.forEach(r=>{
+sorted.forEach(r=>{
 
-  if(m!=="all" && r.d.split("-")[1]!==m) return;
+if(m!=="all" && r.d.split("-")[1]!==m) return;
 
-  td++;
-  th+=+r.h;
+td++; th+=+r.h;
 
-  let isOT=false;
+let night=(r.i>r.o)?"night":"";
 
-  /* double date */
-  if(seenDates[r.d]) isOT=true;
-  seenDates[r.d]=true;
+tbody.innerHTML+=`
+<tr class="${night}" style="background:${r.bg};color:${r.font}">
+<td>${r.d}</td>
+<td>${format(r.i)}</td>
+<td>${format(r.o)}</td>
+<td>${r.h}</td>
+<td>${r.p}</td>
+<td><button onclick="edit('${r.id}')">✏️</button></td>
+<td><button onclick="del('${r.id}')">❌</button></td>
+</tr>`;
+});
 
-  /* night shift */
-  if(r.o < r.i) isOT=true;
-
-  tbody.innerHTML+=`
-  <tr class="${isOT?'otRow':''}">
-  <td>${r.d}</td>
-  <td>${r.i}</td>
-  <td>${r.o}</td>
-  <td>${r.h}</td>
-  <td>${r.p}</td>
-  <td><button onclick="edit('${r.id}')">✏️</button></td>
-  <td><button onclick="del('${r.id}')">❌</button></td>
-  </tr>`;
- });
-
- duty.innerText=td;
- hours.innerText=th.toFixed(2);
+duty.innerText=td;
+hours.innerText=th.toFixed(2);
 }
 
+/* ================= CSV ================= */
 
-/* CSV */
 function downloadCSV(){
- let csv="Date,In,Out,Hours,Post\n";
- data.forEach(r=>csv+=`${r.d},${r.i},${r.o},${r.h},${r.p}\n`);
- let blob=new Blob([csv]);
- let a=document.createElement("a");
- a.href=URL.createObjectURL(blob);
- a.download="attendance.csv";
- a.click();
+let csv="Date,In,Out,Hours,Post\n";
+data.forEach(r=>csv+=`${r.d},${r.i},${r.o},${r.h},${r.p}\n`);
+let blob=new Blob([csv]);
+let a=document.createElement("a");
+a.href=URL.createObjectURL(blob);
+a.download="attendance.csv";
+a.click();
 }
 </script>
 
