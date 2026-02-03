@@ -1,1 +1,196 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Attendance Master</title>
 
+<style>
+body{
+margin:0;
+font-family:Arial;
+background:linear-gradient(135deg,#6a6aff,#7d5fff);
+}
+
+/* LOGIN */
+.loginPage{
+height:100vh;
+display:flex;
+align-items:center;
+justify-content:center;
+}
+
+.card{
+background:#fff;
+width:420px;
+padding:40px;
+border-radius:15px;
+text-align:center;
+box-shadow:0 10px 30px rgba(0,0,0,.3);
+}
+
+input{
+width:100%;
+padding:10px;
+margin:8px 0;
+font-size:16px;
+}
+
+button{
+padding:10px 20px;
+margin-top:10px;
+cursor:pointer;
+}
+
+.secret{
+font-size:13px;
+margin-top:10px;
+cursor:pointer;
+}
+
+/* DASHBOARD */
+#dashboard{
+display:none;
+padding:20px;
+}
+
+table{
+width:100%;
+border-collapse:collapse;
+margin-top:15px;
+}
+
+th,td{
+border:1px solid #ccc;
+padding:6px;
+text-align:center;
+}
+
+.logout{
+background:red;
+color:#fff;
+float:right;
+}
+</style>
+</head>
+
+
+<body>
+
+<!-- LOGIN -->
+<div class="loginPage" id="loginPage">
+<div class="card">
+<h2>👉 Attendance Login</h2>
+
+<input id="user" placeholder="User">
+<input id="pass" type="password" placeholder="Password">
+
+<button onclick="login()">Login</button>
+
+<div class="secret" onclick="secret()">🔒 Secret</div>
+</div>
+</div>
+
+
+<!-- DASHBOARD -->
+<div id="dashboard">
+<button class="logout" onclick="logout()">Logout</button>
+<h2>Attendance Register</h2>
+
+<input type="date" id="date">
+<input type="time" id="inTime">
+<input type="time" id="outTime">
+<input id="post" placeholder="Post">
+
+<button onclick="save()">Save</button>
+
+<table>
+<thead>
+<tr>
+<th>Date</th>
+<th>In</th>
+<th>Out</th>
+<th>Hours</th>
+<th>Post</th>
+<th>Delete</th>
+</tr>
+</thead>
+<tbody id="data"></tbody>
+</table>
+</div>
+
+
+
+<script>
+let USER="9823087";
+let PASS="7284";
+
+let list = JSON.parse(localStorage.getItem("att")) || [];
+
+function login(){
+let u=document.getElementById("user").value;
+let p=document.getElementById("pass").value;
+
+if(u===USER && p===PASS){
+document.getElementById("loginPage").style.display="none";
+document.getElementById("dashboard").style.display="block";
+render();
+}else{
+alert("Wrong login");
+}
+}
+
+function logout(){
+location.reload();
+}
+
+function secret(){
+let y=prompt("Year?");
+if(y=="1995"){
+alert("User: "+USER+"  Pass: "+PASS);
+}
+}
+
+function hours(a,b){
+let x=new Date("2000-01-01 "+a);
+let y=new Date("2000-01-01 "+b);
+if(y<x) y.setDate(y.getDate()+1);
+return ((y-x)/3600000).toFixed(2);
+}
+
+function save(){
+let d=date.value;
+let i=inTime.value;
+let o=outTime.value;
+let p=post.value;
+
+list.push({d,i,o,p,h:hours(i,o)});
+localStorage.setItem("att",JSON.stringify(list));
+render();
+}
+
+function del(i){
+list.splice(i,1);
+localStorage.setItem("att",JSON.stringify(list));
+render();
+}
+
+function render(){
+data.innerHTML="";
+list.sort((a,b)=>a.d.localeCompare(b.d));
+list.forEach((x,i)=>{
+data.innerHTML+=`
+<tr>
+<td>${x.d}</td>
+<td>${x.i}</td>
+<td>${x.o}</td>
+<td>${x.h}</td>
+<td>${x.p}</td>
+<td><button onclick="del(${i})">X</button></td>
+</tr>
+`;
+});
+}
+</script>
+
+</body>
+  </html>
