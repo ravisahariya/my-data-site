@@ -2,78 +2,70 @@
 <html>
 <head>
 <meta charset="UTF-8" />
-<title>Attendance Cloud PRO</title>
+<title>Attendance MASTER Cloud</title>
 
 <!-- Firebase CDN -->
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js"></script>
 
 <style>
 body{
 margin:0;
 font-family:Arial;
-background:linear-gradient(135deg,#5f66ff,#8a5fff);
+background:linear-gradient(135deg,#5f6df5,#7b5cff);
+height:100vh;
+overflow:hidden;
 }
 
-/* ================= LOGIN ================= */
+/* LOGIN */
 #loginPage{
-height:100vh;
 display:flex;
 justify-content:center;
 align-items:center;
+height:100vh;
 }
 
 .loginCard{
-background:#fff;
-width:95%;
-max-width:500px;
+background:white;
+width:90%;
+max-width:420px;
 padding:40px;
-border-radius:25px;
+border-radius:18px;
 text-align:center;
-box-shadow:0 20px 40px rgba(0,0,0,.4);
+box-shadow:0 15px 40px rgba(0,0,0,.25);
 }
 
-.loginCard h1{font-size:32px;margin-bottom:25px;}
-
 .loginCard input{
-width:95%;
+width:100%;
 padding:14px;
-margin:8px 0;
+margin:10px 0;
 font-size:18px;
 }
 
 .loginCard button{
-padding:12px 35px;
+padding:12px 30px;
 font-size:18px;
 }
 
-/* ================= APP ================= */
-#app{
-display:none;
-height:100vh;
-flex-direction:column;
+/* DASHBOARD */
+#app{display:none;height:100vh;flex-direction:column}
+
+header{
+background:#222;
+color:white;
+padding:12px;
+display:flex;
+justify-content:space-between;
+font-size:20px;
 }
 
-.header{
-background:#fff;
+footer{
+background:#ffe89a;
 padding:8px;
-position:sticky;
-top:0;
-z-index:999;
-box-shadow:0 2px 8px rgba(0,0,0,.2);
-}
-
-.footer{
-background:#ffeaa7;
-padding:8px;
-position:sticky;
-bottom:0;
 font-weight:bold;
 }
 
-input,select{padding:6px;margin:3px;}
-
-.tableArea{
+.tableWrap{
 flex:1;
 overflow:auto;
 }
@@ -81,29 +73,25 @@ overflow:auto;
 table{
 width:100%;
 border-collapse:collapse;
-background:#fff;
+background:white;
 }
 
 th,td{
-border:1px solid #ddd;
-padding:7px;
+border:1px solid #ccc;
+padding:8px;
 text-align:center;
 }
 
-thead{
-background:#ffdede;
-position:sticky;
-top:0;
+.controls{
+background:#fff;
+padding:10px;
+display:flex;
+flex-wrap:wrap;
+gap:5px;
 }
 
-.edit{background:#4caf50;color:#fff}
-.del{background:#f44336;color:#fff}
-
-.logout{
-float:right;
-background:red;
-color:#fff;
-padding:6px 10px;
+.controls input,select,button{
+padding:6px;
 }
 </style>
 </head>
@@ -112,49 +100,38 @@ padding:6px 10px;
 
 <!-- LOGIN -->
 <div id="loginPage">
-<div class="loginCard">
-<h1>🔐 Attendance Login</h1>
-
-<input id="user" placeholder="Username">
-<input id="pass" type="password" placeholder="Password">
-
-<br>
-<button onclick="login()">Login</button>
-<br><br>
-<span onclick="secret()">🔒 Secret</span>
+  <div class="loginCard">
+    <h2>🔐 Attendance Login</h2>
+    <input id="user" placeholder="Username">
+    <input id="pass" type="password" placeholder="Password">
+    <button onclick="login()">Login</button>
+    <p style="cursor:pointer" onclick="alert('User: Ravi\nPass: Ravi123')">🔒 Secret</p>
+  </div>
 </div>
-</div>
-
 
 <!-- APP -->
 <div id="app">
 
-<div class="header">
+<header>
+ Attendance MASTER
+ <button onclick="logout()">Logout</button>
+</header>
 
-<button class="logout" onclick="logout()">Logout</button>
-
+<div class="controls">
 <input type="date" id="date">
-<input type="time" id="inTime">
-<input type="time" id="outTime">
-
+<input type="time" id="in">
+<input type="time" id="out">
 <input id="post" placeholder="Post">
-
-<input type="color" id="bgColor" value="#ffffff">
-<input type="color" id="fontColor" value="#000000">
-
 <button onclick="save()">Save</button>
-<button onclick="clearForm()">Clear</button>
-
-<select id="monthFilter" onchange="render()"></select>
-<input id="search" placeholder="Search post" oninput="render()">
-
-<button onclick="downloadExcel()">Excel</button>
+<button onclick="download()">Excel</button>
 <button onclick="window.print()">Print</button>
-
+<input id="search" placeholder="Search post" oninput="render()">
+<select id="month" onchange="render()">
+<option value="all">All</option>
+</select>
 </div>
 
-
-<div class="tableArea">
+<div class="tableWrap">
 <table>
 <thead>
 <tr>
@@ -165,189 +142,157 @@ padding:6px 10px;
 </table>
 </div>
 
-<div class="footer">
+<footer>
 Total Duty: <span id="duty">0</span> |
 Total Hours: <span id="hours">0</span>
-</div>
+</footer>
 
 </div>
 
+<script type="module">
 
-<script>
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getFirestore, collection, addDoc, deleteDoc, doc, onSnapshot, updateDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-/* ================= LOGIN ================= */
-const USER="Ravi";
-const PASS="Ravi123";
-
-function login(){
-if(user.value===USER && pass.value===PASS){
-localStorage.setItem("login","yes");
-openApp();
-}else alert("Wrong login");
-}
-
-function logout(){
-localStorage.removeItem("login");
-location.reload();
-}
-
-function secret(){
-if(prompt("Enter year")==1995){
-alert("User: Ravi\nPass: Ravi123");
-}
-}
-
-function openApp(){
-loginPage.style.display="none";
-app.style.display="flex";
-}
-
-/* ================= AUTO LOGIN ================= */
-if(localStorage.getItem("login")) openApp();
-
-/* ================= FIREBASE ================= */
+/* ===== YOUR FIREBASE CONFIG ===== */
 const firebaseConfig = {
-apiKey: "AIzaSyD71mpolAsmejtU2icecQQcX07iCW_is0Y",
-authDomain: "ravicardmaker.firebaseapp.com",
-databaseURL:"https://ravicardmaker-default-rtdb.firebaseio.com/",
-projectId: "ravicardmaker"
+ apiKey: "YOUR_API_KEY",
+ authDomain: "YOUR_DOMAIN",
+ projectId: "YOUR_ID"
 };
+/* =============================== */
 
-firebase.initializeApp(firebaseConfig);
-const db=firebase.database().ref("attendance");
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+const col = collection(db,"attendance");
 
-/* ================= DATA ================= */
-let DATA=[];
+let rows=[];
+let editId=null;
 
-db.on("value",snap=>{
-DATA=snap.val()||[];
-render();
+/* LOGIN REMEMBER */
+if(localStorage.getItem("login")=="yes"){
+ showApp();
+}
+
+/* LOGIN */
+window.login=()=>{
+ if(user.value==="Ravi" && pass.value==="Ravi123"){
+  localStorage.setItem("login","yes");
+  showApp();
+ }else alert("Wrong login");
+}
+
+window.logout=()=>{
+ localStorage.removeItem("login");
+ location.reload();
+}
+
+function showApp(){
+ loginPage.style.display="none";
+ app.style.display="flex";
+}
+
+/* FIREBASE REALTIME */
+onSnapshot(col,snap=>{
+ rows=[];
+ snap.forEach(d=>rows.push({id:d.id,...d.data()}));
+ render();
 });
 
-/* ================= HOURS ================= */
-function calcHours(i,o){
-let diff=(new Date("1970-1-1 "+o)-new Date("1970-1-1 "+i))/3600000;
-if(diff<0) diff+=24; /* night shift fix */
-return diff.toFixed(2);
+/* SAVE */
+window.save=async()=>{
+ let d=date.value;
+ let i=in.value;
+ let o=out.value;
+ let p=post.value;
+
+ let h=((new Date("1970-01-01T"+o)-new Date("1970-01-01T"+i))/3600000);
+ if(h<0) h+=24;
+
+ if(editId){
+  await updateDoc(doc(db,"attendance",editId),{d,i,o,h,p});
+  editId=null;
+ }else{
+  await addDoc(col,{d,i,o,h,p});
+ }
+
+ date.value=in.value=out.value=post.value="";
 }
 
-/* ================= SAVE ================= */
-let editIndex=-1;
+/* RENDER */
+window.render=()=>{
+ let searchText=search.value.toLowerCase();
+ let m=month.value;
 
-function save(){
+ let body="";
+ let totalH=0,totalD=0;
 
-let h=calcHours(inTime.value,outTime.value);
+ rows
+ .filter(r=>{
+  let ok=r.p.toLowerCase().includes(searchText);
+  if(m!=="all") ok=ok && r.d.slice(0,7)==m;
+  return ok;
+ })
+ .sort((a,b)=>a.d.localeCompare(b.d))
+ .forEach(r=>{
+  totalH+=r.h;
+  totalD++;
 
-let obj={
-date:date.value,
-in:inTime.value,
-out:outTime.value,
-post:post.value,
-bg:bgColor.value,
-font:fontColor.value,
-hours:h
-};
+  body+=`
+  <tr>
+   <td>${r.d}</td>
+   <td>${r.i}</td>
+   <td>${r.o}</td>
+   <td>${r.h.toFixed(2)}</td>
+   <td>${r.p}</td>
+   <td><button onclick="editRow('${r.id}')">✏️</button></td>
+   <td><button onclick="del('${r.id}')">❌</button></td>
+  </tr>`;
+ });
 
-if(editIndex==-1){
-DATA.push(obj);
-}else{
-DATA[editIndex]=obj;
-editIndex=-1;
+ tbody.innerHTML=body;
+ duty.innerText=totalD;
+ hours.innerText=totalH.toFixed(2);
 }
 
-db.set(DATA);
-clearForm();
+/* EDIT */
+window.editRow=id=>{
+ let r=rows.find(x=>x.id==id);
+ date.value=r.d;
+ in.value=r.i;
+ out.value=r.o;
+ post.value=r.p;
+ editId=id;
 }
 
-/* ================= CLEAR ================= */
-function clearForm(){
-date.value="";
-inTime.value="";
-outTime.value="";
-post.value="";
+/* DELETE */
+window.del=async(id)=>{
+ if(confirm("Delete?")) await deleteDoc(doc(db,"attendance",id));
 }
 
-/* ================= DELETE ================= */
-function del(i){
-if(confirm("Delete entry?")){
-DATA.splice(i,1);
-db.set(DATA);
-}
-}
-
-/* ================= EDIT ================= */
-function editRow(i){
-let r=DATA[i];
-date.value=r.date;
-inTime.value=r.in;
-outTime.value=r.out;
-post.value=r.post;
-bgColor.value=r.bg;
-fontColor.value=r.font;
-editIndex=i;
+/* EXCEL */
+window.download=()=>{
+ let csv="Date,In,Out,Hours,Post\n";
+ rows.forEach(r=>{
+  csv+=`${r.d},${r.i},${r.o},${r.h},${r.p}\n`;
+ });
+ let blob=new Blob([csv]);
+ let a=document.createElement("a");
+ a.href=URL.createObjectURL(blob);
+ a.download="attendance.csv";
+ a.click();
 }
 
-/* ================= RENDER ================= */
-function render(){
-
-let m=monthFilter.value;
-let s=search.value.toLowerCase();
-
-let d=[...DATA];
-
-d.sort((a,b)=>a.date.localeCompare(b.date)||a.in.localeCompare(b.in));
-
-tbody.innerHTML="";
-let th=0,td=0;
-
-d.forEach((r,i)=>{
-
-if(m!=="All" && r.date.slice(5,7)!==m) return;
-if(!r.post.toLowerCase().includes(s)) return;
-
-td++;
-th+=parseFloat(r.hours);
-
-let tr=document.createElement("tr");
-tr.style.background=r.bg;
-tr.style.color=r.font;
-
-tr.innerHTML=`
-<td>${r.date}</td>
-<td>${r.in}</td>
-<td>${r.out}</td>
-<td>${r.hours}</td>
-<td>${r.post}</td>
-<td><button class="edit" onclick="editRow(${i})">✏</button></td>
-<td><button class="del" onclick="del(${i})">❌</button></td>
-`;
-
-tbody.appendChild(tr);
-});
-
-duty.innerText=td;
-hours.innerText=th.toFixed(2);
+/* MONTH LIST */
+let now=new Date();
+let ym=now.toISOString().slice(0,7);
+for(let i=0;i<12;i++){
+ let d=new Date(now.getFullYear(),i,1);
+ let v=d.toISOString().slice(0,7);
+ month.innerHTML+=`<option value="${v}">${v}</option>`;
 }
+month.value=ym;
 
-/* ================= MONTH FILTER ================= */
-monthFilter.innerHTML=`<option>All</option>`;
-for(let i=1;i<=12;i++){
-let m=i.toString().padStart(2,"0");
-monthFilter.innerHTML+=`<option value="${m}">${m}</option>`;
-}
-monthFilter.value=(new Date().getMonth()+1).toString().padStart(2,"0");
-
-/* ================= EXCEL ================= */
-function downloadExcel(){
-let csv="Date,In,Out,Hours,Post\n";
-DATA.forEach(r=>{
-csv+=`${r.date},${r.in},${r.out},${r.hours},${r.post}\n`;
-});
-let a=document.createElement("a");
-a.href="data:text/csv;charset=utf-8,"+encodeURIComponent(csv);
-a.download="attendance.csv";
-a.click();
-}
 </script>
 
 </body>
