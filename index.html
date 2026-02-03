@@ -1,137 +1,183 @@
-<!DOCTYPE html>
+l<!DOCTYPE html>
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Attendance Login</title>
+<title>Attendance MASTER</title>
 
 <style>
+body{margin:0;font-family:Arial}
 
-/* FULL SCREEN FIX */
-body{
-  margin:0;
-  height:100vh;
-  overflow:hidden;
-  font-family:Arial;
-  display:flex;
-  justify-content:center;
-  align-items:center;
-  background:linear-gradient(45deg,#667eea,#764ba2);
+/* ========= LOGIN ========= */
+#loginPage{
+height:100vh;
+display:flex;
+justify-content:center;
+align-items:center;
+background:linear-gradient(45deg,#667eea,#764ba2);
 }
 
-/* EXTRA BIG CARD */
 .card{
-  width:95%;
-  max-width:650px;     /* ⭐ bigger than before */
-  padding:65px 45px;  /* ⭐ more space */
-  background:white;
-  border-radius:25px;
-  text-align:center;
-  box-shadow:0 20px 45px rgba(0,0,0,0.35);
+width:95%;
+max-width:650px;
+background:white;
+padding:60px 40px;
+border-radius:25px;
+text-align:center;
+box-shadow:0 20px 45px rgba(0,0,0,.35);
 }
 
-/* TITLE BIG */
-h1{
-  font-size:36px;
-  margin-bottom:40px;
+.card input{
+width:100%;
+padding:18px;
+margin:12px 0;
+font-size:18px;
 }
 
-/* INPUT EXTRA BIG */
-input{
-  width:100%;
-  padding:18px;
-  margin:14px 0;
-  font-size:20px;
-  border-radius:10px;
-  border:1px solid #bbb;
+.card button{
+width:100%;
+padding:16px;
+font-size:18px;
+margin-top:10px;
+background:#1976d2;
+color:white;
+border:none;
+border-radius:10px;
 }
 
-/* BUTTON BIG */
-button{
-  width:100%;
-  padding:18px;
-  margin-top:14px;
-  font-size:20px;
-  border:none;
-  border-radius:10px;
-  background:#1976d2;
-  color:white;
-  cursor:pointer;
+/* ========= APP ========= */
+#app{display:none;height:100vh;background:#f2f2f2;overflow:hidden}
+
+header{
+position:fixed;
+top:0;
+width:100%;
+background:#1976d2;
+color:white;
+text-align:center;
+padding:12px;
+font-weight:bold;
 }
 
-/* SECRET LINK */
-.secret-btn{
-  background:none;
-  color:#444;
-  font-size:18px;
+footer{
+position:fixed;
+bottom:0;
+width:100%;
+background:#ffd54f;
+padding:8px;
+font-weight:bold;
 }
 
-/* SECRET PANEL */
-#secretPanel{
-  display:none;
-  margin-top:20px;
-  background:#f2f2f2;
-  padding:18px;
-  border-radius:12px;
-  font-size:18px;
+.form{
+margin-top:60px;
+padding:6px;
+text-align:center;
 }
 
-/* APP SCREEN */
-#app{
-  display:none;
-  height:100vh;
-  width:100%;
-  background:#f2f2f2;
-  text-align:center;
-  padding-top:150px;
-  font-size:26px;
+.form input,.form select,.form button{
+padding:6px;
+margin:2px;
 }
 
-.logout{
-  width:250px;
-  background:#e53935;
-  margin-top:40px;
+.table-box{
+height:55vh;
+overflow:auto;
 }
 
+table{
+width:100%;
+border-collapse:collapse;
+background:white;
+}
+
+th,td{
+border:1px solid #ccc;
+padding:6px;
+text-align:center;
+}
+
+th{background:#ffebee}
 </style>
 </head>
 
 <body>
 
 <!-- ================= LOGIN ================= -->
-<div class="card" id="loginPage">
 
-<h1>🔐 Attendance Login</h1>
+<div id="loginPage">
+<div class="card">
 
-<!-- Username fixed -->
-<input id="user" value="Admin" readonly>
+<h2>🔐 Attendance Login</h2>
 
+<input value="Admin" readonly>
 <input id="pass" type="password" placeholder="Enter Password">
 
 <button onclick="login()">Login</button>
 
-<button class="secret-btn" onclick="openSecret()">🔒 Secret</button>
+<button onclick="openSecret()" style="background:none;color:#444">🔒 Secret</button>
 
-<!-- SECRET PANEL -->
-<div id="secretPanel">
-
-  Current User : <b id="showU"></b><br>
-  Current Pass : <b id="showP"></b><br><br>
-
-  <input id="newPass" placeholder="New Password">
-  <button onclick="changePass()">OK Change Password</button>
-
+<div id="secretPanel" style="display:none;margin-top:10px">
+User: <b id="showU"></b><br>
+Pass: <b id="showP"></b><br><br>
+<input id="newPass" placeholder="New Password">
+<button onclick="changePass()">Change Password</button>
 </div>
 
 </div>
+</div>
 
 
-<!-- ================= AFTER LOGIN ================= -->
+<!-- ================= APP ================= -->
+
 <div id="app">
 
-✅ Welcome Admin<br>
-Attendance Dashboard Ready
+<header>Attendance MASTER</header>
 
-<button class="logout" onclick="logout()">Logout</button>
+<div class="form">
+
+<input type="date" id="date">
+<input type="time" id="in">
+<input type="time" id="out">
+
+<select id="post">
+<option>ETP</option>
+<option>BORD 2</option>
+<option>COE</option>
+<option>ABEER</option>
+</select>
+
+BG <input type="color" id="bg" value="#fff">
+Font <input type="color" id="font" value="#000">
+
+<button onclick="saveEntry()">Save</button>
+
+<select id="monthFilter" onchange="loadTable()"></select>
+
+<button onclick="downloadCSV()">Excel</button>
+<button onclick="logout()">Logout</button>
+
+</div>
+
+<div class="table-box">
+<table id="tbl">
+<thead>
+<tr>
+<th>Date</th>
+<th>In</th>
+<th>Out</th>
+<th>Hours</th>
+<th>Post</th>
+<th>Edit</th>
+<th>Delete</th>
+</tr>
+</thead>
+<tbody></tbody>
+</table>
+</div>
+
+<footer>
+Total Duty: <span id="duty">0</span> |
+Total Hours: <span id="hours">0</span>
+</footer>
 
 </div>
 
@@ -139,61 +185,172 @@ Attendance Dashboard Ready
 
 <script>
 
-/* DEFAULT USER */
-let userData = JSON.parse(localStorage.getItem("userData")) || {
-  user:"Admin",
-  pass:"1234"
-};
+/* ========= LOGIN ========= */
 
-/* LOGIN */
+let userData=JSON.parse(localStorage.getItem("userData"))||{pass:"1234"};
+
 function login(){
-
-  if(pass.value===""){
-    alert("Enter password");
-    return;
-  }
-
-  if(pass.value===userData.pass){
-    loginPage.style.display="none";
-    app.style.display="block";
-  }
-  else{
-    alert("Wrong Password");
-  }
+ if(pass.value===userData.pass){
+  loginPage.style.display="none";
+  app.style.display="block";
+  loadTable();
+ } else alert("Wrong password");
 }
 
-/* LOGOUT */
 function logout(){
-  app.style.display="none";
-  loginPage.style.display="block";
-  pass.value="";
+ app.style.display="none";
+ loginPage.style.display="flex";
+ pass.value="";
 }
 
-/* SECRET OPEN */
 function openSecret(){
-
-  let code = prompt("Enter Secret Code");
-
-  if(code==="1995"){
-    secretPanel.style.display="block";
-    showU.innerText=userData.user;
-    showP.innerText=userData.pass;
-  }
+ let s=prompt("Secret code");
+ if(s==="1995"){
+  secretPanel.style.display="block";
+  showU.innerText="Admin";
+  showP.innerText=userData.pass;
+ }
 }
 
-/* CHANGE PASSWORD */
 function changePass(){
-
-  if(newPass.value==="") return;
-
-  userData.pass=newPass.value;
-  localStorage.setItem("userData",JSON.stringify(userData));
-
-  alert("Password Changed Successfully");
-
-  secretPanel.style.display="none";
-  pass.value="";          // back to login
+ userData.pass=newPass.value;
+ localStorage.setItem("userData",JSON.stringify(userData));
+ alert("Changed");
+ secretPanel.style.display="none";
 }
+
+
+/* ========= DATA ========= */
+
+let data=JSON.parse(localStorage.getItem("attData"))||[];
+
+
+/* ========= MONTH DROPDOWN ========= */
+
+let months=["All","Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+
+months.forEach((m,i)=>{
+ monthFilter.innerHTML+=`<option value="${i}">${m}</option>`;
+});
+
+monthFilter.value=new Date().getMonth()+1;
+
+
+/* ========= HOURS ========= */
+
+function calcHours(a,b){
+ let s=new Date("2000-01-01 "+a);
+ let e=new Date("2000-01-01 "+b);
+ if(e<s)e.setDate(e.getDate()+1);
+ return ((e-s)/3600000).toFixed(2);
+}
+
+
+/* ========= SAVE ========= */
+
+function saveEntry(){
+
+ if(!date.value||!in.value||!out.value) return;
+
+ let h=calcHours(in.value,out.value);
+
+ data.push({
+  date:date.value,
+  in:in.value,
+  out:out.value,
+  hours:h,
+  post:post.value,
+  bg:bg.value,
+  font:font.value
+ });
+
+ localStorage.setItem("attData",JSON.stringify(data));
+ loadTable();
+}
+
+
+/* ========= LOAD ========= */
+
+function loadTable(){
+
+ let tb=tbl.querySelector("tbody");
+ tb.innerHTML="";
+ let total=0,count=0;
+
+ let m=monthFilter.value;
+
+ data.forEach((r,i)=>{
+
+ let month=new Date(r.date).getMonth()+1;
+
+ if(m!=0 && month!=m) return;
+
+ total+=parseFloat(r.hours);
+ count++;
+
+ tb.innerHTML+=`
+ <tr style="background:${r.bg};color:${r.font}">
+ <td>${r.date}</td>
+ <td>${r.in}</td>
+ <td>${r.out}</td>
+ <td>${r.hours}</td>
+ <td>${r.post}</td>
+ <td><button onclick="editRow(${i})">✏️</button></td>
+ <td><button onclick="deleteRow(${i})">❌</button></td>
+ </tr>`;
+ });
+
+ duty.innerText=count;
+ hours.innerText=total.toFixed(2);
+}
+
+
+/* ========= EDIT ========= */
+
+function editRow(i){
+ let r=data[i];
+ date.value=r.date;
+ in.value=r.in;
+ out.value=r.out;
+ post.value=r.post;
+ bg.value=r.bg;
+ font.value=r.font;
+ data.splice(i,1);
+ loadTable();
+}
+
+
+/* ========= DELETE ========= */
+
+function deleteRow(i){
+ if(confirm("Delete?")){
+  data.splice(i,1);
+  localStorage.setItem("attData",JSON.stringify(data));
+  loadTable();
+ }
+}
+
+
+/* ========= EXCEL ========= */
+
+function downloadCSV(){
+
+ let rows=[...tbl.rows];
+
+ let csv=[...rows].map(r=>
+  [...r.cells].map(c=>c.innerText).join(",")
+ ).join("\n");
+
+ let blob=new Blob([csv]);
+
+ let a=document.createElement("a");
+ a.href=URL.createObjectURL(blob);
+ a.download="attendance.csv";
+ a.click();
+}
+
+
+loadTable();
 
 </script>
 
