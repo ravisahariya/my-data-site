@@ -1,87 +1,127 @@
 <!DOCTYPE html>
 <html>
 <head>
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width,initial-scale=1">
 
 <title>Attendance MASTER</title>
 
+<!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
 
 <style>
 body{
-margin:0;
-font-family:Arial;
-background:#f2f2f2;
+ margin:0;
+ font-family:Arial;
 }
 
-/* ---------- LOGIN ---------- */
+/* ================= LOGIN ================= */
 
 #loginPage{
-height:100vh;
-display:flex;
-justify-content:center;
-align-items:center;
-background:linear-gradient(135deg,#667eea,#764ba2);
+ height:100vh;
+ display:flex;
+ justify-content:center;
+ align-items:center;
+ background:linear-gradient(135deg,#667eea,#764ba2);
 }
 
 .loginCard{
-background:#fff;
-width:95%;
-max-width:420px;
-padding:40px;
-border-radius:20px;
-text-align:center;
-box-shadow:0 10px 30px rgba(0,0,0,.35);
+ background:#fff;
+ width:95%;
+ max-width:500px;
+ padding:40px;
+ border-radius:20px;
+ text-align:center;
+ box-shadow:0 15px 30px rgba(0,0,0,.3);
 }
 
-/* ---------- APP ---------- */
+.loginCard h2{
+ font-size:28px;
+ margin-bottom:25px;
+}
+
+.loginCard input{
+ width:100%;
+ padding:14px;
+ margin:10px 0;
+ font-size:18px;
+}
+
+.loginCard button{
+ padding:12px 30px;
+ font-size:18px;
+}
+
+.secret{
+ margin-top:15px;
+ cursor:pointer;
+ color:#777;
+}
+
+
+/* ================= APP ================= */
 
 #app{
-display:none;
-height:100vh;
-flex-direction:column;
+ display:none;
+ height:100vh;
+ flex-direction:column;
 }
 
-.header{
-background:#fff;
-padding:8px;
-display:flex;
-justify-content:space-between;
-font-weight:bold;
+/* header fixed */
+.top{
+ background:#fff;
+ padding:6px;
+ box-shadow:0 2px 6px rgba(0,0,0,.2);
+ position:sticky;
+ top:0;
+ z-index:5;
 }
 
+/* footer fixed */
+.bottom{
+ background:#ffeaa7;
+ font-weight:bold;
+ padding:6px;
+ position:sticky;
+ bottom:0;
+}
+
+/* scroll only table */
 .tableBox{
-flex:1;
-overflow:auto;
-background:#fff;
+ flex:1;
+ overflow:auto;
+ background:#fff;
 }
 
-.footer{
-background:#ffeaa7;
-padding:6px;
-font-weight:bold;
+.form{
+ display:flex;
+ flex-wrap:wrap;
+ gap:5px;
 }
 
-/* ---------- TABLE ---------- */
+input,select,button{
+ padding:6px;
+ font-size:14px;
+}
 
 table{
-width:100%;
-border-collapse:collapse;
+ width:100%;
+ border-collapse:collapse;
 }
 
 th,td{
-border:1px solid #ccc;
-padding:6px;
-text-align:center;
+ border:1px solid #ccc;
+ padding:6px;
+ text-align:center;
 }
 
 th{
-background:#ffd9d9;
+ background:#ffd9d9;
 }
 
-button{
-padding:6px;
+.logout{
+ background:red;
+ color:#fff;
 }
 </style>
 </head>
@@ -89,49 +129,57 @@ padding:6px;
 <body>
 
 
-<!-- LOGIN -->
+<!-- ================= LOGIN PAGE ================= -->
+
 <div id="loginPage">
+ <div class="loginCard">
+  <h2>🔐 Attendance Login</h2>
 
-<div class="loginCard">
+  <input id="username" placeholder="Username">
+  <input id="password" type="password" placeholder="Password">
 
-<h2>🔐 Attendance Login</h2>
+  <button onclick="doLogin()">Login</button>
 
-<input id="username" placeholder="Username"><br><br>
-<input id="password" type="password" placeholder="Password"><br><br>
-
-<button onclick="login()">Login</button>
-
-<br><br>
-
-<div onclick="secret()" style="cursor:pointer">🔒 Secret</div>
-
-</div>
-
+  <div class="secret" onclick="secretBox()">🔒 Secret</div>
+ </div>
 </div>
 
 
+<!-- ================= APP ================= -->
 
-<!-- APP -->
 <div id="app">
 
-<div class="header">
-Attendance MASTER
-<button onclick="logout()">Logout</button>
+<!-- TOP -->
+<div class="top">
+
+<div style="display:flex;justify-content:space-between">
+ <b>☁️ Attendance MASTER</b>
+ <button class="logout" onclick="logout()">Logout</button>
 </div>
 
-<div style="padding:5px">
+<div class="form">
 
 <input type="date" id="date">
 <input type="time" id="inTime">
 <input type="time" id="outTime">
 <input id="post" placeholder="Post">
 
+BG <input type="color" id="bg" value="#fffacd">
+Font <input type="color" id="font" value="#000000">
+
 <button onclick="save()">Save</button>
 
+<select id="monthFilter" onchange="render()"></select>
+
+<button onclick="downloadCSV()">Excel</button>
+<button onclick="window.print()">Print</button>
+
+</div>
 </div>
 
-<div class="tableBox">
 
+<!-- TABLE -->
+<div class="tableBox">
 <table>
 <thead>
 <tr>
@@ -140,17 +188,17 @@ Attendance MASTER
 <th>Out</th>
 <th>Hours</th>
 <th>Post</th>
+<th>Edit</th>
 <th>Delete</th>
 </tr>
 </thead>
-
 <tbody id="tbody"></tbody>
-
 </table>
-
 </div>
 
-<div class="footer">
+
+<!-- FOOTER -->
+<div class="bottom">
 Total Duty: <span id="duty">0</span>
 &nbsp;&nbsp;
 Total Hours: <span id="hours">0</span>
@@ -161,20 +209,22 @@ Total Hours: <span id="hours">0</span>
 
 
 <script>
-/* ================= LOGIN ================= */
 
-let USER = localStorage.getItem("user") || "Ravi";
-let PASS = localStorage.getItem("pass") || "Ravi123";
+/* ================= LOGIN MEMORY ================= */
+
+if(!localStorage.getItem("user")) localStorage.setItem("user","Ravi");
+if(!localStorage.getItem("pass")) localStorage.setItem("pass","Ravi123");
 
 if(localStorage.getItem("login")) showApp();
 
-function login(){
- if(username.value===USER && password.value===PASS){
+function doLogin(){
+ let u = localStorage.getItem("user");
+ let p = localStorage.getItem("pass");
+
+ if(username.value===u && password.value===p){
   localStorage.setItem("login","1");
   showApp();
- }else{
-  alert("Wrong login");
- }
+ }else alert("Wrong login");
 }
 
 function logout(){
@@ -187,19 +237,36 @@ function showApp(){
  app.style.display="flex";
 }
 
-/* ================= SECRET ================= */
 
-function secret(){
- if(prompt("Enter secret year")!=="1995") return;
+/* ================= SECRET CHANGE ================= */
 
- USER = prompt("New Username", USER);
- PASS = prompt("New Password", PASS);
+function secretBox(){
 
- localStorage.setItem("user",USER);
- localStorage.setItem("pass",PASS);
+ let y=prompt("Enter secret year");
+ if(y!=="1995") return;
 
- alert("Updated!");
+ let old=prompt("Old Password");
+ if(old!==localStorage.getItem("pass")){
+  alert("Wrong old password");
+  return;
+ }
+
+ let newUser=prompt("New Username");
+ let newPass=prompt("New Password");
+ let confirm=prompt("Confirm Password");
+
+ if(newPass!==confirm){
+  alert("Password mismatch");
+  return;
+ }
+
+ localStorage.setItem("user",newUser);
+ localStorage.setItem("pass",newPass);
+
+ alert("Login changed successfully ✅");
 }
+
+
 
 /* ================= FIREBASE ================= */
 
@@ -211,7 +278,7 @@ firebase.initializeApp({
 
 const db=firebase.firestore();
 
-let data=[];
+let data=[],editId=null;
 
 db.collection("attendance").onSnapshot(s=>{
  data=[];
@@ -219,48 +286,104 @@ db.collection("attendance").onSnapshot(s=>{
  render();
 });
 
-/* ================= SAVE ================= */
 
-function hours(a,b){
- let x=new Date("2000 "+a);
- let y=new Date("2000 "+b);
- if(y<x)y.setDate(y.getDate()+1);
- return ((y-x)/3600000).toFixed(2);
+/* ================= MONTH ================= */
+
+const months=["All","Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+
+months.forEach((m,i)=>{
+ let op=document.createElement("option");
+ op.value=i===0?"all":String(i).padStart(2,"0");
+ op.text=m;
+ monthFilter.appendChild(op);
+});
+
+monthFilter.value=String(new Date().getMonth()+1).padStart(2,"0");
+
+
+/* ================= HOURS ================= */
+
+function calc(i,o){
+ let a=new Date("2000 "+i);
+ let b=new Date("2000 "+o);
+ if(b<a) b.setDate(b.getDate()+1);
+ return ((b-a)/3600000).toFixed(2);
 }
+
+
+/* ================= SAVE ================= */
 
 function save(){
 
- db.collection("attendance").add({
+ let obj={
   d:date.value,
   i:inTime.value,
   o:outTime.value,
   p:post.value,
-  h:hours(inTime.value,outTime.value)
- });
+  bg:bg.value,
+  font:font.value,
+  h:calc(inTime.value,outTime.value)
+ };
 
+ if(editId)
+  db.collection("attendance").doc(editId).update(obj);
+ else
+  db.collection("attendance").add(obj);
+
+ editId=null;
 }
+
+
+/* ================= EDIT ================= */
+
+function edit(id){
+ let r=data.find(x=>x.id===id);
+
+ editId=id;
+ date.value=r.d;
+ inTime.value=r.i;
+ outTime.value=r.o;
+ post.value=r.p;
+ bg.value=r.bg;
+ font.value=r.font;
+}
+
+
+/* ================= DELETE ================= */
+
+function del(id){
+ if(confirm("Delete entry?"))
+  db.collection("attendance").doc(id).delete();
+}
+
 
 /* ================= RENDER ================= */
 
 function render(){
 
  tbody.innerHTML="";
- let td=0, th=0;
 
- data.sort((a,b)=> new Date(a.d+" "+a.i)-new Date(b.d+" "+b.i));
+ let m=monthFilter.value;
 
- data.forEach(r=>{
+ let sorted=[...data].sort((a,b)=> new Date(a.d+" "+a.i)-new Date(b.d+" "+b.i));
+
+ let th=0,td=0;
+
+ sorted.forEach(r=>{
+
+  if(m!=="all" && r.d.split("-")[1]!==m) return;
 
   td++;
   th+=+r.h;
 
   tbody.innerHTML+=`
-  <tr>
+  <tr style="background:${r.bg};color:${r.font}">
   <td>${r.d}</td>
   <td>${r.i}</td>
   <td>${r.o}</td>
   <td>${r.h}</td>
   <td>${r.p}</td>
+  <td><button onclick="edit('${r.id}')">✏️</button></td>
   <td><button onclick="del('${r.id}')">❌</button></td>
   </tr>`;
  });
@@ -269,12 +392,20 @@ function render(){
  hours.innerText=th.toFixed(2);
 }
 
-/* ================= DELETE ================= */
 
-function del(id){
- db.collection("attendance").doc(id).delete();
+/* ================= CSV ================= */
+
+function downloadCSV(){
+ let csv="Date,In,Out,Hours,Post\n";
+ data.forEach(r=>csv+=`${r.d},${r.i},${r.o},${r.h},${r.p}\n`);
+
+ let blob=new Blob([csv]);
+ let a=document.createElement("a");
+ a.href=URL.createObjectURL(blob);
+ a.download="attendance.csv";
+ a.click();
 }
-</script>
 
+</script>
 </body>
 </html>
