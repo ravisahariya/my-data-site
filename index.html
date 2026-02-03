@@ -1,3 +1,155 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<title>Attendance MASTER</title>
+
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+
+<style>
+body{
+margin:0;
+font-family:Arial;
+background:#f2f2f2;
+}
+
+/* ---------- LOGIN ---------- */
+
+#loginPage{
+height:100vh;
+display:flex;
+justify-content:center;
+align-items:center;
+background:linear-gradient(135deg,#667eea,#764ba2);
+}
+
+.loginCard{
+background:#fff;
+width:95%;
+max-width:420px;
+padding:40px;
+border-radius:20px;
+text-align:center;
+box-shadow:0 10px 30px rgba(0,0,0,.35);
+}
+
+/* ---------- APP ---------- */
+
+#app{
+display:none;
+height:100vh;
+flex-direction:column;
+}
+
+.header{
+background:#fff;
+padding:8px;
+display:flex;
+justify-content:space-between;
+font-weight:bold;
+}
+
+.tableBox{
+flex:1;
+overflow:auto;
+background:#fff;
+}
+
+.footer{
+background:#ffeaa7;
+padding:6px;
+font-weight:bold;
+}
+
+/* ---------- TABLE ---------- */
+
+table{
+width:100%;
+border-collapse:collapse;
+}
+
+th,td{
+border:1px solid #ccc;
+padding:6px;
+text-align:center;
+}
+
+th{
+background:#ffd9d9;
+}
+
+button{
+padding:6px;
+}
+</style>
+</head>
+
+<body>
+
+
+<!-- LOGIN -->
+<div id="loginPage">
+
+<div class="loginCard">
+
+<h2>🔐 Attendance Login</h2>
+
+<input id="username" placeholder="Username"><br><br>
+<input id="password" type="password" placeholder="Password"><br><br>
+
+<button onclick="login()">Login</button>
+
+<br><br>
+
+<div onclick="secret()" style="cursor:pointer">🔒 Secret</div>
+
+</div>
+
+</div>
+
+
+
+<!-- APP -->
+<div id="app">
+
+<div class="header">
+Attendance MASTER
+<button onclick="logout()">Logout</button>
+</div>
+
+<div style="padding:5px">
+
+<input type="date" id="date">
+<input type="time" id="inTime">
+<input type="time" id="outTime">
+<input id="post" placeholder="Post">
+
+<button onclick="save()">Save</button>
+
+</div>
+
+<div class="tableBox">
+
+<table>
+<thead>
+<tr>
+<th>Date</th>
+<th>In</th>
+<th>Out</th>
+<th>Hours</th>
+<th>Post</th>
+<th>Delete</th>
+</tr>
+</thead>
+
+<tbody id="tbody"></tbody>
+
+</table>
+
+</div>
+
 <div class="footer">
 Total Duty: <span id="duty">0</span>
 &nbsp;&nbsp;
@@ -9,147 +161,118 @@ Total Hours: <span id="hours">0</span>
 
 
 <script>
-/* LOGIN */
-if(localStorage.login) show();
+/* ================= LOGIN ================= */
+
+let USER = localStorage.getItem("user") || "Ravi";
+let PASS = localStorage.getItem("pass") || "Ravi123";
+
+if(localStorage.getItem("login")) showApp();
 
 function login(){
-if(username.value==="Ravi" && password.value==="Ravi123"){
-localStorage.login=1;
-show();
-}else alert("Wrong login");
+ if(username.value===USER && password.value===PASS){
+  localStorage.setItem("login","1");
+  showApp();
+ }else{
+  alert("Wrong login");
+ }
 }
+
 function logout(){
-localStorage.removeItem("login");
-location.reload();
+ localStorage.removeItem("login");
+ location.reload();
 }
-function show(){
-loginPage.style.display="none";
-app.style.display="flex";
+
+function showApp(){
+ loginPage.style.display="none";
+ app.style.display="flex";
 }
+
+/* ================= SECRET ================= */
+
 function secret(){
-if(prompt("Enter year")==="1995")
-alert("Username: Ravi\nPassword: Ravi123");
+ if(prompt("Enter secret year")!=="1995") return;
+
+ USER = prompt("New Username", USER);
+ PASS = prompt("New Password", PASS);
+
+ localStorage.setItem("user",USER);
+ localStorage.setItem("pass",PASS);
+
+ alert("Updated!");
 }
 
+/* ================= FIREBASE ================= */
 
-/* FIREBASE */
 firebase.initializeApp({
-apiKey:"AIzaSyD71mpolAsmejtU2icecQQcX07iCW_is0Y",
-authDomain:"ravicardmaker.firebaseapp.com",
-projectId:"ravicardmaker"
+ apiKey:"AIzaSyD71mpolAsmejtU2icecQQcX07iCW_is0Y",
+ authDomain:"ravicardmaker.firebaseapp.com",
+ projectId:"ravicardmaker"
 });
+
 const db=firebase.firestore();
 
-let rows=[],editId=null;
+let data=[];
 
 db.collection("attendance").onSnapshot(s=>{
-rows=[];
-s.forEach(d=>rows.push({id:d.id,...d.data()}));
-render();
+ data=[];
+ s.forEach(d=>data.push({id:d.id,...d.data()}));
+ render();
 });
 
+/* ================= SAVE ================= */
 
-/* MONTH */
-const months=["All","Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
-months.forEach((m,i)=>{
-let o=document.createElement("option");
-o.value=i===0?"all":String(i).padStart(2,"0");
-o.text=m;
-month.appendChild(o);
-});
-month.value=String(new Date().getMonth()+1).padStart(2,"0");
-
-
-/* HOURS */
-function hoursCalc(i,o){
-let a=new Date("2000 "+i),b=new Date("2000 "+o);
-if(b<a)b.setDate(b.getDate()+1);
-return ((b-a)/3600000).toFixed(2);
+function hours(a,b){
+ let x=new Date("2000 "+a);
+ let y=new Date("2000 "+b);
+ if(y<x)y.setDate(y.getDate()+1);
+ return ((y-x)/3600000).toFixed(2);
 }
 
-
-/* SAVE */
 function save(){
-let obj={
-d:date.value,
-i:inTime.value,
-o:outTime.value,
-p:post.value,
-bg:bg.value,
-font:font.value,
-h:hoursCalc(inTime.value,outTime.value)
-};
 
-if(editId)
-db.collection("attendance").doc(editId).update(obj);
-else
-db.collection("attendance").add(obj);
+ db.collection("attendance").add({
+  d:date.value,
+  i:inTime.value,
+  o:outTime.value,
+  p:post.value,
+  h:hours(inTime.value,outTime.value)
+ });
 
-clearForm();
-}
-function clearForm(){editId=null}
-
-
-/* EDIT */
-function edit(id){
-let r=rows.find(x=>x.id===id);
-editId=id;
-date.value=r.d;
-inTime.value=r.i;
-outTime.value=r.o;
-post.value=r.p;
-bg.value=r.bg;
-font.value=r.font;
 }
 
+/* ================= RENDER ================= */
 
-/* DELETE */
-function del(id){
-if(confirm("Delete?"))
-db.collection("attendance").doc(id).delete();
-}
-
-
-/* RENDER */
 function render(){
-tbody.innerHTML="";
-let m=month.value,s=search.value.toLowerCase();
-let th=0,td=0;
 
-rows.sort((a,b)=> new Date(a.d+" "+a.i)-new Date(b.d+" "+b.i));
+ tbody.innerHTML="";
+ let td=0, th=0;
 
-rows.forEach(r=>{
-if(m!=="all" && r.d.split("-")[1]!==m) return;
-if(s && !r.p.toLowerCase().includes(s)) return;
+ data.sort((a,b)=> new Date(a.d+" "+a.i)-new Date(b.d+" "+b.i));
 
-td++; th+=+r.h;
+ data.forEach(r=>{
 
-tbody.innerHTML+=`
-<tr style="background:${r.bg};color:${r.font}">
-<td>${r.d}</td>
-<td>${r.i}</td>
-<td>${r.o}</td>
-<td>${r.h}</td>
-<td>${r.p}</td>
-<td><button onclick="edit('${r.id}')">✏️</button></td>
-<td><button onclick="del('${r.id}')">❌</button></td>
-</tr>`;
-});
+  td++;
+  th+=+r.h;
 
-duty.innerText=td;
-hours.innerText=th.toFixed(2);
+  tbody.innerHTML+=`
+  <tr>
+  <td>${r.d}</td>
+  <td>${r.i}</td>
+  <td>${r.o}</td>
+  <td>${r.h}</td>
+  <td>${r.p}</td>
+  <td><button onclick="del('${r.id}')">❌</button></td>
+  </tr>`;
+ });
+
+ duty.innerText=td;
+ hours.innerText=th.toFixed(2);
 }
 
+/* ================= DELETE ================= */
 
-/* CSV */
-function downloadCSV(){
-let csv="Date,In,Out,Hours,Post\n";
-rows.forEach(r=>csv+=`${r.d},${r.i},${r.o},${r.h},${r.p}\n`);
-let blob=new Blob([csv]);
-let a=document.createElement("a");
-a.href=URL.createObjectURL(blob);
-a.download="attendance.csv";
-a.click();
+function del(id){
+ db.collection("attendance").doc(id).delete();
 }
 </script>
 
