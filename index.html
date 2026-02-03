@@ -8,9 +8,13 @@
 <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
 
 <style>
-body{margin:0;font-family:Arial;background:#f2f2f2}
+body{
+margin:0;
+font-family:Arial;
+background:#f2f2f2;
+}
 
-/* LOGIN */
+/* ================= LOGIN ================= */
 #loginPage{
 height:100vh;
 display:flex;
@@ -26,60 +30,74 @@ max-width:520px;
 padding:40px;
 border-radius:18px;
 text-align:center;
-box-shadow:0 12px 30px rgba(0,0,0,.35);
+box-shadow:0 10px 25px rgba(0,0,0,.3);
 }
 
-.bigClock{
-font-size:18px;
-font-weight:bold;
-margin-bottom:15px;
+input,select,button{
+padding:7px;
+margin:3px;
 }
 
-/* APP */
+/* ================= APP ================= */
 #app{
 display:none;
 height:100vh;
 flex-direction:column;
 }
 
-/* HEADER */
+/* BLUE HEADER */
 .topFixed{
+background:#1976d2;
+color:#fff;
+padding:8px;
 position:sticky;
 top:0;
-background:#fff;
-padding:8px;
-box-shadow:0 2px 6px rgba(0,0,0,.2);
 z-index:5;
+box-shadow:0 2px 6px rgba(0,0,0,.3);
 }
 
-/* FOOTER */
-.bottomFixed{
-position:sticky;
-bottom:0;
-background:#ffeaa7;
-padding:8px;
-font-weight:bold;
+.logout{
+background:#f44336;
+color:#fff;
+border:none;
+padding:6px 10px;
 }
 
-/* TABLE */
 .tableBox{
 flex:1;
 overflow:auto;
 background:#fff;
 }
 
-table{width:100%;border-collapse:collapse}
-th,td{border:1px solid #ccc;padding:6px;text-align:center}
-th{background:#ffd9d9}
-
-/* night highlight */
-.night{
-background:#d0e6ff !important;
+/* TABLE */
+table{
+width:100%;
+border-collapse:collapse;
 }
 
-button{padding:6px}
-.logout{background:#f44336;color:#fff;border:none}
-.secret{cursor:pointer;margin-top:10px}
+th,td{
+border:1px solid #ccc;
+padding:6px;
+text-align:center;
+}
+
+th{
+background:#ffd9d9;
+}
+
+/* OT highlight */
+.otRow{
+background:#cfe8ff !important;
+}
+
+/* FOOTER */
+.bottomFixed{
+background:#ffeaa7;
+padding:6px;
+font-weight:bold;
+position:sticky;
+bottom:0;
+}
 </style>
 </head>
 
@@ -88,17 +106,10 @@ button{padding:6px}
 <!-- LOGIN -->
 <div id="loginPage">
 <div class="loginCard">
-
-<div class="bigClock" id="clock"></div>
-
 <h2>🔐 Attendance Login</h2>
-
-<input id="username" placeholder="Username"><br><br>
-<input type="password" id="password" placeholder="Password"><br><br>
-
+<input id="username" placeholder="Username"><br>
+<input type="password" id="password" placeholder="Password"><br>
 <button onclick="doLogin()">Login</button>
-
-<div class="secret" onclick="secretBox()">🔒 Secret</div>
 </div>
 </div>
 
@@ -106,18 +117,19 @@ button{padding:6px}
 <!-- APP -->
 <div id="app">
 
+<!-- HEADER -->
 <div class="topFixed">
+
+<div style="display:flex;justify-content:space-between">
 <b>☁️ Attendance MASTER</b>
 <button class="logout" onclick="logout()">Logout</button>
-<br><br>
+</div>
 
+<div>
 <input type="date" id="date">
 <input type="time" id="inTime">
 <input type="time" id="outTime">
 <input id="post" placeholder="Post">
-
-BG <input type="color" id="bg" value="#ffffff">
-Font <input type="color" id="font" value="#000000">
 
 <button onclick="save()">Save</button>
 
@@ -125,10 +137,12 @@ Font <input type="color" id="font" value="#000000">
 
 <button onclick="downloadCSV()">Excel</button>
 <button onclick="window.print()">Print</button>
+</div>
 
 </div>
 
 
+<!-- TABLE -->
 <div class="tableBox">
 <table>
 <thead>
@@ -146,38 +160,22 @@ Font <input type="color" id="font" value="#000000">
 </table>
 </div>
 
-
 <div class="bottomFixed">
 Total Duty: <span id="duty">0</span>
-&nbsp;&nbsp;&nbsp;
+&nbsp;&nbsp;
 Total Hours: <span id="hours">0</span>
 </div>
 
 </div>
 
 
-
 <script>
-
-/* CLOCK */
-setInterval(()=>{
- let d=new Date();
- let day=d.toLocaleDateString('en-IN',{weekday:'long'});
- let date=d.toLocaleDateString('en-IN');
- let time=d.toLocaleTimeString('en-IN',{hour12:false});
- clock.innerText=`${day} | ${date} | ${time}`;
-},1000);
-
-
 /* LOGIN */
-let USER="Ravi";
-let PASS="Ravi123";
-
-if(localStorage.login) showApp();
+if(localStorage.getItem("login")) showApp();
 
 function doLogin(){
- if(username.value===USER && password.value===PASS){
-  localStorage.login=1;
+ if(username.value==="Ravi" && password.value==="Ravi123"){
+  localStorage.setItem("login","1");
   showApp();
  }else alert("Wrong login");
 }
@@ -192,24 +190,16 @@ function showApp(){
  app.style.display="flex";
 }
 
-/* SECRET */
-function secretBox(){
- let y=prompt("Enter 1995");
- if(y==="1995"){
-  alert(`Username: ${USER}\nPassword: ${PASS}`);
- }
-}
-
 
 /* FIREBASE */
 firebase.initializeApp({
  apiKey:"AIzaSyD71mpolAsmejtU2icecQQcX07iCW_is0Y",
+ authDomain:"ravicardmaker.firebaseapp.com",
  projectId:"ravicardmaker"
 });
 
 const db=firebase.firestore();
-
-let data=[],editId=null;
+let data=[], editId=null;
 
 db.collection("attendance").onSnapshot(s=>{
  data=[];
@@ -218,35 +208,28 @@ db.collection("attendance").onSnapshot(s=>{
 });
 
 
-/* CURRENT MONTH DEFAULT */
-let now=new Date();
-let currentMonth=String(now.getMonth()+1).padStart(2,"0");
+/* MONTH NAMES */
+const monthNames=[
+"All",
+"January","February","March","April","May","June",
+"July","August","September","October","November","December"
+];
 
-["All","01","02","03","04","05","06","07","08","09","10","11","12"]
-.forEach(m=>{
- let o=document.createElement("option");
- o.value=m==="All"?"all":m;
- o.text=m==="All"?"All":m;
- monthFilter.appendChild(o);
+monthNames.forEach((m,i)=>{
+ let op=document.createElement("option");
+ op.value=i===0?"all":String(i).padStart(2,"0");
+ op.text=m;
+ monthFilter.appendChild(op);
 });
 
-monthFilter.value=currentMonth;
+monthFilter.value=String(new Date().getMonth()+1).padStart(2,"0");
 
 
 /* HOURS */
 function calc(i,o){
- let a=new Date("2000 "+i);
- let b=new Date("2000 "+o);
- if(b<a)b.setDate(b.getDate()+1);
+ let a=new Date("2000 "+i),b=new Date("2000 "+o);
+ if(b<a) b.setDate(b.getDate()+1);
  return ((b-a)/3600000).toFixed(2);
-}
-
-/* AM PM */
-function ampm(t){
- let [h,m]=t.split(":");
- let d=new Date();
- d.setHours(h,m);
- return d.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
 }
 
 
@@ -257,40 +240,67 @@ function save(){
   i:inTime.value,
   o:outTime.value,
   p:post.value,
-  bg:bg.value,
-  font:font.value,
   h:calc(inTime.value,outTime.value)
  };
 
  if(editId) db.collection("attendance").doc(editId).update(obj);
  else db.collection("attendance").add(obj);
 
+ editId=null;
 }
 
 
-/* RENDER */
+/* EDIT */
+function edit(id){
+ let r=data.find(x=>x.id===id);
+ editId=id;
+ date.value=r.d;
+ inTime.value=r.i;
+ outTime.value=r.o;
+ post.value=r.p;
+}
+
+
+/* DELETE */
+function del(id){
+ if(confirm("Delete?"))
+  db.collection("attendance").doc(id).delete();
+}
+
+
+/* RENDER + OT HIGHLIGHT */
 function render(){
 
  tbody.innerHTML="";
- let month=monthFilter.value;
+
+ let m=monthFilter.value;
 
  let sorted=[...data].sort((a,b)=> new Date(a.d+" "+a.i)-new Date(b.d+" "+b.i));
 
- let th=0,td=0;
+ let seenDates={};
+ let td=0, th=0;
 
  sorted.forEach(r=>{
 
-  if(month!=="all" && r.d.split("-")[1]!==month) return;
+  if(m!=="all" && r.d.split("-")[1]!==m) return;
 
-  td++; th+=+r.h;
+  td++;
+  th+=+r.h;
 
-  let night = (r.i > r.o); // night shift
+  let isOT=false;
+
+  /* double date */
+  if(seenDates[r.d]) isOT=true;
+  seenDates[r.d]=true;
+
+  /* night shift */
+  if(r.o < r.i) isOT=true;
 
   tbody.innerHTML+=`
-  <tr class="${night?'night':''}" style="color:${r.font}">
+  <tr class="${isOT?'otRow':''}">
   <td>${r.d}</td>
-  <td>${ampm(r.i)}</td>
-  <td>${ampm(r.o)}</td>
+  <td>${r.i}</td>
+  <td>${r.o}</td>
   <td>${r.h}</td>
   <td>${r.p}</td>
   <td><button onclick="edit('${r.id}')">✏️</button></td>
@@ -300,13 +310,6 @@ function render(){
 
  duty.innerText=td;
  hours.innerText=th.toFixed(2);
-}
-
-
-/* DELETE */
-function del(id){
- if(confirm("Delete?"))
-  db.collection("attendance").doc(id).delete();
 }
 
 
@@ -320,7 +323,6 @@ function downloadCSV(){
  a.download="attendance.csv";
  a.click();
 }
-
 </script>
 
 </body>
