@@ -2,12 +2,15 @@
 <html>
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Attendance MASTER FINAL</title>
+<title>Attendance Master</title>
 
 <style>
-body{margin:0;font-family:Arial;background:#f2f2f2}
+body{
+margin:0;
+font-family:Arial;
+}
 
-/* LOGIN */
+/* LOGIN PAGE */
 #loginPage{
 height:100vh;
 display:flex;
@@ -15,17 +18,29 @@ justify-content:center;
 align-items:center;
 background:linear-gradient(135deg,#667eea,#764ba2);
 }
-.loginCard{
+
+.card{
 background:#fff;
 width:95%;
-max-width:450px;
+max-width:500px;
 padding:40px;
-border-radius:18px;
+border-radius:20px;
 text-align:center;
-box-shadow:0 12px 30px rgba(0,0,0,.3);
+box-shadow:0 15px 35px rgba(0,0,0,.35);
 }
-input,select,button{padding:8px;margin:3px}
-button{cursor:pointer}
+
+input{
+width:100%;
+padding:12px;
+margin:8px 0;
+font-size:18px;
+}
+
+button{
+padding:10px 20px;
+font-size:16px;
+cursor:pointer;
+}
 
 /* APP */
 #app{
@@ -34,38 +49,22 @@ height:100vh;
 flex-direction:column;
 }
 
-/* HEADER */
 .top{
 background:#fff;
-padding:6px;
-position:sticky;
-top:0;
-z-index:5;
-box-shadow:0 2px 6px rgba(0,0,0,.15);
+padding:8px;
+box-shadow:0 2px 5px #ccc;
 }
 
-/* TABLE SCROLL */
 .tableBox{
 flex:1;
 overflow:auto;
-background:#fff;
 }
 
-table{width:100%;border-collapse:collapse}
-th,td{border:1px solid #ccc;padding:6px;text-align:center}
-th{background:#ffd9d9}
-
-/* FOOTER */
 .bottom{
 background:#ffeaa7;
 padding:6px;
-position:sticky;
-bottom:0;
 font-weight:bold;
 }
-
-.logout{background:#f44336;color:#fff;border:none}
-.secret{margin-top:8px;color:#666;cursor:pointer}
 </style>
 </head>
 
@@ -73,206 +72,86 @@ font-weight:bold;
 
 <!-- LOGIN -->
 <div id="loginPage">
-<div class="loginCard">
+<div class="card">
+
 <h2>🔐 Attendance Login</h2>
 
-<input id="user" placeholder="Username"><br>
-<input type="password" id="pass" placeholder="Password"><br>
+<input id="username" placeholder="Username">
+<input id="password" type="password" placeholder="Password">
 
 <button onclick="login()">Login</button>
-<div class="secret" onclick="secret()">🔒 Secret</div>
+
+<div onclick="secret()" style="margin-top:10px;color:#777;cursor:pointer">🔒 Secret</div>
+
 </div>
 </div>
+
 
 
 <!-- APP -->
 <div id="app">
 
 <div class="top">
-
-<div style="display:flex;justify-content:space-between">
-<b>📋 Attendance MASTER</b>
-<button class="logout" onclick="logout()">Logout</button>
+<b>Attendance MASTER</b>
+<button onclick="logout()" style="float:right;background:red;color:#fff">Logout</button>
 </div>
 
-<input type="date" id="date">
-<input type="time" id="in">
-<input type="time" id="out">
-<input id="post" placeholder="Post">
+<div class="tableBox" style="padding:15px">
 
-BG <input type="color" id="bg" value="#fffacd">
-Font <input type="color" id="font" value="#000000">
-
-<button onclick="save()">Save</button>
-<button onclick="clearForm()">Clear</button>
-
-<select id="month" onchange="render()"></select>
-<input id="search" placeholder="Search..." onkeyup="render()">
-
-<button onclick="downloadCSV()">Excel</button>
-<button onclick="window.print()">Print</button>
+<h3>✅ Login Successful</h3>
+<p>Yahan se aapka attendance dashboard start hoga</p>
 
 </div>
-
-
-<div class="tableBox">
-<table>
-<thead>
-<tr>
-<th>Date</th><th>In</th><th>Out</th><th>Hours</th>
-<th>Post</th><th>Edit</th><th>Delete</th>
-</tr>
-</thead>
-<tbody id="tbody"></tbody>
-</table>
-</div>
-
 
 <div class="bottom">
-Total Duty: <span id="duty">0</span>
-&nbsp;&nbsp;
-Total Hours: <span id="hours">0</span>
+Ready
 </div>
 
 </div>
 
 
 <script>
+
+/* AUTO LOGIN AFTER REFRESH */
+if(localStorage.getItem("login")){
+ showApp();
+}
+
 /* LOGIN */
-if(localStorage.getItem("login")) showApp();
-
 function login(){
- if(user.value==="Ravi" && pass.value==="Ravi123"){
-  localStorage.setItem("login","1");
-  showApp();
- } else alert("Wrong login");
+
+let u = username.value.trim();
+let p = password.value.trim();
+
+if(u==="Ravi" && p==="Ravi123"){
+ localStorage.setItem("login","1");
+ showApp();
+}
+else{
+ alert("Wrong Username or Password");
+}
 }
 
-function logout(){
- localStorage.removeItem("login");
- location.reload();
-}
-
+/* SHOW APP */
 function showApp(){
  loginPage.style.display="none";
  app.style.display="flex";
 }
 
+/* LOGOUT */
+function logout(){
+ localStorage.removeItem("login");
+ location.reload();
+}
+
+/* SECRET */
 function secret(){
- let y=prompt("Year?");
- if(y==="1995") alert("Username: Ravi\nPassword: Ravi123");
-}
-
-/* DATA (local safe) */
-let data=JSON.parse(localStorage.getItem("att"))||[];
-let editIndex=null;
-
-/* MONTH DROPDOWN */
-const months=["All","Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
-months.forEach((m,i)=>{
- let op=document.createElement("option");
- op.value=i===0?"all":String(i).padStart(2,"0");
- op.text=m;
- month.appendChild(op);
-});
-month.value=String(new Date().getMonth()+1).padStart(2,"0");
-
-/* HOURS */
-function calc(i,o){
- let a=new Date("2000 "+i),b=new Date("2000 "+o);
- if(b<a)b.setDate(b.getDate()+1);
- return ((b-a)/3600000).toFixed(2);
-}
-
-/* SAVE */
-function save(){
- let obj={
- d:date.value,
- i:in.value,
- o:out.value,
- p:post.value,
- bg:bg.value,
- font:font.value,
- h:calc(in.value,out.value)
- };
-
- if(editIndex!=null) data[editIndex]=obj;
- else data.push(obj);
-
- localStorage.setItem("att",JSON.stringify(data));
- clearForm();
- render();
-}
-
-/* CLEAR */
-function clearForm(){ editIndex=null; }
-
-/* EDIT */
-function edit(i){
- let r=data[i];
- editIndex=i;
- date.value=r.d;
- in.value=r.i;
- out.value=r.o;
- post.value=r.p;
- bg.value=r.bg;
- font.value=r.font;
- window.scrollTo(0,0);
-}
-
-/* DELETE */
-function del(i){
- if(confirm("Delete?")){
-  data.splice(i,1);
-  localStorage.setItem("att",JSON.stringify(data));
-  render();
+ let y = prompt("Enter secret year");
+ if(y==="1995"){
+  alert("Username: Ravi\nPassword: Ravi123");
  }
 }
 
-/* RENDER */
-function render(){
- tbody.innerHTML="";
- let m=month.value;
- let s=search.value.toLowerCase();
-
- let sorted=[...data].sort((a,b)=> new Date(a.d+" "+a.i)-new Date(b.d+" "+b.i));
-
- let td=0,th=0;
-
- sorted.forEach((r,i)=>{
-  if(m!=="all" && r.d.split("-")[1]!==m) return;
-  if(s && !r.p.toLowerCase().includes(s)) return;
-
-  td++; th+=+r.h;
-
-  tbody.innerHTML+=`
-  <tr style="background:${r.bg};color:${r.font}">
-  <td>${r.d}</td>
-  <td>${r.i}</td>
-  <td>${r.o}</td>
-  <td>${r.h}</td>
-  <td>${r.p}</td>
-  <td><button onclick="edit(${i})">✏️</button></td>
-  <td><button onclick="del(${i})">❌</button></td>
-  </tr>`;
- });
-
- duty.innerText=td;
- hours.innerText=th.toFixed(2);
-}
-
-/* CSV */
-function downloadCSV(){
- let csv="Date,In,Out,Hours,Post\n";
- data.forEach(r=>csv+=`${r.d},${r.i},${r.o},${r.h},${r.p}\n`);
- let blob=new Blob([csv]);
- let a=document.createElement("a");
- a.href=URL.createObjectURL(blob);
- a.download="attendance.csv";
- a.click();
-}
-
-render();
 </script>
 
 </body>
