@@ -6,7 +6,7 @@
 
 <style>
 
-/* NO SCROLL FULL SCREEN */
+/* FULL SCREEN FIX */
 body{
   margin:0;
   height:100vh;
@@ -18,76 +18,78 @@ body{
   background:linear-gradient(45deg,#667eea,#764ba2);
 }
 
-/* CARD BIG + CENTER FIXED */
+/* EXTRA BIG CARD */
 .card{
-  width:92%;
-  max-width:500px;
+  width:95%;
+  max-width:650px;     /* ⭐ bigger than before */
+  padding:65px 45px;  /* ⭐ more space */
   background:white;
-  padding:45px 30px;
-  border-radius:20px;
+  border-radius:25px;
   text-align:center;
-  box-shadow:0 15px 35px rgba(0,0,0,0.3);
+  box-shadow:0 20px 45px rgba(0,0,0,0.35);
 }
 
-/* TITLE */
+/* TITLE BIG */
 h1{
-  font-size:28px;
-  margin-bottom:25px;
+  font-size:36px;
+  margin-bottom:40px;
 }
 
-/* INPUT BIG */
+/* INPUT EXTRA BIG */
 input{
   width:100%;
-  padding:15px;
-  margin:10px 0;
-  font-size:18px;
-  border-radius:8px;
-  border:1px solid #ccc;
+  padding:18px;
+  margin:14px 0;
+  font-size:20px;
+  border-radius:10px;
+  border:1px solid #bbb;
 }
 
-/* BUTTON */
+/* BUTTON BIG */
 button{
   width:100%;
-  padding:14px;
-  margin-top:10px;
-  font-size:18px;
+  padding:18px;
+  margin-top:14px;
+  font-size:20px;
   border:none;
-  border-radius:8px;
+  border-radius:10px;
   background:#1976d2;
   color:white;
+  cursor:pointer;
 }
 
-/* SECRET TEXT BUTTON */
+/* SECRET LINK */
 .secret-btn{
   background:none;
   color:#444;
-  font-size:16px;
+  font-size:18px;
 }
 
 /* SECRET PANEL */
 #secretPanel{
   display:none;
-  margin-top:15px;
-  padding:12px;
+  margin-top:20px;
   background:#f2f2f2;
-  border-radius:10px;
+  padding:18px;
+  border-radius:12px;
+  font-size:18px;
 }
 
-/* APP SCREEN AFTER LOGIN */
+/* APP SCREEN */
 #app{
   display:none;
   height:100vh;
+  width:100%;
   background:#f2f2f2;
   text-align:center;
-  padding-top:120px;
-  font-size:22px;
+  padding-top:150px;
+  font-size:26px;
 }
 
 .logout{
-  width:200px;
-  margin:auto;
-  margin-top:30px;
+  width:250px;
   background:#e53935;
+  margin-top:40px;
 }
 
 </style>
@@ -95,60 +97,68 @@ button{
 
 <body>
 
-<!-- LOGIN PAGE -->
+<!-- ================= LOGIN ================= -->
 <div class="card" id="loginPage">
 
 <h1>🔐 Attendance Login</h1>
 
-<input id="user" placeholder="Username">
-<input id="pass" type="password" placeholder="Password">
+<!-- Username fixed -->
+<input id="user" value="Admin" readonly>
+
+<input id="pass" type="password" placeholder="Enter Password">
 
 <button onclick="login()">Login</button>
 
 <button class="secret-btn" onclick="openSecret()">🔒 Secret</button>
 
+<!-- SECRET PANEL -->
 <div id="secretPanel">
-  User: <span id="showU"></span><br>
-  Pass: <span id="showP"></span><br><br>
+
+  Current User : <b id="showU"></b><br>
+  Current Pass : <b id="showP"></b><br><br>
 
   <input id="newPass" placeholder="New Password">
-  <button onclick="changePass()">Change Password</button>
-</div>
+  <button onclick="changePass()">OK Change Password</button>
 
 </div>
 
+</div>
 
-<!-- AFTER LOGIN SCREEN -->
+
+<!-- ================= AFTER LOGIN ================= -->
 <div id="app">
-  ✅ Login Success<br>
-  Welcome to Attendance System
-  <br>
-  <button class="logout" onclick="logout()">Logout</button>
+
+✅ Welcome Admin<br>
+Attendance Dashboard Ready
+
+<button class="logout" onclick="logout()">Logout</button>
+
 </div>
+
 
 
 <script>
 
-/* DEFAULT LOGIN */
+/* DEFAULT USER */
 let userData = JSON.parse(localStorage.getItem("userData")) || {
-  user:"admin",
+  user:"Admin",
   pass:"1234"
 };
 
 /* LOGIN */
 function login(){
 
-  if(user.value==="" || pass.value===""){
-    alert("Enter username/password");
+  if(pass.value===""){
+    alert("Enter password");
     return;
   }
 
-  if(user.value===userData.user && pass.value===userData.pass){
+  if(pass.value===userData.pass){
     loginPage.style.display="none";
     app.style.display="block";
   }
   else{
-    alert("Wrong login");
+    alert("Wrong Password");
   }
 }
 
@@ -156,27 +166,33 @@ function login(){
 function logout(){
   app.style.display="none";
   loginPage.style.display="block";
-
-  user.value="";
   pass.value="";
 }
 
-/* SECRET */
+/* SECRET OPEN */
 function openSecret(){
-  let s = prompt("Enter Secret Code");
 
-  if(s==="1995"){
+  let code = prompt("Enter Secret Code");
+
+  if(code==="1995"){
     secretPanel.style.display="block";
     showU.innerText=userData.user;
     showP.innerText=userData.pass;
   }
 }
 
-/* CHANGE PASS */
+/* CHANGE PASSWORD */
 function changePass(){
+
+  if(newPass.value==="") return;
+
   userData.pass=newPass.value;
   localStorage.setItem("userData",JSON.stringify(userData));
-  alert("Password Changed");
+
+  alert("Password Changed Successfully");
+
+  secretPanel.style.display="none";
+  pass.value="";          // back to login
 }
 
 </script>
