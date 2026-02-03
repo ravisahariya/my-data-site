@@ -5,48 +5,51 @@
 <title>Attendance Login</title>
 
 <style>
+
+/* NO SCROLL FULL SCREEN */
 body{
   margin:0;
-  font-family:Arial;
   height:100vh;
+  overflow:hidden;
+  font-family:Arial;
   display:flex;
   justify-content:center;
   align-items:center;
   background:linear-gradient(45deg,#667eea,#764ba2);
 }
 
-/* BIG CARD */
+/* CARD BIG + CENTER FIXED */
 .card{
-  background:white;
   width:92%;
   max-width:500px;
-  padding:50px 35px;
+  background:white;
+  padding:45px 30px;
   border-radius:20px;
   text-align:center;
-  box-shadow:0 15px 35px rgba(0,0,0,0.35);
+  box-shadow:0 15px 35px rgba(0,0,0,0.3);
 }
 
-/* TITLE BIG */
+/* TITLE */
 h1{
-  font-size:30px;
-  margin-bottom:30px;
+  font-size:28px;
+  margin-bottom:25px;
 }
 
 /* INPUT BIG */
 input{
   width:100%;
-  padding:16px;
-  margin:12px 0;
+  padding:15px;
+  margin:10px 0;
   font-size:18px;
   border-radius:8px;
   border:1px solid #ccc;
 }
 
-/* BUTTON BIG */
+/* BUTTON */
 button{
   width:100%;
   padding:14px;
-  margin-top:12px;
+  margin-top:10px;
   font-size:18px;
   border:none;
   border-radius:8px;
@@ -54,7 +57,7 @@ button{
   color:white;
 }
 
-/* SECRET BUTTON */
+/* SECRET TEXT BUTTON */
 .secret-btn{
   background:none;
   color:#444;
@@ -65,63 +68,103 @@ button{
 #secretPanel{
   display:none;
   margin-top:15px;
-  padding:15px;
+  padding:12px;
   background:#f2f2f2;
   border-radius:10px;
-  font-size:16px;
 }
 
-/* MOBILE EXTRA BIG */
-@media(max-width:480px){
-  h1{font-size:28px}
-  input{font-size:17px}
+/* APP SCREEN AFTER LOGIN */
+#app{
+  display:none;
+  height:100vh;
+  background:#f2f2f2;
+  text-align:center;
+  padding-top:120px;
+  font-size:22px;
 }
+
+.logout{
+  width:200px;
+  margin:auto;
+  margin-top:30px;
+  background:#e53935;
+}
+
 </style>
 </head>
 
 <body>
 
-<div class="card">
+<!-- LOGIN PAGE -->
+<div class="card" id="loginPage">
 
-  <h1>🔐 Attendance Login</h1>
+<h1>🔐 Attendance Login</h1>
 
-  <input id="user" placeholder="Username">
-  <input id="pass" type="password" placeholder="Password">
+<input id="user" placeholder="Username">
+<input id="pass" type="password" placeholder="Password">
 
-  <button onclick="login()">Login</button>
+<button onclick="login()">Login</button>
 
-  <button class="secret-btn" onclick="openSecret()">🔒 Secret</button>
+<button class="secret-btn" onclick="openSecret()">🔒 Secret</button>
 
-  <div id="secretPanel">
-    User: <span id="showU"></span><br>
-    Pass: <span id="showP"></span><br><br>
+<div id="secretPanel">
+  User: <span id="showU"></span><br>
+  Pass: <span id="showP"></span><br><br>
 
-    <input id="newPass" placeholder="New Password">
-    <button onclick="changePass()">Change Password</button>
-  </div>
+  <input id="newPass" placeholder="New Password">
+  <button onclick="changePass()">Change Password</button>
+</div>
 
 </div>
 
+
+<!-- AFTER LOGIN SCREEN -->
+<div id="app">
+  ✅ Login Success<br>
+  Welcome to Attendance System
+  <br>
+  <button class="logout" onclick="logout()">Logout</button>
+</div>
+
+
 <script>
 
+/* DEFAULT LOGIN */
 let userData = JSON.parse(localStorage.getItem("userData")) || {
   user:"admin",
   pass:"1234"
 };
 
-user.value=userData.user;
-pass.value=userData.pass;
-
+/* LOGIN */
 function login(){
+
+  if(user.value==="" || pass.value===""){
+    alert("Enter username/password");
+    return;
+  }
+
   if(user.value===userData.user && pass.value===userData.pass){
-    alert("Login Success ✅");
-  }else{
-    alert("Wrong Login ❌");
+    loginPage.style.display="none";
+    app.style.display="block";
+  }
+  else{
+    alert("Wrong login");
   }
 }
 
+/* LOGOUT */
+function logout(){
+  app.style.display="none";
+  loginPage.style.display="block";
+
+  user.value="";
+  pass.value="";
+}
+
+/* SECRET */
 function openSecret(){
-  let s=prompt("Enter Secret Code");
+  let s = prompt("Enter Secret Code");
+
   if(s==="1995"){
     secretPanel.style.display="block";
     showU.innerText=userData.user;
@@ -129,6 +172,7 @@ function openSecret(){
   }
 }
 
+/* CHANGE PASS */
 function changePass(){
   userData.pass=newPass.value;
   localStorage.setItem("userData",JSON.stringify(userData));
