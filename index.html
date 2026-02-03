@@ -1,179 +1,167 @@
 <!DOCTYPE html>
 <html>
 <head>
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Attendance MASTER</title>
 
 <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
 
 <style>
-body{margin:0;font-family:Arial}
+body{
+margin:0;
+font-family:Arial;
+background:linear-gradient(135deg,#667eea,#764ba2);
+}
 
-/* ================= LOGIN PAGE ================= */
-
+/* LOGIN */
 #loginPage{
 height:100vh;
 display:flex;
 justify-content:center;
 align-items:center;
-background:linear-gradient(135deg,#667eea,#764ba2);
 }
 
 .loginCard{
 background:#fff;
 width:95%;
-max-width:520px;      /* BIGGER */
-padding:50px;         /* BIGGER */
+max-width:500px;
+padding:35px;
 border-radius:20px;
 text-align:center;
-box-shadow:0 15px 35px rgba(0,0,0,.4);
-font-size:18px;
+box-shadow:0 15px 40px rgba(0,0,0,.3);
 }
+
+.loginCard h2{font-size:30px;margin-bottom:10px}
 
 .loginCard input{
 width:100%;
 padding:12px;
-margin:10px 0;
+margin:6px 0;
 font-size:18px;
 }
 
 .loginCard button{
-padding:12px 30px;
+padding:10px 25px;
 font-size:18px;
 }
 
-.secretBtn{
-margin-top:12px;
-cursor:pointer;
-color:#555;
+/* LIVE CLOCK */
+.clockBox{
+background:#f2f3ff;
+padding:12px;
+border-radius:10px;
+margin-bottom:15px;
 }
 
-/* ================= APP ================= */
+#liveDate{font-size:18px}
+#liveDay{font-size:16px;color:#666}
+#liveTime{font-size:26px;color:#2e7dff;font-weight:bold}
 
-#app{
-display:none;
-height:100vh;
-flex-direction:column;
-}
+/* APP */
+#app{display:none;height:100vh;flex-direction:column}
 
-/* HEADER */
 .top{
 background:#fff;
-padding:8px;
-display:flex;
-justify-content:space-between;
-box-shadow:0 2px 6px rgba(0,0,0,.2);
+padding:6px;
 position:sticky;
 top:0;
-z-index:5;
+z-index:10;
 }
 
-/* FORM */
-.form{
-display:flex;
-flex-wrap:wrap;
-gap:5px;
-padding:6px;
-background:#fafafa;
-}
-
-input,select,button{
-padding:6px;
-font-size:14px;
-}
-
-/* TABLE SCROLL ONLY */
 .tableBox{
 flex:1;
 overflow:auto;
 background:#fff;
 }
 
-table{
-width:100%;
-border-collapse:collapse;
-}
-
-th,td{
-border:1px solid #ccc;
-padding:6px;
-text-align:center;
-}
-
-th{
-background:#ffd9d9;
-position:sticky;
-top:0;
-}
-
-/* FOOTER */
 .bottom{
 background:#ffeaa7;
 padding:8px;
 font-weight:bold;
-position:sticky;
-bottom:0;
 }
 
-/* SECRET POPUP */
-#secretBox{
-display:none;
-position:fixed;
-top:50%;
-left:50%;
-transform:translate(-50%,-50%);
-background:#fff;
-padding:20px;
-border-radius:12px;
-box-shadow:0 10px 30px rgba(0,0,0,.4);
-width:90%;
-max-width:360px;
-z-index:99;
+table{width:100%;border-collapse:collapse}
+th,td{border:1px solid #ccc;padding:6px;text-align:center}
+th{background:#ffd9d9}
+
+.logout{
+background:red;color:#fff;border:none;padding:6px 10px
+}
+.secret{
+cursor:pointer;color:#555;margin-top:10px
 }
 </style>
 </head>
 
 <body>
 
-<!-- ================= LOGIN ================= -->
+<!-- LOGIN -->
 <div id="loginPage">
 <div class="loginCard">
+
 <h2>🔐 Attendance Login</h2>
 
-<input id="u" placeholder="Username">
-<input id="p" type="password" placeholder="Password">
+<div class="clockBox">
+<div id="liveDate"></div>
+<div id="liveDay"></div>
+<div id="liveTime"></div>
+</div>
+
+<input id="username" placeholder="Username">
+<input type="password" id="password" placeholder="Password">
 
 <button onclick="login()">Login</button>
 
-<div class="secretBtn" onclick="openSecret()">🔒 Secret</div>
+<div class="secret" onclick="openSecret()">🔒 Secret</div>
 </div>
 </div>
 
 
-<!-- ================= APP ================= -->
+<!-- SECRET BOX -->
+<div id="secretBox" style="display:none;position:fixed;inset:0;background:#0008;justify-content:center;align-items:center">
+<div style="background:#fff;padding:20px;border-radius:10px;width:300px">
+
+<b>Current Username:</b> <span id="cu"></span><br>
+<b>Current Password:</b> <span id="cp"></span><hr>
+
+Old Password<br>
+<input id="oldp"><br>
+New Username<br>
+<input id="newu"><br>
+New Password<br>
+<input id="newp"><br>
+Confirm<br>
+<input id="conf"><br><br>
+
+<button onclick="changeCred()">OK</button>
+<button onclick="secretBox.style.display='none'">Close</button>
+</div>
+</div>
+
+
+<!-- APP -->
 <div id="app">
 
 <div class="top">
 <b>☁️ Attendance MASTER</b>
-<button onclick="logout()">Logout</button>
-</div>
+<button class="logout" onclick="logout()">Logout</button>
 
-<div class="form">
+<br><br>
+
 <input type="date" id="date">
 <input type="time" id="inTime">
 <input type="time" id="outTime">
 <input id="post" placeholder="Post">
 
-BG <input type="color" id="bg" value="#ffffff">
-Font <input type="color" id="font" value="#000000">
+BG <input type="color" id="bg" value="#fffacd">
+Font <input type="color" id="font" value="#000">
 
 <button onclick="save()">Save</button>
 
 <select id="monthFilter" onchange="render()"></select>
-
 <button onclick="downloadCSV()">Excel</button>
-<button onclick="window.print()">Print</button>
+<button onclick="print()">Print</button>
 </div>
 
 <div class="tableBox">
@@ -190,205 +178,171 @@ Font <input type="color" id="font" value="#000000">
 
 <div class="bottom">
 Total Duty: <span id="duty">0</span>
-|
+&nbsp;&nbsp;
 Total Hours: <span id="hours">0</span>
 </div>
+
 </div>
-
-
-
-<!-- ================= SECRET ================= -->
-<div id="secretBox">
-<h3>🔒 Secret Settings</h3>
-
-<b>Current Username:</b>
-<div id="showU"></div>
-
-<b>Current Password:</b>
-<div id="showP"></div>
-<hr>
-
-Old Password<br>
-<input id="oldp" type="password"><br>
-
-New Username<br>
-<input id="newu"><br>
-
-New Password<br>
-<input id="newp" type="password"><br>
-
-Confirm Password<br>
-<input id="confp" type="password"><br><br>
-
-<button onclick="changeCred()">OK</button>
-<button onclick="secretBox.style.display='none'">Close</button>
-</div>
-
 
 
 <script>
+/* CLOCK 24H */
+function updateClock(){
+const n=new Date();
 
-/* ===== DEFAULT LOGIN ===== */
-if(!localStorage.getItem("u")){
- localStorage.setItem("u","Ravi");
- localStorage.setItem("p","Ravi123");
+liveDate.innerText=n.toLocaleDateString();
+liveDay.innerText=n.toLocaleDateString('en',{weekday:'long'});
+
+let h=String(n.getHours()).padStart(2,'0');
+let m=String(n.getMinutes()).padStart(2,'0');
+let s=String(n.getSeconds()).padStart(2,'0');
+
+liveTime.innerText=h+":"+m+":"+s;
 }
+setInterval(updateClock,1000);
+updateClock();
 
-if(localStorage.getItem("login")) showApp();
+/* CREDENTIALS */
+let creds=JSON.parse(localStorage.getItem("creds")) || {u:"Ravi",p:"Ravi123"};
 
 /* LOGIN */
+if(localStorage.getItem("login")) showApp();
+
 function login(){
- if(u.value===localStorage.getItem("u") &&
-    p.value===localStorage.getItem("p")){
-   localStorage.setItem("login","1");
-   showApp();
- }else alert("Wrong login");
+if(username.value===creds.u && password.value===creds.p){
+localStorage.setItem("login","1");
+showApp();
+}else alert("Wrong login");
 }
 
 function logout(){
- localStorage.removeItem("login");
- location.reload();
+localStorage.removeItem("login");
+location.reload();
 }
 
 function showApp(){
- loginPage.style.display="none";
- app.style.display="flex";
+loginPage.style.display="none";
+app.style.display="flex";
 }
 
 /* SECRET */
 function openSecret(){
- let y=prompt("Enter year");
- if(y!=="1995") return;
-
- showU.innerText=localStorage.getItem("u");
- showP.innerText=localStorage.getItem("p");
-
- secretBox.style.display="block";
+let y=prompt("Enter year");
+if(y==="1995"){
+secretBox.style.display="flex";
+cu.innerText=creds.u;
+cp.innerText=creds.p;
+}
 }
 
 function changeCred(){
- if(oldp.value!==localStorage.getItem("p"))
-  return alert("Wrong old password");
+if(oldp.value!==creds.p) return alert("Wrong old");
+if(newp.value!==conf.value) return alert("Mismatch");
 
- if(newp.value!==confp.value)
-  return alert("Mismatch");
-
- localStorage.setItem("u",newu.value);
- localStorage.setItem("p",newp.value);
-
- alert("Updated");
- secretBox.style.display="none";
+creds={u:newu.value,p:newp.value};
+localStorage.setItem("creds",JSON.stringify(creds));
+alert("Changed");
+secretBox.style.display="none";
 }
 
-
-/* ===== FIREBASE ===== */
+/* FIREBASE */
 firebase.initializeApp({
- apiKey:"AIzaSyD71mpolAsmejtU2icecQQcX07iCW_is0Y",
- authDomain:"ravicardmaker.firebaseapp.com",
- projectId:"ravicardmaker"
+apiKey:"AIzaSyD71mpolAsmejtU2icecQQcX07iCW_is0Y",
+projectId:"ravicardmaker"
 });
 const db=firebase.firestore();
 
 let data=[],editId=null;
 
 db.collection("attendance").onSnapshot(s=>{
- data=[];
- s.forEach(d=>data.push({id:d.id,...d.data()}));
- render();
+data=[];
+s.forEach(d=>data.push({id:d.id,...d.data()}));
+render();
 });
+
+/* MONTH */
+for(let i=0;i<=12;i++){
+let op=document.createElement("option");
+op.value=i===0?"all":String(i).padStart(2,'0');
+op.text=i===0?"All":new Date(0,i-1).toLocaleString('default',{month:'short'});
+monthFilter.appendChild(op);
+}
 
 /* HOURS */
 function calc(i,o){
- let a=new Date("2000 "+i),b=new Date("2000 "+o);
- if(b<a)b.setDate(b.getDate()+1);
- return ((b-a)/3600000).toFixed(2);
+let a=new Date("2000 "+i),b=new Date("2000 "+o);
+if(b<a)b.setDate(b.getDate()+1);
+return ((b-a)/3600000).toFixed(2);
 }
 
 /* SAVE */
 function save(){
- let obj={
-  d:date.value,
-  i:inTime.value,
-  o:outTime.value,
-  p:post.value,
-  bg:bg.value,
-  font:font.value,
-  h:calc(inTime.value,outTime.value)
- };
+let obj={
+d:date.value,i:inTime.value,o:outTime.value,
+p:post.value,bg:bg.value,font:font.value,
+h:calc(inTime.value,outTime.value)
+};
 
- if(editId) db.collection("attendance").doc(editId).update(obj);
- else db.collection("attendance").add(obj);
+if(editId) db.collection("attendance").doc(editId).update(obj);
+else db.collection("attendance").add(obj);
 
- editId=null;
 }
 
 /* EDIT */
 function edit(id){
- let r=data.find(x=>x.id===id);
- editId=id;
- date.value=r.d;
- inTime.value=r.i;
- outTime.value=r.o;
- post.value=r.p;
- bg.value=r.bg;
- font.value=r.font;
+let r=data.find(x=>x.id===id);
+editId=id;
+date.value=r.d;
+inTime.value=r.i;
+outTime.value=r.o;
+post.value=r.p;
+bg.value=r.bg;
+font.value=r.font;
 }
 
 /* DELETE */
 function del(id){
- if(confirm("Delete?"))
-  db.collection("attendance").doc(id).delete();
+if(confirm("Delete?"))
+db.collection("attendance").doc(id).delete();
 }
-
-/* MONTH */
-const months=["All","Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
-months.forEach((m,i)=>{
- let op=document.createElement("option");
- op.value=i===0?"all":String(i).padStart(2,"0");
- op.text=m;
- monthFilter.appendChild(op);
-});
-monthFilter.value=String(new Date().getMonth()+1).padStart(2,"0");
 
 /* RENDER */
 function render(){
- tbody.innerHTML="";
- let m=monthFilter.value;
+tbody.innerHTML="";
+let m=monthFilter.value;
 
- let sorted=[...data].sort((a,b)=> new Date(a.d+" "+a.i)-new Date(b.d+" "+b.i));
+let th=0,td=0;
 
- let td=0,th=0;
+[...data].sort((a,b)=> new Date(a.d+" "+a.i)-new Date(b.d+" "+b.i))
+.forEach(r=>{
+if(m!=="all" && r.d.split("-")[1]!==m) return;
 
- sorted.forEach(r=>{
-  if(m!=="all" && r.d.split("-")[1]!==m) return;
+td++; th+=+r.h;
 
-  td++; th+=+r.h;
+tbody.innerHTML+=`
+<tr style="background:${r.bg};color:${r.font}">
+<td>${r.d}</td>
+<td>${r.i}</td>
+<td>${r.o}</td>
+<td>${r.h}</td>
+<td>${r.p}</td>
+<td><button onclick="edit('${r.id}')">✏️</button></td>
+<td><button onclick="del('${r.id}')">❌</button></td>
+</tr>`;
+});
 
-  tbody.innerHTML+=`
-  <tr style="background:${r.bg};color:${r.font}">
-  <td>${r.d}</td>
-  <td>${r.i}</td>
-  <td>${r.o}</td>
-  <td>${r.h}</td>
-  <td>${r.p}</td>
-  <td><button onclick="edit('${r.id}')">✏️</button></td>
-  <td><button onclick="del('${r.id}')">❌</button></td>
-  </tr>`;
- });
-
- duty.innerText=td;
- hours.innerText=th.toFixed(2);
+duty.innerText=td;
+hours.innerText=th.toFixed(2);
 }
 
 /* CSV */
 function downloadCSV(){
- let csv="Date,In,Out,Hours,Post\n";
- data.forEach(r=>csv+=`${r.d},${r.i},${r.o},${r.h},${r.p}\n`);
- let blob=new Blob([csv]);
- let a=document.createElement("a");
- a.href=URL.createObjectURL(blob);
- a.download="attendance.csv";
- a.click();
+let csv="Date,In,Out,Hours,Post\n";
+data.forEach(r=>csv+=`${r.d},${r.i},${r.o},${r.h},${r.p}\n`);
+let a=document.createElement("a");
+a.href=URL.createObjectURL(new Blob([csv]));
+a.download="attendance.csv";
+a.click();
 }
 </script>
 
