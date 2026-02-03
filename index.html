@@ -1,79 +1,113 @@
 <!DOCTYPE html>
 <html>
 <head>
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width,initial-scale=1">
 
-<title>Attendance MASTER</title>
+<title>Attendance MASTER ULTIMATE</title>
 
-<!-- ✅ EMBED ICON + PWA (NO EXTRA FILE NEEDED) -->
-<link rel="icon" type="image/png"
-href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMAAAADACAYAAABS3GwHAAAA...">
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
 
 <style>
-body{margin:0;font-family:Arial}
+body{
+margin:0;
+font-family:Arial;
+background:#f2f2f2;
+}
 
-/* LOGIN */
+/* LOGIN PAGE */
 #loginPage{
 height:100vh;
 display:flex;
 justify-content:center;
 align-items:center;
 background:linear-gradient(135deg,#667eea,#764ba2);
-flex-direction:column;
-color:#fff;
-}
-
-.clock{
-font-size:26px;
-font-weight:bold;
-margin-bottom:20px;
-text-align:center;
 }
 
 .loginCard{
 background:#fff;
-color:#000;
-padding:40px;
-width:92%;
-max-width:450px;
+width:95%;
+max-width:420px;
+padding:35px;
 border-radius:20px;
 text-align:center;
-box-shadow:0 10px 25px rgba(0,0,0,.4);
+box-shadow:0 15px 35px rgba(0,0,0,.4);
 }
 
-input,select,button{padding:8px;margin:4px}
+.bigClock{
+font-size:20px;
+font-weight:bold;
+margin-bottom:10px;
+color:#333;
+}
 
-#app{display:none;height:100vh;flex-direction:column}
+/* APP */
+#app{
+display:none;
+height:100vh;
+flex-direction:column;
+}
 
 /* HEADER */
-.topFixed{
-background:#0d6efd;
+.top{
+background:#1976d2;
 color:#fff;
-padding:8px;
+padding:10px;
 position:sticky;
 top:0;
+display:flex;
+justify-content:space-between;
+align-items:center;
+z-index:5;
 }
 
 /* FOOTER */
-.bottomFixed{
-background:#ffeaa7;
+.bottom{
+background:#ffe082;
 padding:8px;
-font-weight:bold;
 position:sticky;
 bottom:0;
+font-weight:bold;
 }
 
-/* TABLE SCROLL */
-.tableBox{flex:1;overflow:auto;background:#fff}
+/* SCROLL TABLE */
+.tableBox{
+flex:1;
+overflow:auto;
+background:#fff;
+}
 
-table{width:100%;border-collapse:collapse}
-th,td{border:1px solid #ccc;padding:6px;text-align:center}
-th{background:#ffd9d9}
+table{
+width:100%;
+border-collapse:collapse;
+}
 
-.night{background:#d6ecff}
+th,td{
+border:1px solid #ccc;
+padding:6px;
+text-align:center;
+}
 
-.logout{background:#f44336;color:#fff;border:none}
-.secret{cursor:pointer;margin-top:10px;color:#555}
+th{
+background:#ffd9d9;
+}
+
+.form{
+display:flex;
+flex-wrap:wrap;
+gap:5px;
+padding:5px;
+background:#fff;
+}
+
+input,select,button{
+padding:6px;
+}
+
+.night{
+background:#e3f2fd;
+}
 </style>
 </head>
 
@@ -81,41 +115,44 @@ th{background:#ffd9d9}
 
 <!-- LOGIN -->
 <div id="loginPage">
-
-<div class="clock" id="clock"></div>
-
 <div class="loginCard">
+
 <h2>🔐 Attendance Login</h2>
 
-<input id="username" placeholder="Username"><br>
-<input type="password" id="password" placeholder="Password"><br>
-<button onclick="doLogin()">Login</button>
+<div id="clock" class="bigClock"></div>
 
-<div class="secret" onclick="secret()">🔒 Secret</div>
+<input id="username" placeholder="Username"><br><br>
+<input type="password" id="password" placeholder="Password"><br><br>
+
+<button onclick="login()">Login</button>
+
+<div onclick="openSecret()" style="margin-top:10px;cursor:pointer">🔒 Secret</div>
+
+</div>
 </div>
 
-</div>
 
 <!-- APP -->
 <div id="app">
 
-<div class="topFixed">
-Attendance MASTER
-<button class="logout" onclick="logout()" style="float:right">Logout</button>
+<div class="top">
+<b>☁️ Attendance MASTER</b>
+<button onclick="logout()">Logout</button>
 </div>
 
-<div style="padding:6px">
+<div class="form">
 <input type="date" id="date">
 <input type="time" id="inTime">
 <input type="time" id="outTime">
 <input id="post" placeholder="Post">
 
-BG <input type="color" id="bg">
-Font <input type="color" id="font">
+BG <input type="color" id="bg" value="#ffffff">
+Font <input type="color" id="font" value="#000000">
 
 <button onclick="save()">Save</button>
 
 <select id="monthFilter" onchange="render()"></select>
+
 <button onclick="downloadCSV()">Excel</button>
 <button onclick="window.print()">Print</button>
 </div>
@@ -124,17 +161,15 @@ Font <input type="color" id="font">
 <table>
 <thead>
 <tr>
-<th>Date</th><th>In</th><th>Out</th><th>Hours</th>
-<th>Post</th><th>Edit</th><th>Delete</th>
+<th>Date</th><th>In</th><th>Out</th><th>Hours</th><th>Post</th><th>Edit</th><th>Delete</th>
 </tr>
 </thead>
 <tbody id="tbody"></tbody>
 </table>
 </div>
 
-<div class="bottomFixed">
-Total Duty: <span id="duty">0</span>
-&nbsp;&nbsp;
+<div class="bottom">
+Total Duty: <span id="duty">0</span> |
 Total Hours: <span id="hours">0</span>
 </div>
 
@@ -143,171 +178,174 @@ Total Hours: <span id="hours">0</span>
 
 <script>
 
-/* ========= LOGIN DATA ========= */
-let USER=localStorage.getItem("u")||"Ravi";
-let PASS=localStorage.getItem("p")||"Ravi123";
-
-/* ========= CLOCK ========= */
+/* LIVE CLOCK */
 setInterval(()=>{
- let d=new Date();
- clock.innerHTML=
- d.toDateString()+"<br>"+
- d.toLocaleTimeString('en-GB',{hour12:false});
+let d=new Date();
+clock.innerText=d.toLocaleString();
 },1000);
 
-/* ========= LOGIN ========= */
+
+/* LOGIN SYSTEM */
+let creds=JSON.parse(localStorage.getItem("creds"))||{u:"Ravi",p:"Ravi123"};
+
 if(localStorage.getItem("login")) showApp();
 
-function doLogin(){
- if(username.value===USER && password.value===PASS){
-  localStorage.setItem("login",1);
-  showApp();
- }else alert("Wrong");
+function login(){
+if(username.value===creds.u && password.value===creds.p){
+localStorage.setItem("login","1");
+showApp();
+}else alert("Wrong login");
 }
 
 function logout(){
- localStorage.clear();
- location.reload();
+localStorage.removeItem("login");
+location.reload();
 }
 
 function showApp(){
- loginPage.style.display="none";
- app.style.display="flex";
+loginPage.style.display="none";
+app.style.display="flex";
 }
 
-/* ========= SECRET ========= */
-function secret(){
- let y=prompt("Enter secret year");
- if(y==="1995"){
-  alert("Username: "+USER+"\nPassword: "+PASS);
 
-  let old=prompt("Old Password");
-  if(old!==PASS) return;
+/* SECRET */
+function openSecret(){
+let y=prompt("Enter secret year");
+if(y!=="1995") return;
 
-  let nu=prompt("New Username");
-  let np=prompt("New Password");
+let old=prompt("Old password:");
+if(old!==creds.p) return;
 
-  if(nu&&np){
-   USER=nu;
-   PASS=np;
-   localStorage.setItem("u",nu);
-   localStorage.setItem("p",np);
-   alert("Changed!");
-  }
- }
+let nu=prompt("New username:");
+let np=prompt("New password:");
+
+creds={u:nu,p:np};
+localStorage.setItem("creds",JSON.stringify(creds));
+alert("Changed");
 }
 
-/* ========= DATA ========= */
-let data=[],editIndex=null;
 
-function hours(i,o){
- let a=new Date("2000 "+i);
- let b=new Date("2000 "+o);
- if(b<a)b.setDate(b.getDate()+1);
- return ((b-a)/3600000).toFixed(2);
-}
+/* FIREBASE */
+firebase.initializeApp({
+apiKey:"AIzaSyD71mpolAsmejtU2icecQQcX07iCW_is0Y",
+authDomain:"ravicardmaker.firebaseapp.com",
+projectId:"ravicardmaker"
+});
 
-function save(){
- let obj={
-  d:date.value,
-  i:inTime.value,
-  o:outTime.value,
-  p:post.value,
-  bg:bg.value,
-  font:font.value
- };
- obj.h=hours(obj.i,obj.o);
+const db=firebase.firestore();
 
- if(editIndex!=null) data[editIndex]=obj;
- else data.push(obj);
+let data=[],editId=null;
 
- localStorage.setItem("att",JSON.stringify(data));
- render();
-}
+db.collection("attendance").onSnapshot(s=>{
+data=[];
+s.forEach(d=>data.push({id:d.id,...d.data()}));
+render();
+});
 
-data=JSON.parse(localStorage.getItem("att")||"[]");
 
-/* ========= MONTH FILTER ========= */
+/* MONTH DROPDOWN */
 const months=["All","Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
 months.forEach((m,i)=>{
- let op=document.createElement("option");
- op.value=i;
- op.text=m;
- monthFilter.appendChild(op);
+let o=document.createElement("option");
+o.value=i;
+o.text=m;
+monthFilter.appendChild(o);
 });
 monthFilter.value=new Date().getMonth()+1;
 
-/* ========= RENDER ========= */
+
+/* HOURS */
+function calc(i,o){
+let a=new Date("2000 "+i),b=new Date("2000 "+o);
+if(b<a)b.setDate(b.getDate()+1);
+return ((b-a)/3600000).toFixed(2);
+}
+
+
+/* SAVE */
+function save(){
+let obj={
+d:date.value,
+i:inTime.value,
+o:outTime.value,
+p:post.value,
+bg:bg.value,
+font:font.value,
+h:calc(inTime.value,outTime.value)
+};
+
+if(editId) db.collection("attendance").doc(editId).update(obj);
+else db.collection("attendance").add(obj);
+
+editId=null;
+}
+
+
+/* EDIT */
+function edit(id){
+let r=data.find(x=>x.id===id);
+editId=id;
+date.value=r.d;
+inTime.value=r.i;
+outTime.value=r.o;
+post.value=r.p;
+bg.value=r.bg;
+font.value=r.font;
+}
+
+
+/* DELETE */
+function del(id){
+if(confirm("Delete?"))
+db.collection("attendance").doc(id).delete();
+}
+
+
+/* RENDER */
 function render(){
 
- tbody.innerHTML="";
- let m=monthFilter.value;
+tbody.innerHTML="";
+let m=monthFilter.value;
+let th=0,td=0;
 
- let td=0,th=0;
+let sorted=[...data].sort((a,b)=> new Date(a.d+" "+a.i)-new Date(b.d+" "+b.i));
 
- data.forEach((r,i)=>{
+sorted.forEach((r,i)=>{
 
-  if(m!=0 && r.d.split("-")[1]!=String(m).padStart(2,"0")) return;
+if(m!=0 && new Date(r.d).getMonth()+1!=m) return;
 
-  let night=r.o<r.i;
+td++; th+=+r.h;
 
-  td++;
-  th+=+r.h;
+let cls="";
+if(i>0 && sorted[i-1].d===r.d) cls="night";
 
-  tbody.innerHTML+=`
-  <tr class="${night?'night':''}" style="background:${r.bg};color:${r.font}">
-  <td>${r.d}</td>
-  <td>${format(r.i)}</td>
-  <td>${format(r.o)}</td>
-  <td>${r.h}</td>
-  <td>${r.p}</td>
-  <td><button onclick="edit(${i})">✏️</button></td>
-  <td><button onclick="del(${i})">❌</button></td>
-  </tr>`;
- });
+tbody.innerHTML+=`
+<tr class="${cls}" style="background:${r.bg};color:${r.font}">
+<td>${r.d}</td>
+<td>${new Date("2000 "+r.i).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})}</td>
+<td>${new Date("2000 "+r.o).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})}</td>
+<td>${r.h}</td>
+<td>${r.p}</td>
+<td><button onclick="edit('${r.id}')">✏️</button></td>
+<td><button onclick="del('${r.id}')">❌</button></td>
+</tr>`;
+});
 
- duty.innerText=td;
- hours.innerText=th.toFixed(2);
+duty.innerText=td;
+hours.innerText=th.toFixed(2);
 }
 
-function format(t){
- let [h,m]=t.split(":");
- let am=h>=12?"pm":"am";
- h=h%12||12;
- return h+":"+m+" "+am;
-}
 
-function edit(i){
- editIndex=i;
- let r=data[i];
- date.value=r.d;
- inTime.value=r.i;
- outTime.value=r.o;
- post.value=r.p;
- bg.value=r.bg;
- font.value=r.font;
-}
-
-function del(i){
- if(confirm("Delete?")){
-  data.splice(i,1);
-  localStorage.setItem("att",JSON.stringify(data));
-  render();
- }
-}
-
-/* ========= CSV ========= */
+/* CSV */
 function downloadCSV(){
- let csv="Date,In,Out,Hours,Post\n";
- data.forEach(r=>csv+=`${r.d},${r.i},${r.o},${r.h},${r.p}\n`);
- let a=document.createElement("a");
- a.href=URL.createObjectURL(new Blob([csv]));
- a.download="attendance.csv";
- a.click();
+let csv="Date,In,Out,Hours,Post\n";
+data.forEach(r=>csv+=`${r.d},${r.i},${r.o},${r.h},${r.p}\n`);
+let blob=new Blob([csv]);
+let a=document.createElement("a");
+a.href=URL.createObjectURL(blob);
+a.download="attendance.csv";
+a.click();
 }
-
-render();
-
 </script>
 
 </body>
