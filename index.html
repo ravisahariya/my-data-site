@@ -2,61 +2,67 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Attendance MASTER FINAL</title>
+<title>Attendance MASTER PRO</title>
 
 <style>
 body{
 margin:0;
 font-family:Arial;
-background:#f5f6fa;
+background:#eef1f6;
 }
 
-/* ================= LOGIN ================= */
+/* ========= LOGIN ========= */
 
 #loginPage{
 height:100vh;
 display:flex;
 align-items:center;
 justify-content:center;
-background:linear-gradient(135deg,#5f6af2,#7d5fff);
+background:linear-gradient(135deg,#6a6cff,#9c6cff);
 }
 
 .loginCard{
-width:380px;
-padding:40px;
+width:420px;
+padding:45px;
 background:white;
 border-radius:20px;
 text-align:center;
-box-shadow:0 10px 30px rgba(0,0,0,.3);
+box-shadow:0 15px 40px rgba(0,0,0,.3);
 }
 
-.loginCard h2{
-margin-bottom:20px;
-}
+.loginCard h2{margin-bottom:20px;}
 
-input,select,button{
-padding:8px;
-margin:5px;
+.loginCard input{
+width:90%;
+padding:10px;
+margin:8px 0;
 }
 
 .secret{
 cursor:pointer;
-color:#555;
-margin-top:10px;
 font-size:14px;
+margin-top:10px;
 }
 
-/* ================= APP ================= */
+/* ========= APP ========= */
 
-#app{display:none;height:100vh;display:flex;flex-direction:column;}
+#app{display:none;height:100vh;flex-direction:column;}
 
 header{
 background:#fff;
-padding:10px;
-box-shadow:0 2px 5px rgba(0,0,0,.2);
+padding:8px;
 position:sticky;
 top:0;
 z-index:10;
+box-shadow:0 2px 5px rgba(0,0,0,.2);
+}
+
+footer{
+background:#ffe7a1;
+padding:8px;
+position:sticky;
+bottom:0;
+font-weight:bold;
 }
 
 .tableWrap{
@@ -70,60 +76,51 @@ border-collapse:collapse;
 }
 
 th,td{
-border:1px solid #ddd;
+border:1px solid #ccc;
 padding:6px;
 text-align:center;
 }
 
 th{
-background:#ffe6e6;
+background:#ffdede;
 position:sticky;
 top:0;
 }
 
-footer{
-background:#ffe9a8;
-padding:8px;
-position:sticky;
-bottom:0;
-font-weight:bold;
-}
-
-button{
-cursor:pointer;
-}
+button{cursor:pointer}
 
 .logout{
 background:#ff3b30;
-color:#fff;
+color:white;
 float:right;
 }
-
 </style>
 </head>
 
 <body>
 
-<!-- ================= LOGIN PAGE ================= -->
+<!-- ================= LOGIN ================= -->
 <div id="loginPage">
-  <div class="loginCard">
-    <h2>🔐 Login</h2>
+<div class="loginCard">
 
-    <div style="font-size:40px">👆</div>
+<h2>👆 Attendance Login</h2>
 
-    <input id="user" placeholder="User"><br>
-    <input id="pass" type="password" placeholder="Password"><br>
+<input id="user" placeholder="User">
+<input id="pass" type="password" placeholder="Password">
 
-    <button onclick="login()">Login</button>
+<button onclick="login()">Login</button>
 
-    <div class="secret" onclick="secretBox()">🔒 Secret</div>
-  </div>
+<div class="secret" onclick="secretBox()">🔒 Secret</div>
+
+</div>
 </div>
 
-<!-- ================= APP PAGE ================= -->
+
+<!-- ================= APP ================= -->
 <div id="app">
 
 <header>
+
 Date <input type="date" id="date">
 In <input type="time" id="in">
 Out <input type="time" id="out">
@@ -134,6 +131,7 @@ BG <input type="color" id="bg">
 Font <input type="color" id="font">
 
 <button onclick="save()">Save</button>
+<button onclick="clearForm()">Clear</button>
 
 <select id="monthFilter" onchange="render()"></select>
 
@@ -143,6 +141,7 @@ Font <input type="color" id="font">
 <button onclick="window.print()">Print</button>
 
 <button class="logout" onclick="logout()">Logout</button>
+
 </header>
 
 <div class="tableWrap">
@@ -166,9 +165,10 @@ Font <input type="color" id="font">
 
 </div>
 
+
 <script>
 
-/* ================= LOGIN ================= */
+/* ========= LOGIN ========= */
 
 function login(){
 if(user.value==="9823087" && pass.value==="7284"){
@@ -191,16 +191,13 @@ render();
 
 if(localStorage.getItem("login")) showApp();
 
-/* ================= SECRET ================= */
-
 function secretBox(){
 let y=prompt("Enter year");
-if(y==="1995"){
-alert("User: 9823087\nPass: 7284");
-}
+if(y==="1995") alert("User: 9823087\nPassword: 7284");
 }
 
-/* ================= DATA ================= */
+
+/* ========= DATA ========= */
 
 let data=JSON.parse(localStorage.getItem("attData")||"[]");
 
@@ -228,16 +225,25 @@ font:font.value
 };
 
 let i=data.findIndex(x=>x.editing);
-if(i>=0){ data[i]=obj; }
+if(i>=0)data[i]=obj;
 else data.push(obj);
 
 data.forEach(x=>delete x.editing);
 
 saveData();
 render();
+clearForm();
 }
 
-/* ================= RENDER ================= */
+function clearForm(){
+date.value="";
+in.value="";
+out.value="";
+post.value="";
+}
+
+
+/* ========= RENDER ========= */
 
 function render(){
 
@@ -253,7 +259,10 @@ if(s) ok=x.post.toLowerCase().includes(s);
 return ok;
 });
 
-arr.sort((a,b)=>a.date.localeCompare(b.date));
+arr.sort((a,b)=>{
+if(a.date===b.date) return a.in.localeCompare(b.in);
+return a.date.localeCompare(b.date);
+});
 
 tbody.innerHTML="";
 
@@ -279,16 +288,17 @@ tr.innerHTML=`
 `;
 
 tbody.appendChild(tr);
-
 });
 
 footer.innerText="Total Duty: "+arr.length+" | Total Hours: "+total.toFixed(2);
 }
 
-/* ================= EDIT ================= */
+
+/* ========= EDIT DELETE ========= */
 
 function edit(id){
 let r=data.find(x=>x.id===id);
+
 date.value=r.date;
 in.value=r.in;
 out.value=r.out;
@@ -300,20 +310,19 @@ data.forEach(x=>delete x.editing);
 r.editing=true;
 }
 
-/* ================= DELETE ================= */
-
 function del(id){
-if(confirm("Delete?")){
+if(confirm("Delete entry?")){
 data=data.filter(x=>x.id!==id);
 saveData();
 render();
 }
 }
 
-/* ================= MONTH ================= */
+
+/* ========= MONTH ========= */
 
 function initMonth(){
-let m=new Date().getMonth()+1;
+let cur=new Date().getMonth()+1;
 
 monthFilter.innerHTML='<option value="all">All</option>';
 
@@ -322,17 +331,17 @@ let mm=i.toString().padStart(2,'0');
 let o=document.createElement("option");
 o.value=mm;
 o.text=mm;
-if(i===m)o.selected=true;
+if(i===cur)o.selected=true;
 monthFilter.appendChild(o);
 }
 }
 
-/* ================= EXCEL ================= */
+
+/* ========= EXCEL ========= */
 
 function exportExcel(){
 let rows=[...document.querySelectorAll("table tr")];
-let csv=[...rows].map(r=>[...r.children].map(c=>c.innerText).join(",")).join("\n");
-
+let csv=rows.map(r=>[...r.children].map(c=>c.innerText).join(",")).join("\n");
 let blob=new Blob([csv]);
 let a=document.createElement("a");
 a.href=URL.createObjectURL(blob);
