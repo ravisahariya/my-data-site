@@ -1,12 +1,8 @@
 <!DOCTYPE html>
 <html>
 <head>
-<meta charset="UTF-8" />
-<title>Attendance MASTER Cloud</title>
-
-<!-- Firebase CDN -->
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js"></script>
+<meta charset="UTF-8">
+<title>Attendance MASTER</title>
 
 <style>
 body{
@@ -14,49 +10,64 @@ margin:0;
 font-family:Arial;
 background:linear-gradient(135deg,#5f6df5,#7b5cff);
 height:100vh;
-overflow:hidden;
 }
 
 /* LOGIN */
-#loginPage{
+#login{
 display:flex;
 justify-content:center;
 align-items:center;
 height:100vh;
 }
 
-.loginCard{
-background:white;
-width:90%;
-max-width:420px;
+.card{
+background:#fff;
+width:95%;
+max-width:450px;
 padding:40px;
 border-radius:18px;
 text-align:center;
-box-shadow:0 15px 40px rgba(0,0,0,.25);
+box-shadow:0 15px 40px rgba(0,0,0,.3);
 }
 
-.loginCard input{
+.card input{
 width:100%;
 padding:14px;
 margin:10px 0;
 font-size:18px;
 }
 
-.loginCard button{
+.card button{
 padding:12px 30px;
 font-size:18px;
+cursor:pointer;
 }
 
 /* DASHBOARD */
-#app{display:none;height:100vh;flex-direction:column}
+#app{
+display:none;
+height:100vh;
+flex-direction:column;
+}
 
 header{
 background:#222;
-color:white;
-padding:12px;
+color:#fff;
+padding:10px;
 display:flex;
 justify-content:space-between;
 font-size:20px;
+}
+
+.controls{
+background:#fff;
+padding:10px;
+}
+
+.tableWrap{
+flex:1;
+overflow:auto;
+background:#fff;
 }
 
 footer{
@@ -65,33 +76,15 @@ padding:8px;
 font-weight:bold;
 }
 
-.tableWrap{
-flex:1;
-overflow:auto;
-}
-
 table{
 width:100%;
 border-collapse:collapse;
-background:white;
 }
 
 th,td{
 border:1px solid #ccc;
-padding:8px;
-text-align:center;
-}
-
-.controls{
-background:#fff;
-padding:10px;
-display:flex;
-flex-wrap:wrap;
-gap:5px;
-}
-
-.controls input,select,button{
 padding:6px;
+text-align:center;
 }
 </style>
 </head>
@@ -99,22 +92,23 @@ padding:6px;
 <body>
 
 <!-- LOGIN -->
-<div id="loginPage">
-  <div class="loginCard">
-    <h2>🔐 Attendance Login</h2>
-    <input id="user" placeholder="Username">
-    <input id="pass" type="password" placeholder="Password">
-    <button onclick="login()">Login</button>
-    <p style="cursor:pointer" onclick="alert('User: Ravi\nPass: Ravi123')">🔒 Secret</p>
-  </div>
+<div id="login">
+<div class="card">
+<h2>🔐 Attendance Login</h2>
+<input id="u" placeholder="Username">
+<input id="p" type="password" placeholder="Password">
+<button onclick="login()">Login</button>
+<br><br>
+<button onclick="alert('User: Ravi\nPass: Ravi123')">🔒 Secret</button>
+</div>
 </div>
 
 <!-- APP -->
 <div id="app">
 
 <header>
- Attendance MASTER
- <button onclick="logout()">Logout</button>
+Attendance MASTER
+<button onclick="logout()">Logout</button>
 </header>
 
 <div class="controls">
@@ -123,19 +117,19 @@ padding:6px;
 <input type="time" id="out">
 <input id="post" placeholder="Post">
 <button onclick="save()">Save</button>
-<button onclick="download()">Excel</button>
-<button onclick="window.print()">Print</button>
-<input id="search" placeholder="Search post" oninput="render()">
-<select id="month" onchange="render()">
-<option value="all">All</option>
-</select>
+<input id="search" placeholder="Search" oninput="render()">
 </div>
 
 <div class="tableWrap">
 <table>
 <thead>
 <tr>
-<th>Date</th><th>In</th><th>Out</th><th>Hours</th><th>Post</th><th>Edit</th><th>Delete</th>
+<th>Date</th>
+<th>In</th>
+<th>Out</th>
+<th>Hours</th>
+<th>Post</th>
+<th>Delete</th>
 </tr>
 </thead>
 <tbody id="tbody"></tbody>
@@ -149,149 +143,100 @@ Total Hours: <span id="hours">0</span>
 
 </div>
 
-<script type="module">
+<script>
 
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getFirestore, collection, addDoc, deleteDoc, doc, onSnapshot, updateDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+let data=[];
+let editIndex=null;
 
-/* ===== YOUR FIREBASE CONFIG ===== */
-const firebaseConfig = {
- apiKey: "YOUR_API_KEY",
- authDomain: "YOUR_DOMAIN",
- projectId: "YOUR_ID"
-};
-/* =============================== */
-
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
-const col = collection(db,"attendance");
-
-let rows=[];
-let editId=null;
-
-/* LOGIN REMEMBER */
+/* AUTO LOGIN */
 if(localStorage.getItem("login")=="yes"){
- showApp();
+showApp();
 }
 
 /* LOGIN */
-window.login=()=>{
- if(user.value==="Ravi" && pass.value==="Ravi123"){
-  localStorage.setItem("login","yes");
-  showApp();
- }else alert("Wrong login");
+function login(){
+if(u.value==="Ravi" && p.value==="Ravi123"){
+localStorage.setItem("login","yes");
+showApp();
+}else{
+alert("Wrong username or password");
+}
 }
 
-window.logout=()=>{
- localStorage.removeItem("login");
- location.reload();
+/* LOGOUT */
+function logout(){
+localStorage.removeItem("login");
+location.reload();
 }
 
 function showApp(){
- loginPage.style.display="none";
- app.style.display="flex";
+login.style.display="none";
+app.style.display="flex";
+render();
 }
 
-/* FIREBASE REALTIME */
-onSnapshot(col,snap=>{
- rows=[];
- snap.forEach(d=>rows.push({id:d.id,...d.data()}));
- render();
-});
-
 /* SAVE */
-window.save=async()=>{
- let d=date.value;
- let i=in.value;
- let o=out.value;
- let p=post.value;
+function save(){
+let d=date.value;
+let i=in.value;
+let o=out.value;
+let p=post.value;
 
- let h=((new Date("1970-01-01T"+o)-new Date("1970-01-01T"+i))/3600000);
- if(h<0) h+=24;
+if(!d||!i||!o)return;
 
- if(editId){
-  await updateDoc(doc(db,"attendance",editId),{d,i,o,h,p});
-  editId=null;
- }else{
-  await addDoc(col,{d,i,o,h,p});
- }
+let h=((new Date("1970-01-01T"+o)-new Date("1970-01-01T"+i))/3600000);
+if(h<0)h+=24;
 
- date.value=in.value=out.value=post.value="";
+data.push({d,i,o,h,p});
+localStorage.setItem("attendance",JSON.stringify(data));
+
+date.value=in.value=out.value=post.value="";
+render();
+}
+
+/* LOAD */
+data=JSON.parse(localStorage.getItem("attendance")||"[]");
+
+/* DELETE */
+function del(i){
+if(confirm("Delete?")){
+data.splice(i,1);
+localStorage.setItem("attendance",JSON.stringify(data));
+render();
+}
 }
 
 /* RENDER */
-window.render=()=>{
- let searchText=search.value.toLowerCase();
- let m=month.value;
+function render(){
 
- let body="";
- let totalH=0,totalD=0;
+let body="";
+let tH=0,tD=0;
 
- rows
- .filter(r=>{
-  let ok=r.p.toLowerCase().includes(searchText);
-  if(m!=="all") ok=ok && r.d.slice(0,7)==m;
-  return ok;
- })
- .sort((a,b)=>a.d.localeCompare(b.d))
- .forEach(r=>{
-  totalH+=r.h;
-  totalD++;
+let s=search.value.toLowerCase();
 
-  body+=`
-  <tr>
-   <td>${r.d}</td>
-   <td>${r.i}</td>
-   <td>${r.o}</td>
-   <td>${r.h.toFixed(2)}</td>
-   <td>${r.p}</td>
-   <td><button onclick="editRow('${r.id}')">✏️</button></td>
-   <td><button onclick="del('${r.id}')">❌</button></td>
-  </tr>`;
- });
+data
+.filter(r=>r.p.toLowerCase().includes(s))
+.sort((a,b)=>a.d.localeCompare(b.d))
+.forEach((r,i)=>{
 
- tbody.innerHTML=body;
- duty.innerText=totalD;
- hours.innerText=totalH.toFixed(2);
+tH+=r.h;
+tD++;
+
+body+=`
+<tr>
+<td>${r.d}</td>
+<td>${r.i}</td>
+<td>${r.o}</td>
+<td>${r.h.toFixed(2)}</td>
+<td>${r.p}</td>
+<td><button onclick="del(${i})">❌</button></td>
+</tr>`;
+});
+
+tbody.innerHTML=body;
+duty.innerText=tD;
+hours.innerText=tH.toFixed(2);
 }
-
-/* EDIT */
-window.editRow=id=>{
- let r=rows.find(x=>x.id==id);
- date.value=r.d;
- in.value=r.i;
- out.value=r.o;
- post.value=r.p;
- editId=id;
-}
-
-/* DELETE */
-window.del=async(id)=>{
- if(confirm("Delete?")) await deleteDoc(doc(db,"attendance",id));
-}
-
-/* EXCEL */
-window.download=()=>{
- let csv="Date,In,Out,Hours,Post\n";
- rows.forEach(r=>{
-  csv+=`${r.d},${r.i},${r.o},${r.h},${r.p}\n`;
- });
- let blob=new Blob([csv]);
- let a=document.createElement("a");
- a.href=URL.createObjectURL(blob);
- a.download="attendance.csv";
- a.click();
-}
-
-/* MONTH LIST */
-let now=new Date();
-let ym=now.toISOString().slice(0,7);
-for(let i=0;i<12;i++){
- let d=new Date(now.getFullYear(),i,1);
- let v=d.toISOString().slice(0,7);
- month.innerHTML+=`<option value="${v}">${v}</option>`;
-}
-month.value=ym;
 
 </script>
 
