@@ -1,225 +1,187 @@
 <!DOCTYPE html>
 <html>
 <head>
-<meta name="viewport" content="width=device-width,initial-scale=1">
-
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Attendance MASTER</title>
 
-<!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
 
 <style>
-body{
- margin:0;
- font-family:Arial;
-}
+body{margin:0;font-family:Arial;background:#f2f2f2}
 
-/* ================= LOGIN ================= */
-
+/* LOGIN PAGE */
 #loginPage{
- height:100vh;
- display:flex;
- justify-content:center;
- align-items:center;
- background:linear-gradient(135deg,#667eea,#764ba2);
+height:100vh;
+display:flex;
+justify-content:center;
+align-items:center;
+background:linear-gradient(135deg,#667eea,#764ba2);
+}
+.card{
+background:#fff;
+width:95%;
+max-width:420px;
+padding:30px;
+border-radius:16px;
+box-shadow:0 10px 30px rgba(0,0,0,.3);
+text-align:center;
 }
 
-.loginCard{
- background:#fff;
- width:95%;
- max-width:500px;
- padding:40px;
- border-radius:20px;
- text-align:center;
- box-shadow:0 15px 30px rgba(0,0,0,.3);
-}
-
-.loginCard h2{
- font-size:28px;
- margin-bottom:25px;
-}
-
-.loginCard input{
- width:100%;
- padding:14px;
- margin:10px 0;
- font-size:18px;
-}
-
-.loginCard button{
- padding:12px 30px;
- font-size:18px;
-}
-
-.secret{
- margin-top:15px;
- cursor:pointer;
- color:#777;
-}
-
-
-/* ================= APP ================= */
-
+/* APP */
 #app{
- display:none;
- height:100vh;
- flex-direction:column;
+display:none;
+height:100vh;
+flex-direction:column;
 }
 
-/* header fixed */
-.top{
- background:#fff;
- padding:6px;
- box-shadow:0 2px 6px rgba(0,0,0,.2);
- position:sticky;
- top:0;
- z-index:5;
+/* HEADER */
+.header{
+background:#fff;
+padding:8px;
+display:flex;
+justify-content:space-between;
+align-items:center;
+box-shadow:0 2px 6px rgba(0,0,0,.2);
 }
 
-/* footer fixed */
-.bottom{
- background:#ffeaa7;
- font-weight:bold;
- padding:6px;
- position:sticky;
- bottom:0;
+/* FOOTER */
+.footer{
+background:#ffeaa7;
+padding:6px;
+font-weight:bold;
+position:sticky;
+bottom:0;
 }
 
-/* scroll only table */
+/* TABLE SCROLL */
 .tableBox{
- flex:1;
- overflow:auto;
- background:#fff;
+flex:1;
+overflow:auto;
+background:#fff;
 }
 
-.form{
- display:flex;
- flex-wrap:wrap;
- gap:5px;
-}
+table{width:100%;border-collapse:collapse}
+th,td{border:1px solid #ccc;padding:6px;text-align:center}
+th{background:#ffd9d9}
 
-input,select,button{
- padding:6px;
- font-size:14px;
-}
+input,select,button{padding:6px;margin:2px}
+.logout{background:#f44336;color:#fff;border:none}
 
-table{
- width:100%;
- border-collapse:collapse;
-}
-
-th,td{
- border:1px solid #ccc;
- padding:6px;
- text-align:center;
-}
-
-th{
- background:#ffd9d9;
-}
-
-.logout{
- background:red;
- color:#fff;
+/* SECRET POPUP */
+#secretBox{
+display:none;
+position:fixed;
+top:50%;left:50%;
+transform:translate(-50%,-50%);
+background:#fff;
+padding:20px;
+border-radius:12px;
+box-shadow:0 10px 25px rgba(0,0,0,.4);
+z-index:99;
+width:90%;
+max-width:350px;
 }
 </style>
 </head>
 
 <body>
 
-
-<!-- ================= LOGIN PAGE ================= -->
-
+<!-- LOGIN -->
 <div id="loginPage">
- <div class="loginCard">
-  <h2>🔐 Attendance Login</h2>
-
-  <input id="username" placeholder="Username">
-  <input id="password" type="password" placeholder="Password">
-
-  <button onclick="doLogin()">Login</button>
-
-  <div class="secret" onclick="secretBox()">🔒 Secret</div>
- </div>
+<div class="card">
+<h2>🔐 Attendance Login</h2>
+<input id="username" placeholder="Username"><br>
+<input type="password" id="password" placeholder="Password"><br>
+<button onclick="login()">Login</button>
+<br><br>
+<div onclick="openSecret()" style="cursor:pointer;color:#555">🔒 Secret</div>
+</div>
 </div>
 
 
-<!-- ================= APP ================= -->
+<!-- SECRET SETTINGS -->
+<div id="secretBox">
+<h3>🔒 Secret Settings</h3>
 
+<b>Current Username:</b>
+<div id="showUser"></div>
+
+<b>Current Password:</b>
+<div id="showPass"></div>
+<hr>
+
+Old Password<br>
+<input id="oldp" type="password"><br>
+
+New Username<br>
+<input id="newu"><br>
+
+New Password<br>
+<input id="newp" type="password"><br>
+
+Confirm Password<br>
+<input id="confp" type="password"><br>
+
+<button onclick="changeCred()">OK</button>
+<button onclick="secretBox.style.display='none'">Close</button>
+</div>
+
+
+<!-- APP -->
 <div id="app">
 
-<!-- TOP -->
-<div class="top">
-
-<div style="display:flex;justify-content:space-between">
- <b>☁️ Attendance MASTER</b>
- <button class="logout" onclick="logout()">Logout</button>
+<div class="header">
+<b>☁️ Attendance MASTER</b>
+<button class="logout" onclick="logout()">Logout</button>
 </div>
 
-<div class="form">
-
+<div style="padding:6px">
 <input type="date" id="date">
 <input type="time" id="inTime">
 <input type="time" id="outTime">
 <input id="post" placeholder="Post">
-
-BG <input type="color" id="bg" value="#fffacd">
-Font <input type="color" id="font" value="#000000">
-
 <button onclick="save()">Save</button>
 
 <select id="monthFilter" onchange="render()"></select>
-
 <button onclick="downloadCSV()">Excel</button>
 <button onclick="window.print()">Print</button>
-
-</div>
 </div>
 
-
-<!-- TABLE -->
 <div class="tableBox">
 <table>
 <thead>
 <tr>
-<th>Date</th>
-<th>In</th>
-<th>Out</th>
-<th>Hours</th>
-<th>Post</th>
-<th>Edit</th>
-<th>Delete</th>
+<th>Date</th><th>In</th><th>Out</th><th>Hours</th>
+<th>Post</th><th>Edit</th><th>Delete</th>
 </tr>
 </thead>
 <tbody id="tbody"></tbody>
 </table>
 </div>
 
-
-<!-- FOOTER -->
-<div class="bottom">
-Total Duty: <span id="duty">0</span>
-&nbsp;&nbsp;
+<div class="footer">
+Total Duty: <span id="duty">0</span> |
 Total Hours: <span id="hours">0</span>
 </div>
 
 </div>
 
 
-
 <script>
 
-/* ================= LOGIN MEMORY ================= */
+/* DEFAULT CREDENTIALS */
+if(!localStorage.getItem("u")){
+ localStorage.setItem("u","Ravi");
+ localStorage.setItem("p","Ravi123");
+}
 
-if(!localStorage.getItem("user")) localStorage.setItem("user","Ravi");
-if(!localStorage.getItem("pass")) localStorage.setItem("pass","Ravi123");
-
+/* LOGIN */
 if(localStorage.getItem("login")) showApp();
 
-function doLogin(){
- let u = localStorage.getItem("user");
- let p = localStorage.getItem("pass");
+function login(){
+ let u=localStorage.getItem("u");
+ let p=localStorage.getItem("p");
 
  if(username.value===u && password.value===p){
   localStorage.setItem("login","1");
@@ -237,45 +199,37 @@ function showApp(){
  app.style.display="flex";
 }
 
-
-/* ================= SECRET CHANGE ================= */
-
-function secretBox(){
-
- let y=prompt("Enter secret year");
+/* SECRET */
+function openSecret(){
+ let y=prompt("Enter Secret Year");
  if(y!=="1995") return;
 
- let old=prompt("Old Password");
- if(old!==localStorage.getItem("pass")){
-  alert("Wrong old password");
-  return;
- }
+ showUser.innerText=localStorage.getItem("u");
+ showPass.innerText=localStorage.getItem("p");
 
- let newUser=prompt("New Username");
- let newPass=prompt("New Password");
- let confirm=prompt("Confirm Password");
+ secretBox.style.display="block";
+}
 
- if(newPass!==confirm){
-  alert("Password mismatch");
-  return;
- }
+function changeCred(){
+ let old=localStorage.getItem("p");
 
- localStorage.setItem("user",newUser);
- localStorage.setItem("pass",newPass);
+ if(oldp.value!==old) return alert("Wrong old password");
+ if(newp.value!==confp.value) return alert("Password mismatch");
 
- alert("Login changed successfully ✅");
+ localStorage.setItem("u",newu.value);
+ localStorage.setItem("p",newp.value);
+
+ alert("Updated Successfully");
+ secretBox.style.display="none";
 }
 
 
-
-/* ================= FIREBASE ================= */
-
+/* FIREBASE */
 firebase.initializeApp({
  apiKey:"AIzaSyD71mpolAsmejtU2icecQQcX07iCW_is0Y",
  authDomain:"ravicardmaker.firebaseapp.com",
  projectId:"ravicardmaker"
 });
-
 const db=firebase.firestore();
 
 let data=[],editId=null;
@@ -286,83 +240,41 @@ db.collection("attendance").onSnapshot(s=>{
  render();
 });
 
-
-/* ================= MONTH ================= */
-
+/* MONTH FILTER */
 const months=["All","Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
-
 months.forEach((m,i)=>{
  let op=document.createElement("option");
  op.value=i===0?"all":String(i).padStart(2,"0");
  op.text=m;
  monthFilter.appendChild(op);
 });
-
 monthFilter.value=String(new Date().getMonth()+1).padStart(2,"0");
 
-
-/* ================= HOURS ================= */
-
+/* HOURS */
 function calc(i,o){
- let a=new Date("2000 "+i);
- let b=new Date("2000 "+o);
- if(b<a) b.setDate(b.getDate()+1);
+ let a=new Date("2000 "+i),b=new Date("2000 "+o);
+ if(b<a)b.setDate(b.getDate()+1);
  return ((b-a)/3600000).toFixed(2);
 }
 
-
-/* ================= SAVE ================= */
-
+/* SAVE */
 function save(){
-
  let obj={
-  d:date.value,
-  i:inTime.value,
-  o:outTime.value,
-  p:post.value,
-  bg:bg.value,
-  font:font.value,
-  h:calc(inTime.value,outTime.value)
+  d:date.value,i:inTime.value,o:outTime.value,
+  p:post.value,h:calc(inTime.value,outTime.value)
  };
-
- if(editId)
-  db.collection("attendance").doc(editId).update(obj);
- else
-  db.collection("attendance").add(obj);
-
- editId=null;
+ db.collection("attendance").add(obj);
 }
 
-
-/* ================= EDIT ================= */
-
-function edit(id){
- let r=data.find(x=>x.id===id);
-
- editId=id;
- date.value=r.d;
- inTime.value=r.i;
- outTime.value=r.o;
- post.value=r.p;
- bg.value=r.bg;
- font.value=r.font;
-}
-
-
-/* ================= DELETE ================= */
-
+/* DELETE */
 function del(id){
- if(confirm("Delete entry?"))
+ if(confirm("Delete?"))
   db.collection("attendance").doc(id).delete();
 }
 
-
-/* ================= RENDER ================= */
-
+/* RENDER */
 function render(){
-
  tbody.innerHTML="";
-
  let m=monthFilter.value;
 
  let sorted=[...data].sort((a,b)=> new Date(a.d+" "+a.i)-new Date(b.d+" "+b.i));
@@ -370,20 +282,17 @@ function render(){
  let th=0,td=0;
 
  sorted.forEach(r=>{
-
   if(m!=="all" && r.d.split("-")[1]!==m) return;
 
-  td++;
-  th+=+r.h;
+  td++; th+=+r.h;
 
   tbody.innerHTML+=`
-  <tr style="background:${r.bg};color:${r.font}">
+  <tr>
   <td>${r.d}</td>
   <td>${r.i}</td>
   <td>${r.o}</td>
   <td>${r.h}</td>
   <td>${r.p}</td>
-  <td><button onclick="edit('${r.id}')">✏️</button></td>
   <td><button onclick="del('${r.id}')">❌</button></td>
   </tr>`;
  });
@@ -392,20 +301,17 @@ function render(){
  hours.innerText=th.toFixed(2);
 }
 
-
-/* ================= CSV ================= */
-
+/* CSV */
 function downloadCSV(){
  let csv="Date,In,Out,Hours,Post\n";
  data.forEach(r=>csv+=`${r.d},${r.i},${r.o},${r.h},${r.p}\n`);
-
  let blob=new Blob([csv]);
  let a=document.createElement("a");
  a.href=URL.createObjectURL(blob);
  a.download="attendance.csv";
  a.click();
 }
-
 </script>
+
 </body>
 </html>
