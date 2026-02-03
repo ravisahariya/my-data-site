@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Attendance Master</title>
+<title>Attendance MASTER PRO</title>
 
 <style>
 body{
@@ -12,7 +12,7 @@ background:linear-gradient(135deg,#6a6aff,#7d5fff);
 }
 
 /* LOGIN */
-.loginPage{
+#login{
 height:100vh;
 display:flex;
 align-items:center;
@@ -24,45 +24,31 @@ background:#fff;
 width:420px;
 padding:40px;
 border-radius:15px;
+box-shadow:0 10px 30px rgba(0,0,0,.4);
 text-align:center;
-box-shadow:0 10px 30px rgba(0,0,0,.3);
 }
 
-input{
-width:100%;
-padding:10px;
-margin:8px 0;
-font-size:16px;
+input,select{
+padding:6px;
+margin:4px;
+font-size:14px;
 }
 
 button{
-padding:10px 20px;
-margin-top:10px;
-cursor:pointer;
-}
-
-.secret{
-font-size:13px;
-margin-top:10px;
+padding:6px 12px;
 cursor:pointer;
 }
 
 /* DASHBOARD */
-#dashboard{
-display:none;
-padding:20px;
-}
+#app{display:none;}
 
-table{
-width:100%;
-border-collapse:collapse;
-margin-top:15px;
-}
-
-th,td{
-border:1px solid #ccc;
-padding:6px;
-text-align:center;
+.header{
+background:#fff;
+padding:10px;
+position:sticky;
+top:0;
+z-index:10;
+box-shadow:0 2px 6px rgba(0,0,0,.2);
 }
 
 .logout{
@@ -70,39 +56,96 @@ background:red;
 color:#fff;
 float:right;
 }
+
+.tableBox{
+height:65vh;
+overflow:auto;
+background:#fff;
+}
+
+table{
+width:100%;
+border-collapse:collapse;
+}
+
+th,td{
+border:1px solid #ddd;
+padding:6px;
+text-align:center;
+}
+
+thead{
+background:#ffdcdc;
+position:sticky;
+top:0;
+}
+
+.total{
+background:#ffe9a6;
+font-weight:bold;
+}
 </style>
 </head>
-
 
 <body>
 
 <!-- LOGIN -->
-<div class="loginPage" id="loginPage">
+<div id="login">
 <div class="card">
 <h2>👉 Attendance Login</h2>
-
-<input id="user" placeholder="User">
-<input id="pass" type="password" placeholder="Password">
-
+<input id="user" placeholder="User"><br>
+<input id="pass" type="password" placeholder="Password"><br>
 <button onclick="login()">Login</button>
-
-<div class="secret" onclick="secret()">🔒 Secret</div>
+<br>
+<small onclick="secret()">🔒 Secret</small>
 </div>
 </div>
 
 
-<!-- DASHBOARD -->
-<div id="dashboard">
-<button class="logout" onclick="logout()">Logout</button>
-<h2>Attendance Register</h2>
+<!-- APP -->
+<div id="app">
+
+<div class="header">
 
 <input type="date" id="date">
 <input type="time" id="inTime">
 <input type="time" id="outTime">
+
 <input id="post" placeholder="Post">
 
-<button onclick="save()">Save</button>
+BG <input type="color" id="bg">
+Font <input type="color" id="font">
 
+<button onclick="save()">Save</button>
+<button onclick="clearForm()">Clear</button>
+
+<select id="month" onchange="render()">
+<option value="all">All</option>
+<option value="01">Jan</option>
+<option value="02">Feb</option>
+<option value="03">Mar</option>
+<option value="04">Apr</option>
+<option value="05">May</option>
+<option value="06">Jun</option>
+<option value="07">Jul</option>
+<option value="08">Aug</option>
+<option value="09">Sep</option>
+<option value="10">Oct</option>
+<option value="11">Nov</option>
+<option value="12">Dec</option>
+</select>
+
+<input id="search" placeholder="Search" onkeyup="render()">
+
+<button onclick="exportExcel()">Excel</button>
+<button onclick="window.print()">Print</button>
+
+<button class="logout" onclick="logout()">Logout</button>
+
+</div>
+
+
+<div class="tableBox">
 <table>
 <thead>
 <tr>
@@ -111,32 +154,41 @@ float:right;
 <th>Out</th>
 <th>Hours</th>
 <th>Post</th>
+<th>Edit</th>
 <th>Delete</th>
 </tr>
 </thead>
+
 <tbody id="data"></tbody>
+
+<tfoot>
+<tr class="total">
+<td colspan="3">Total Duty</td>
+<td id="duty">0</td>
+<td colspan="3" id="hours">0</td>
+</tr>
+</tfoot>
+
 </table>
 </div>
 
+</div>
 
 
 <script>
-let USER="9823087";
-let PASS="7284";
+const USER="9823087";
+const PASS="7284";
 
 let list = JSON.parse(localStorage.getItem("att")) || [];
+let editIndex=null;
 
+/* LOGIN */
 function login(){
-let u=document.getElementById("user").value;
-let p=document.getElementById("pass").value;
-
-if(u===USER && p===PASS){
-document.getElementById("loginPage").style.display="none";
-document.getElementById("dashboard").style.display="block";
+if(user.value==USER && pass.value==PASS){
+login.style.display="none";
+app.style.display="block";
 render();
-}else{
-alert("Wrong login");
-}
+}else alert("Wrong Login");
 }
 
 function logout(){
@@ -144,53 +196,117 @@ location.reload();
 }
 
 function secret(){
-let y=prompt("Year?");
-if(y=="1995"){
+if(prompt("Year?")=="1995"){
 alert("User: "+USER+"  Pass: "+PASS);
 }
 }
 
-function hours(a,b){
+/* HOURS */
+function calc(a,b){
 let x=new Date("2000-01-01 "+a);
 let y=new Date("2000-01-01 "+b);
 if(y<x) y.setDate(y.getDate()+1);
 return ((y-x)/3600000).toFixed(2);
 }
 
+/* SAVE */
 function save(){
-let d=date.value;
-let i=inTime.value;
-let o=outTime.value;
-let p=post.value;
+let obj={
+d:date.value,
+i:inTime.value,
+o:outTime.value,
+p:post.value,
+bg:bg.value,
+f:font.value
+};
+obj.h=calc(obj.i,obj.o);
 
-list.push({d,i,o,p,h:hours(i,o)});
+if(editIndex!==null){
+list[editIndex]=obj;
+editIndex=null;
+}else{
+list.push(obj);
+}
+
 localStorage.setItem("att",JSON.stringify(list));
+clearForm();
 render();
 }
 
+/* CLEAR */
+function clearForm(){
+date.value=inTime.value=outTime.value=post.value="";
+}
+
+/* DELETE */
 function del(i){
+if(confirm("Delete?")){
 list.splice(i,1);
 localStorage.setItem("att",JSON.stringify(list));
 render();
 }
+}
 
+/* EDIT */
+function editRow(i){
+let r=list[i];
+date.value=r.d;
+inTime.value=r.i;
+outTime.value=r.o;
+post.value=r.p;
+bg.value=r.bg;
+font.value=r.f;
+editIndex=i;
+}
+
+/* RENDER */
 function render(){
 data.innerHTML="";
+let totalH=0;
+let count=0;
+
+let m=month.value;
+let s=search.value.toLowerCase();
+
 list.sort((a,b)=>a.d.localeCompare(b.d));
+
 list.forEach((x,i)=>{
+
+if(m!="all" && x.d.split("-")[1]!=m) return;
+if(s && !x.p.toLowerCase().includes(s)) return;
+
+count++;
+totalH+=Number(x.h);
+
 data.innerHTML+=`
-<tr>
+<tr style="background:${x.bg};color:${x.f}">
 <td>${x.d}</td>
 <td>${x.i}</td>
 <td>${x.o}</td>
 <td>${x.h}</td>
 <td>${x.p}</td>
-<td><button onclick="del(${i})">X</button></td>
-</tr>
-`;
+<td><button onclick="editRow(${i})">✏️</button></td>
+<td><button onclick="del(${i})">❌</button></td>
+</tr>`;
 });
+
+duty.innerText=count;
+hours.innerText=totalH.toFixed(2);
+}
+
+/* EXCEL */
+function exportExcel(){
+let csv="Date,In,Out,Hours,Post\n";
+list.forEach(x=>{
+csv+=`${x.d},${x.i},${x.o},${x.h},${x.p}\n`;
+});
+let blob=new Blob([csv]);
+let a=document.createElement("a");
+a.href=URL.createObjectURL(blob);
+a.download="attendance.csv";
+a.click();
 }
 </script>
 
 </body>
-  </html>
+</html>
