@@ -2,12 +2,12 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Attendance MASTER PRO MAX</title>
+<title>Attendance MASTER PRO</title>
 
 <style>
-body{margin:0;font-family:Arial;background:#eef1f6}
+body{margin:0;font-family:Arial;background:#f2f4f8}
 
-/* LOGIN */
+/* ===== LOGIN ===== */
 #login{
 height:100vh;
 display:flex;
@@ -17,27 +17,29 @@ background:linear-gradient(135deg,#6a6cff,#9c6cff);
 }
 
 .card{
-width:430px;
-padding:45px;
 background:#fff;
+padding:40px;
 border-radius:20px;
+width:380px;
 text-align:center;
 box-shadow:0 15px 40px rgba(0,0,0,.3);
 }
 
-.card input{width:95%;padding:10px;margin:8px 0}
+.card input{
+width:95%;
+padding:10px;
+margin:8px 0;
+}
 
-.secret{cursor:pointer;color:#666;margin-top:8px}
-
-/* APP */
+/* ===== APP ===== */
 #app{display:none;height:100vh;flex-direction:column}
 
 header{
 background:#fff;
 padding:8px;
-box-shadow:0 2px 5px #ccc;
 position:sticky;
 top:0;
+box-shadow:0 2px 6px #ccc;
 z-index:10;
 }
 
@@ -62,14 +64,9 @@ padding:6px;
 text-align:center;
 }
 
-th{
-background:#ffdede;
-position:sticky;
-top:0;
-}
+th{background:#ffdede}
 
 button{cursor:pointer}
-
 .logout{background:red;color:white}
 </style>
 </head>
@@ -80,22 +77,24 @@ button{cursor:pointer}
 <div id="login">
 <div class="card">
 <h2>👆 Attendance Login</h2>
-<input id="u" placeholder="User">
+
+<input id="u" placeholder="User ID">
 <input id="p" type="password" placeholder="Password">
-<button onclick="login()">Login</button>
-<div class="secret" onclick="secret()">🔒 Secret</div>
+
+<button onclick="doLogin()">Login</button>
+<br>
+<small onclick="secret()">🔒 Secret</small>
 </div>
 </div>
+
 
 <!-- APP -->
 <div id="app">
 
 <header>
-
-Date <input type="date" id="date">
-In <input type="time" id="in">
-Out <input type="time" id="out">
-
+Date <input type="date" id="d">
+In <input type="time" id="i">
+Out <input type="time" id="o">
 Post <input id="post">
 
 BG <input type="color" id="bg" value="#ffffff">
@@ -104,16 +103,14 @@ Font <input type="color" id="font" value="#000000">
 <button onclick="save()">Save</button>
 <button onclick="clearForm()">Clear</button>
 
-<select id="monthFilter" onchange="render()"></select>
-
+<select id="month" onchange="render()"></select>
 <input id="search" placeholder="Search" onkeyup="render()">
 
 <button onclick="excel()">Excel</button>
 <button onclick="window.print()">Print</button>
-
 <button class="logout" onclick="logout()">Logout</button>
-
 </header>
+
 
 <div class="tableWrap">
 <table>
@@ -128,7 +125,7 @@ Font <input type="color" id="font" value="#000000">
 <th>Delete</th>
 </tr>
 </thead>
-<tbody id="tbody"></tbody>
+<tbody id="tb"></tbody>
 </table>
 </div>
 
@@ -136,14 +133,15 @@ Font <input type="color" id="font" value="#000000">
 
 </div>
 
+
 <script>
 
-/* LOGIN */
-function login(){
-if(u.value=="9823087" && p.value=="7284"){
-localStorage.setItem("login","1");
+/* ========= LOGIN ========= */
+function doLogin(){
+if(u.value==="9823087" && p.value==="7284"){
+localStorage.setItem("login","yes");
 start();
-}else alert("Wrong login");
+}else alert("Wrong Login");
 }
 
 function logout(){
@@ -153,7 +151,7 @@ location.reload();
 
 function secret(){
 let y=prompt("Enter year");
-if(y=="1995") alert("User: 9823087\nPass: 7284");
+if(y==="1995") alert("User: 9823087\nPass: 7284");
 }
 
 if(localStorage.getItem("login")) start();
@@ -165,34 +163,37 @@ initMonth();
 render();
 }
 
-/* DATA */
-let data=JSON.parse(localStorage.getItem("data")||"[]");
+
+/* ========= DATA ========= */
+let data = JSON.parse(localStorage.getItem("data")||"[]");
 
 function saveData(){
 localStorage.setItem("data",JSON.stringify(data));
 }
 
-function calc(a,b){
+function hours(a,b){
 let s=new Date("2020-01-01 "+a);
 let e=new Date("2020-01-01 "+b);
 if(e<s)e.setDate(e.getDate()+1);
 return ((e-s)/3600000).toFixed(2);
 }
 
+
+/* ========= SAVE ========= */
 function save(){
 
 let obj={
 id:Date.now(),
-date:date.value,
-in:in.value,
-out:out.value,
+date:d.value,
+in:i.value,
+out:o.value,
 post:post.value,
 bg:bg.value,
 font:font.value
 };
 
-let i=data.findIndex(x=>x.editing);
-if(i>=0)data[i]=obj;
+let editIndex=data.findIndex(x=>x.editing);
+if(editIndex>=0) data[editIndex]=obj;
 else data.push(obj);
 
 data.forEach(x=>delete x.editing);
@@ -203,34 +204,33 @@ clearForm();
 }
 
 function clearForm(){
-date.value=in.value=out.value=post.value="";
+d.value=i.value=o.value=post.value="";
 }
 
-/* RENDER */
+
+/* ========= RENDER ========= */
 function render(){
 
-let m=monthFilter.value;
+let m=month.value;
 let s=search.value.toLowerCase();
 
-let arr=data.filter(x=>{
+let list=data.filter(x=>{
 let ok=true;
-
 if(m!="all") ok=x.date.slice(5,7)==m;
 if(s) ok=x.post.toLowerCase().includes(s);
-
 return ok;
 });
 
-arr.sort((a,b)=>{
+list.sort((a,b)=>{
 if(a.date==b.date) return a.in.localeCompare(b.in);
 return a.date.localeCompare(b.date);
 });
 
-tbody.innerHTML="";
+tb.innerHTML="";
 let total=0;
 
-arr.forEach(r=>{
-let h=calc(r.in,r.out);
+list.forEach(r=>{
+let h=hours(r.in,r.out);
 total+=+h;
 
 let tr=document.createElement("tr");
@@ -247,18 +247,19 @@ tr.innerHTML=`
 <td><button onclick="del(${r.id})">❌</button></td>
 `;
 
-tbody.appendChild(tr);
+tb.appendChild(tr);
 });
 
-foot.innerText="Total Duty: "+arr.length+" | Total Hours: "+total.toFixed(2);
+foot.innerText="Total Duty: "+list.length+" | Total Hours: "+total.toFixed(2);
 }
 
-/* EDIT DELETE */
+
+/* ========= EDIT DELETE ========= */
 function edit(id){
 let r=data.find(x=>x.id==id);
-date.value=r.date;
-in.value=r.in;
-out.value=r.out;
+d.value=r.date;
+i.value=r.in;
+o.value=r.out;
 post.value=r.post;
 bg.value=r.bg;
 font.value=r.font;
@@ -273,22 +274,23 @@ render();
 }
 }
 
-/* MONTH */
+
+/* ========= MONTH ========= */
 function initMonth(){
 let cur=new Date().getMonth()+1;
-monthFilter.innerHTML='<option value="all">All</option>';
-
+month.innerHTML='<option value="all">All</option>';
 for(let i=1;i<=12;i++){
 let m=i.toString().padStart(2,'0');
 let o=document.createElement("option");
 o.value=m;
 o.text=m;
 if(i==cur)o.selected=true;
-monthFilter.appendChild(o);
+month.appendChild(o);
 }
 }
 
-/* EXCEL */
+
+/* ========= EXCEL ========= */
 function excel(){
 let rows=[...document.querySelectorAll("table tr")];
 let csv=rows.map(r=>[...r.children].map(c=>c.innerText).join(",")).join("\n");
@@ -300,5 +302,6 @@ a.click();
 }
 
 </script>
+
 </body>
 </html>
