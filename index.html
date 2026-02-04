@@ -23,32 +23,35 @@ align-items:center;
 .loginCard{
 background:#fff;
 width:95%;
-max-width:520px;
-padding:50px;
-border-radius:25px;
+max-width:650px;     /* BIGGER */
+padding:60px;        /* BIGGER */
+border-radius:30px;
 text-align:center;
-box-shadow:0 15px 45px rgba(0,0,0,.35);
+box-shadow:0 20px 60px rgba(0,0,0,.4);
 }
 
-.loginCard h2{
-font-size:34px;
+.loginCard h1{
+font-size:40px;
 margin-bottom:10px;
 }
 
 .loginInput{
 width:100%;
-padding:16px;
-margin:10px 0;
-font-size:18px;
+padding:20px;
+margin:15px 0;
+font-size:20px;
+border-radius:10px;
 }
 
-.bigBtn{
-padding:12px 30px;
-font-size:18px;
-margin:6px;
+.loginBtn{
+width:100%;
+padding:18px;
+font-size:22px;
+margin-top:10px;
 }
 
 #clock{
+font-size:20px;
 color:#1976d2;
 font-weight:bold;
 margin-bottom:15px;
@@ -62,7 +65,6 @@ height:100vh;
 flex-direction:column;
 }
 
-/* header fixed */
 header{
 background:#1565c0;
 color:white;
@@ -70,7 +72,6 @@ padding:12px;
 font-size:20px;
 display:flex;
 justify-content:space-between;
-align-items:center;
 position:sticky;
 top:0;
 }
@@ -79,15 +80,16 @@ top:0;
 background:red;
 color:white;
 border:none;
-padding:8px 14px;
+padding:8px 15px;
 }
 
-/* entry form */
+/* blue entry */
 #entry{
 background:#d9ecff;
 padding:10px;
 }
 
+/* table */
 table{
 width:100%;
 border-collapse:collapse;
@@ -103,6 +105,7 @@ th{
 background:#ffd6d6;
 }
 
+/* ONLY ROW SCROLL */
 tbody{
 display:block;
 height:60vh;
@@ -131,30 +134,28 @@ background:#e3f2fd;
 
 <body>
 
-<!-- ================= LOGIN PAGE ================= -->
-
+<!-- LOGIN -->
 <div id="loginPage">
 <div class="loginCard">
 
-<h2>🔐 Attendance Login</h2>
+<h1>🔐 Attendance Login</h1>
 <div id="clock"></div>
 
-<input id="user" class="loginInput" placeholder="Username">
-<input id="pass" type="password" class="loginInput" placeholder="Password">
+<input id="username" class="loginInput" placeholder="Username">
+<input id="password" type="password" class="loginInput" placeholder="Password">
 
-<button class="bigBtn" onclick="login()">Login</button>
-<button class="bigBtn" onclick="secret()">🔒 Secret</button>
+<button class="loginBtn" onclick="doLogin()">Login</button>
+<button class="loginBtn" onclick="secret()">🔒 Secret</button>
 
 </div>
 </div>
 
 
-<!-- ================= DASHBOARD ================= -->
-
+<!-- APP -->
 <div id="app">
 
 <header>
-📊 <b>ATTENDANCE MASTER DATA</b>
+📊 ATTENDANCE MASTER DATA
 <button class="logoutBtn" onclick="logout()">Logout</button>
 </header>
 
@@ -162,8 +163,8 @@ background:#e3f2fd;
 🕒 <span id="runClock"></span><br>
 
 <input type="date" id="date">
-<input type="time" id="in">
-<input type="time" id="out">
+<input type="time" id="inTime">
+<input type="time" id="outTime">
 <input id="post" placeholder="Post">
 <button onclick="save()">Save</button>
 
@@ -205,21 +206,25 @@ Total Hours: <span id="hours">0</span>
 
 </div>
 
-
 <script>
 
-/* ================= DEFAULT LOGIN ================= */
-
+/* DEFAULT LOGIN */
 if(!localStorage.user){
 localStorage.user="9823087";
 localStorage.pass="7284";
 }
 
-function login(){
-if(user.value==localStorage.user && pass.value==localStorage.pass){
+/* LOGIN FUNCTION (FIXED) */
+function doLogin(){
+let u=document.getElementById("username").value;
+let p=document.getElementById("password").value;
+
+if(u===localStorage.user && p===localStorage.pass){
 localStorage.logged="yes";
 showApp();
-}else alert("Wrong");
+}else{
+alert("Wrong Username/Password");
+}
 }
 
 function logout(){
@@ -233,64 +238,55 @@ app.style.display="flex";
 render();
 }
 
-if(localStorage.logged=="yes") showApp();
+if(localStorage.logged==="yes") showApp();
 
-
-/* ================= SECRET ================= */
-
+/* SECRET */
 function secret(){
 let s=prompt("Enter secret year");
-if(s=="1995"){
+if(s==="1995"){
 alert("Username: "+localStorage.user+"\nPassword: "+localStorage.pass);
 
 let old=prompt("Old password");
-if(old!=localStorage.pass) return;
+if(old!==localStorage.pass) return;
 
-let u=prompt("New username");
-let p=prompt("New password");
-let c=prompt("Confirm password");
+let nu=prompt("New username");
+let np=prompt("New password");
+let cp=prompt("Confirm password");
 
-if(p!=c) return alert("Not match");
+if(np!==cp) return alert("Not match");
 
-localStorage.user=u;
-localStorage.pass=p;
+localStorage.user=nu;
+localStorage.pass=np;
 
-alert("Changed successfully");
+alert("Changed!");
 }
 }
 
-
-/* ================= CLOCK ================= */
-
-function clock(){
+/* CLOCK */
+function tick(){
 let d=new Date();
-clockDiv=d.toLocaleString();
-document.getElementById("clock").innerText=clockDiv;
-document.getElementById("runClock").innerText=clockDiv;
+let t=d.toLocaleString();
+clock.innerText=t;
+runClock.innerText=t;
 }
-setInterval(clock,1000);
+setInterval(tick,1000);
 
-
-/* ================= DATA ================= */
-
+/* DATA */
 let data=JSON.parse(localStorage.data||"[]");
 
 function save(){
-let d=date.value;
-let i=in.value;
-let o=out.value;
-let p=post.value;
+let d=date.value,i=inTime.value,o=outTime.value,p=post.value;
 
-let h=(new Date("1970-01-01 "+o)-new Date("1970-01-01 "+i))/3600000;
-if(h<0) h+=24;
+let h=(new Date("1970 "+o)-new Date("1970 "+i))/3600000;
+if(h<0)h+=24;
 
 data.push({d,i,o,h:h.toFixed(2),p});
 localStorage.data=JSON.stringify(data);
 render();
 }
 
-function del(x){
-data.splice(x,1);
+function del(i){
+data.splice(i,1);
 localStorage.data=JSON.stringify(data);
 render();
 }
@@ -299,15 +295,13 @@ function render(){
 tbody.innerHTML="";
 let m=monthFilter.value;
 
-let td=0, th=0;
+let td=0,th=0;
 
 data.forEach((r,i)=>{
-
 let month=new Date(r.d).getMonth();
-if(m!="all" && month!=m) return;
+if(m!=="all" && month!=m) return;
 
 let tr=document.createElement("tr");
-
 if(r.i>r.o) tr.className="night";
 
 tr.innerHTML=`
@@ -328,7 +322,6 @@ th+=parseFloat(r.h);
 duty.innerText=td;
 hours.innerText=th.toFixed(2);
 }
-
 </script>
 </body>
 </html>
