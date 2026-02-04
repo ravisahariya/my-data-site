@@ -1,9 +1,10 @@
 <!DOCTYPE html>
 <html>
 <head>
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Attendance MASTER</title>
 
+<!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
 
@@ -16,78 +17,108 @@ height:100vh;
 display:flex;
 justify-content:center;
 align-items:center;
-background:linear-gradient(135deg,#5f72ff,#9b23ea);
+background:linear-gradient(135deg,#5f72ff,#9b59ff);
+color:#fff;
 }
 
-.card{
+.loginCard{
 background:#fff;
+color:#000;
+padding:40px;
 width:95%;
-max-width:520px;
-padding:55px;
-border-radius:25px;
+max-width:480px;
+border-radius:20px;
 text-align:center;
-box-shadow:0 20px 40px rgba(0,0,0,.3);
+box-shadow:0 10px 25px rgba(0,0,0,.3);
 }
 
-.card h2{font-size:32px}
-.card input{width:100%;padding:14px;font-size:18px;margin:8px 0}
-.card button{width:100%;padding:14px;font-size:18px}
+.loginCard h1{font-size:32px;margin-bottom:10px}
+.clock{font-size:20px;margin-bottom:20px;font-weight:bold}
 
-#clock{
-font-weight:bold;
-color:#1976d2;
-margin-bottom:10px;
+input,select,button{
+padding:10px;
+margin:5px;
+font-size:16px;
+}
+
+button{cursor:pointer}
+
+.secretBtn{color:#666;background:none;border:none}
+
+.logout{
+background:#e53935;
+color:#fff;
+border:none;
+padding:8px 12px;
 }
 
 /* APP */
 #app{display:none;height:100vh;flex-direction:column}
 
 /* HEADER */
-header{
+.header{
 background:#1976d2;
 color:#fff;
-padding:10px;
+padding:8px;
 display:flex;
 justify-content:space-between;
-font-weight:bold;
-}
-
-.logout{
-background:red;
-color:#fff;
-border:none;
-padding:6px 12px;
+align-items:center;
 }
 
 /* ENTRY FORM BLUE */
-.form{
-background:#1976d2;
-padding:6px;
-display:flex;
-flex-wrap:wrap;
-gap:5px;
-}
-
-.form input,.form select,.form button{
+.formBox{
+background:#e3f2fd;
 padding:6px;
 }
 
 /* TABLE */
-.tableBox{flex:1;overflow:auto;background:#fff}
+.tableBox{
+flex:1;
+overflow:auto;
+}
 
-table{width:100%;border-collapse:collapse}
-th,td{border:1px solid #ccc;padding:6px;text-align:center}
-th{background:#ffd9d9}
+table{
+width:100%;
+border-collapse:collapse;
+}
 
-.night{background:#d8ecff}
+th,td{
+border:1px solid #ccc;
+padding:6px;
+text-align:center;
+}
+
+th{background:#ffe0e0}
 
 /* FOOTER */
-footer{
-background:#ffe082;
-padding:8px;
+.footer{
+background:#ffeaa7;
+padding:6px;
 font-weight:bold;
-position:sticky;
-bottom:0;
+}
+
+/* SECRET POPUP */
+#secretBox{
+display:none;
+position:fixed;
+inset:0;
+background:rgba(0,0,0,.6);
+justify-content:center;
+align-items:center;
+}
+
+.secretCard{
+background:#fff;
+padding:20px;
+width:90%;
+max-width:420px;
+border-radius:12px;
+}
+
+.green{
+background:#4caf50;
+color:#fff;
+border:none;
 }
 </style>
 </head>
@@ -96,46 +127,62 @@ bottom:0;
 
 <!-- LOGIN -->
 <div id="loginPage">
-<div class="card">
-<h2>🔐 Attendance Login</h2>
-<div id="clock"></div>
+<div class="loginCard">
 
-<input id="username" placeholder="Username">
-<input type="password" id="password" placeholder="Password">
+<h1>🔐 Attendance Login</h1>
+<div id="clock" class="clock"></div>
 
-<button onclick="login()">Login</button>
+<input id="u" placeholder="Username"><br>
+<input id="p" type="password" placeholder="Password"><br>
+<button onclick="login()">Login</button><br>
+<button class="secretBtn" onclick="openSecret()">🔒 Secret</button>
 
-<div onclick="secret()">🔒 Secret</div>
 </div>
 </div>
+
+<!-- SECRET SETTINGS -->
+<div id="secretBox">
+<div class="secretCard">
+
+<b>Current Username:</b> <span id="cu"></span><br>
+<b>Current Password:</b> <span id="cp"></span><hr>
+
+<input id="oldPass" placeholder="Old Password">
+<input id="newUser" placeholder="New Username">
+<input id="newPass" placeholder="New Password">
+<input id="confirmPass" placeholder="Confirm Password">
+
+<button class="green" onclick="saveSecret()">Save</button>
+<button onclick="closeSecret()">Close</button>
+
+</div>
+</div>
+
 
 <!-- APP -->
 <div id="app">
 
-<header>
-Attendance MASTER
+<div class="header">
+<b>Attendance MASTER</b>
 <button class="logout" onclick="logout()">Logout</button>
-</header>
+</div>
 
-<!-- ENTRY FORM -->
-<div class="form">
-<input type="date" id="date">
-<input type="time" id="inTime">
-<input type="time" id="outTime">
+<div class="formBox">
+<input type="date" id="d">
+<input type="time" id="i">
+<input type="time" id="o">
 <input id="post" placeholder="Post">
-
-BG <input type="color" id="bg">
-Font <input type="color" id="font">
+<input type="color" id="bg" value="#ffffff">
+<input type="color" id="font" value="#000000">
 
 <button onclick="save()">Save</button>
 
-<select id="monthFilter" onchange="render()"></select>
+<select id="month" onchange="render()"></select>
 
-<button onclick="download()">Excel</button>
+<button onclick="excel()">Excel</button>
 <button onclick="window.print()">Print</button>
 </div>
 
-<!-- TABLE -->
 <div class="tableBox">
 <table>
 <thead>
@@ -143,34 +190,42 @@ Font <input type="color" id="font">
 <th>Date</th><th>In</th><th>Out</th><th>Hours</th><th>Post</th><th>Edit</th><th>Delete</th>
 </tr>
 </thead>
-<tbody id="tbody"></tbody>
+<tbody id="tb"></tbody>
 </table>
 </div>
 
-<footer>
-Total Duty: <span id="duty">0</span> |
-Total Hours: <span id="hours">0</span>
-</footer>
+<div class="footer">
+Total Duty: <span id="td">0</span> |
+Total Hours: <span id="th">0</span>
+</div>
 
 </div>
 
 
 <script>
-
 /* CLOCK */
 setInterval(()=>{
-clock.innerText=new Date().toLocaleString();
+let now=new Date();
+clock.innerText=
+now.toDateString()+" "+
+now.toLocaleTimeString('en-GB');
 },1000);
 
-/* LOGIN DATA */
-let user=localStorage.u||"Ravi";
-let pass=localStorage.p||"Ravi123";
+/* DEFAULT LOGIN */
+if(!localStorage.getItem("user")){
+localStorage.setItem("user","9823087");
+localStorage.setItem("pass","7284");
+}
 
-if(localStorage.login) showApp();
+let user=()=>localStorage.getItem("user");
+let pass=()=>localStorage.getItem("pass");
+
+/* LOGIN */
+if(localStorage.getItem("login")) showApp();
 
 function login(){
-if(username.value===user && password.value===pass){
-localStorage.login=1;
+if(u.value===user() && p.value===pass()){
+localStorage.setItem("login","1");
 showApp();
 }else alert("Wrong login");
 }
@@ -185,27 +240,37 @@ loginPage.style.display="none";
 app.style.display="flex";
 }
 
-/* SECRET (NO SHOW) */
-function secret(){
-let y=prompt("Enter year");
-if(y!=="1995") return;
+/* SECRET */
+function openSecret(){
+let y=prompt("Enter secret code");
+if(y==="1995"){
+cu.innerText=user();
+cp.innerText=pass();
+secretBox.style.display="flex";
+}
+}
 
-let nu=prompt("New username",user);
-let np=prompt("New password",pass);
+function closeSecret(){
+secretBox.style.display="none";
+}
 
-user=nu;
-pass=np;
+function saveSecret(){
+if(oldPass.value!==pass()) return alert("Wrong old password");
+if(newPass.value!==confirmPass.value) return alert("Password mismatch");
 
-localStorage.u=nu;
-localStorage.p=np;
+localStorage.setItem("user",newUser.value);
+localStorage.setItem("pass",newPass.value);
+
+alert("Updated");
+closeSecret();
 }
 
 /* FIREBASE */
 firebase.initializeApp({
 apiKey:"AIzaSyD71mpolAsmejtU2icecQQcX07iCW_is0Y",
+authDomain:"ravicardmaker.firebaseapp.com",
 projectId:"ravicardmaker"
 });
-
 const db=firebase.firestore();
 
 let data=[],editId=null;
@@ -215,18 +280,6 @@ data=[];
 s.forEach(d=>data.push({id:d.id,...d.data()}));
 render();
 });
-
-/* MONTH DROPDOWN */
-const months=["All","Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
-months.forEach((m,i)=>{
-let o=document.createElement("option");
-o.value=i;
-o.text=m;
-monthFilter.appendChild(o);
-});
-
-/* AUTO CURRENT MONTH */
-monthFilter.value=new Date().getMonth()+1;
 
 /* HOURS */
 function calc(i,o){
@@ -238,41 +291,48 @@ return ((b-a)/3600000).toFixed(2);
 /* SAVE */
 function save(){
 let obj={
-d:date.value,
-i:inTime.value,
-o:outTime.value,
-p:post.value,
-bg:bg.value,
-font:font.value
+d:d.value,i:i.value,o:o.value,
+h:calc(i.value,o.value),
+p:post.value,bg:bg.value,font:font.value
 };
 
-obj.h=calc(obj.i,obj.o);
+if(editId) db.collection("attendance").doc(editId).update(obj);
+else db.collection("attendance").add(obj);
 
-if(editId)
-db.collection("attendance").doc(editId).update(obj);
-else
-db.collection("attendance").add(obj);
+editId=null;
 }
+
+/* EDIT */
+function edit(id){
+let r=data.find(x=>x.id===id);
+editId=id;
+d.value=r.d;i.value=r.i;o.value=r.o;
+post.value=r.p;bg.value=r.bg;font.value=r.font;
+}
+
+/* DELETE */
+function del(id){
+if(confirm("Delete?")) db.collection("attendance").doc(id).delete();
+}
+
+/* MONTH */
+for(let m=1;m<=12;m++){
+month.innerHTML+=`<option value="${String(m).padStart(2,'0')}">${new Date(2025,m-1).toLocaleString('en',{month:'long'})}</option>`;
+}
+month.value=String(new Date().getMonth()+1).padStart(2,'0');
 
 /* RENDER */
 function render(){
-tbody.innerHTML="";
+tb.innerHTML="";
+let totalH=0,totalD=0;
 
-let m=monthFilter.value;
-let td=0,th=0;
+data.forEach(r=>{
+if(r.d.split("-")[1]!==month.value) return;
 
-data.sort((a,b)=> new Date(a.d+" "+a.i)-new Date(b.d+" "+b.i))
-.forEach(r=>{
+totalD++; totalH+=+r.h;
 
-if(m!=0 && parseInt(r.d.split("-")[1])!=m) return;
-
-td++;
-th+=+r.h;
-
-let night=(r.i>r.o);
-
-tbody.innerHTML+=`
-<tr class="${night?'night':''}" style="background:${r.bg};color:${r.font}">
+tb.innerHTML+=`
+<tr style="background:${r.bg};color:${r.font}">
 <td>${r.d}</td>
 <td>${r.i}</td>
 <td>${r.o}</td>
@@ -283,39 +343,21 @@ tbody.innerHTML+=`
 </tr>`;
 });
 
-duty.innerText=td;
-hours.innerText=th.toFixed(2);
+td.innerText=totalD;
+th.innerText=totalH.toFixed(2);
 }
 
-/* EDIT */
-function edit(id){
-let r=data.find(x=>x.id===id);
-editId=id;
-date.value=r.d;
-inTime.value=r.i;
-outTime.value=r.o;
-post.value=r.p;
-bg.value=r.bg;
-font.value=r.font;
-}
-
-/* DELETE */
-function del(id){
-if(confirm("Delete?"))
-db.collection("attendance").doc(id).delete();
-}
-
-/* CSV */
-function download(){
+/* EXCEL */
+function excel(){
 let csv="Date,In,Out,Hours,Post\n";
 data.forEach(r=>csv+=`${r.d},${r.i},${r.o},${r.h},${r.p}\n`);
+let blob=new Blob([csv]);
 let a=document.createElement("a");
-a.href=URL.createObjectURL(new Blob([csv]));
+a.href=URL.createObjectURL(blob);
 a.download="attendance.csv";
 a.click();
 }
-
 </script>
 
 </body>
-</html>
+  </html>
