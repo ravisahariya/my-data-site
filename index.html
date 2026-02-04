@@ -1,70 +1,78 @@
 <!DOCTYPE html>
 <html>
 <head>
-<meta charset="UTF-8" />
+<meta charset="UTF-8">
 <title>Attendance Master</title>
 
 <style>
 body{
-font-family: Arial;
 margin:0;
+font-family:Arial;
 background:linear-gradient(135deg,#5f72ff,#9b59b6);
 }
 
-/* ===== LOGIN ===== */
-#loginBox{
-width:95%;
-max-width:520px;
-margin:60px auto;
-background:#fff;
-padding:45px;
-border-radius:25px;
-text-align:center;
-box-shadow:0 10px 40px rgba(0,0,0,.3);
+/* ================= LOGIN ================= */
+
+#loginPage{
+height:100vh;
+display:flex;
+justify-content:center;
+align-items:center;
 }
 
-#loginBox h2{
-font-size:32px;
+.loginCard{
+background:#fff;
+width:95%;
+max-width:520px;
+padding:50px;
+border-radius:25px;
+text-align:center;
+box-shadow:0 15px 45px rgba(0,0,0,.35);
+}
+
+.loginCard h2{
+font-size:34px;
 margin-bottom:10px;
 }
 
-input,select{
-padding:12px;
-margin:6px;
-font-size:16px;
-}
-
 .loginInput{
-width:95%;
+width:100%;
 padding:16px;
+margin:10px 0;
 font-size:18px;
 }
 
-button{
-padding:10px 18px;
-font-size:15px;
-cursor:pointer;
+.bigBtn{
+padding:12px 30px;
+font-size:18px;
+margin:6px;
 }
 
-#timeNow{
+#clock{
 color:#1976d2;
 font-weight:bold;
-font-size:18px;
 margin-bottom:15px;
 }
 
-/* ===== DASHBOARD ===== */
+/* ================= APP ================= */
 
-#app{display:none;}
+#app{
+display:none;
+height:100vh;
+flex-direction:column;
+}
 
+/* header fixed */
 header{
-background:#1976d2;
+background:#1565c0;
 color:white;
 padding:12px;
 font-size:20px;
 display:flex;
 justify-content:space-between;
 align-items:center;
+position:sticky;
+top:0;
 }
 
 .logoutBtn{
@@ -74,6 +82,7 @@ border:none;
 padding:8px 14px;
 }
 
+/* entry form */
 #entry{
 background:#d9ecff;
 padding:10px;
@@ -91,7 +100,7 @@ text-align:center;
 }
 
 th{
-background:#ffdcdc;
+background:#ffd6d6;
 }
 
 tbody{
@@ -108,8 +117,10 @@ table-layout:fixed;
 
 footer{
 background:#ffeaa7;
-padding:8px;
+padding:10px;
 font-weight:bold;
+position:sticky;
+bottom:0;
 }
 
 .night{
@@ -120,20 +131,26 @@ background:#e3f2fd;
 
 <body>
 
-<!-- ================= LOGIN ================= -->
-<div id="loginBox">
+<!-- ================= LOGIN PAGE ================= -->
+
+<div id="loginPage">
+<div class="loginCard">
+
 <h2>🔐 Attendance Login</h2>
-<div id="timeNow"></div>
+<div id="clock"></div>
 
-<input id="user" class="loginInput" placeholder="Username"><br>
-<input id="pass" type="password" class="loginInput" placeholder="Password"><br>
+<input id="user" class="loginInput" placeholder="Username">
+<input id="pass" type="password" class="loginInput" placeholder="Password">
 
-<button onclick="login()">Admin</button>
-<button onclick="secret()">🔒 Secret</button>
+<button class="bigBtn" onclick="login()">Login</button>
+<button class="bigBtn" onclick="secret()">🔒 Secret</button>
+
+</div>
 </div>
 
 
-<!-- ================= APP ================= -->
+<!-- ================= DASHBOARD ================= -->
+
 <div id="app">
 
 <header>
@@ -191,7 +208,7 @@ Total Hours: <span id="hours">0</span>
 
 <script>
 
-/* ================= LOGIN SYSTEM ================= */
+/* ================= DEFAULT LOGIN ================= */
 
 if(!localStorage.user){
 localStorage.user="9823087";
@@ -211,8 +228,8 @@ location.reload();
 }
 
 function showApp(){
-loginBox.style.display="none";
-app.style.display="block";
+loginPage.style.display="none";
+app.style.display="flex";
 render();
 }
 
@@ -222,20 +239,23 @@ if(localStorage.logged=="yes") showApp();
 /* ================= SECRET ================= */
 
 function secret(){
-let p=prompt("Enter secret");
-if(p=="1995"){
+let s=prompt("Enter secret year");
+if(s=="1995"){
+alert("Username: "+localStorage.user+"\nPassword: "+localStorage.pass);
+
 let old=prompt("Old password");
-if(old!=localStorage.pass) return alert("Wrong");
+if(old!=localStorage.pass) return;
 
 let u=prompt("New username");
-let n=prompt("New password");
+let p=prompt("New password");
 let c=prompt("Confirm password");
 
-if(n!=c) return alert("Not match");
+if(p!=c) return alert("Not match");
 
 localStorage.user=u;
-localStorage.pass=n;
-alert("Changed");
+localStorage.pass=p;
+
+alert("Changed successfully");
 }
 }
 
@@ -244,13 +264,14 @@ alert("Changed");
 
 function clock(){
 let d=new Date();
-timeNow.innerText=d.toLocaleString();
-runClock.innerText=d.toLocaleString();
+clockDiv=d.toLocaleString();
+document.getElementById("clock").innerText=clockDiv;
+document.getElementById("runClock").innerText=clockDiv;
 }
 setInterval(clock,1000);
 
 
-/* ================= DATA SYSTEM ================= */
+/* ================= DATA ================= */
 
 let data=JSON.parse(localStorage.data||"[]");
 
@@ -278,7 +299,7 @@ function render(){
 tbody.innerHTML="";
 let m=monthFilter.value;
 
-let totalH=0, totalD=0;
+let td=0, th=0;
 
 data.forEach((r,i)=>{
 
@@ -300,12 +321,12 @@ tr.innerHTML=`
 
 tbody.appendChild(tr);
 
-totalH+=parseFloat(r.h);
-totalD++;
+td++;
+th+=parseFloat(r.h);
 });
 
-duty.innerText=totalD;
-hours.innerText=totalH.toFixed(2);
+duty.innerText=td;
+hours.innerText=th.toFixed(2);
 }
 
 </script>
