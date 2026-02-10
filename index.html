@@ -1,54 +1,110 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
 <meta charset="UTF-8">
-<title>Attendance MASTER DATA</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Attendance Master Cloud</title>
 
 <!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
 
 <style>
-*{box-sizing:border-box;font-family:Arial}
-body{margin:0;background:linear-gradient(135deg,#6a7cff,#9b59b6)}
+body{margin:0;font-family:Arial;background:#f2f2f2}
 
-/* ===== LOGIN ===== */
-#loginPage{position:fixed;inset:0;display:flex;align-items:center;justify-content:center}
+/* ================= LOGIN ================= */
+#loginPage{
+height:100vh;
+display:flex;
+justify-content:center;
+align-items:center;
+background:linear-gradient(135deg,#5f72ff,#9b59b6);
+}
 .loginCard{
-  width:92%;max-width:440px;background:#fff;padding:28px;border-radius:18px;
-  box-shadow:0 15px 40px rgba(0,0,0,.35);text-align:center
+background:#fff;
+width:95%;
+max-width:520px;
+padding:55px;
+border-radius:25px;
+text-align:center;
+box-shadow:0 20px 50px rgba(0,0,0,.35);
 }
-.loginCard h2{margin:5px 0 10px}
-.loginCard input{width:100%;padding:14px;margin:8px 0;font-size:18px}
-.loginCard button{width:100%;padding:12px;font-size:18px;margin-top:8px}
-.secretBtn{background:none;border:none;color:#555;margin-top:8px}
+.loginCard h2{font-size:32px;margin-bottom:10px}
+.loginCard input{
+width:100%;
+padding:16px;
+margin:10px 0;
+font-size:18px;
+}
+.loginBtn{
+width:100%;
+padding:14px;
+font-size:18px;
+margin-top:8px;
+}
 
-/* ===== APP ===== */
-#app{display:none;height:100vh;display:flex;flex-direction:column}
+/* ================= APP ================= */
+#app{
+display:none;
+height:100vh;
+flex-direction:column;
+background:#fff;
+}
 
-/* HEADER */
+/* HEADER FIXED */
 header{
-  background:#1976d2;color:#fff;padding:10px;font-size:20px;
-  display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:5
+background:#1565c0;
+color:#fff;
+padding:12px;
+font-size:20px;
+display:flex;
+justify-content:space-between;
+align-items:center;
+position:sticky;
+top:0;
+z-index:10;
 }
-.logout{background:red;color:#fff;border:none;padding:8px 14px;font-size:16px}
+.logoutBtn{
+background:red;
+color:#fff;
+border:none;
+padding:8px 16px;
+font-size:16px;
+}
 
-/* ENTRY (BLUE) */
-.entry{background:#d9ecff;padding:10px}
-.entry input,.entry select{padding:6px;margin:3px}
+/* ENTRY FORM ONLY BLUE */
+#entryForm{
+background:#d9ecff;
+padding:10px;
+}
 
-/* TABLE */
-.tableWrap{flex:1;overflow:auto;background:#fff}
+/* TABLE SCROLL ONLY */
+.tableWrap{
+flex:1;
+overflow:auto;
+}
 table{width:100%;border-collapse:collapse}
-th,td{border:1px solid #ccc;padding:6px;text-align:center}
-th{background:#ffdada;position:sticky;top:0;z-index:2}
-.night{background:#e3f2fd;font-weight:bold}
+th,td{
+border:1px solid #ccc;
+padding:6px;
+text-align:center;
+}
+th{
+background:#ffdede;
+position:sticky;
+top:0;
+z-index:5;
+}
+.night{background:#e3f2fd}
 
-/* FOOTER */
+/* FOOTER FIXED */
 footer{
-  background:#ffeb99;padding:10px;font-size:18px;font-weight:bold;
-  position:sticky;bottom:0
+background:#ffcc00;
+padding:14px;
+font-size:18px;
+font-weight:bold;
+position:sticky;
+bottom:0;
 }
 </style>
 </head>
@@ -58,35 +114,40 @@ footer{
 <!-- LOGIN -->
 <div id="loginPage">
   <div class="loginCard">
-    <h2>🔐 Admin Attendance Login</h2>
-    <div id="loginClock"></div>
-    <input id="u" placeholder="Username">
-    <input id="p" type="password" placeholder="Password">
-    <button onclick="login()">ADMIN</button>
-    <button class="secretBtn" onclick="secret()">🔑 Secret</button>
+    <h2>🔐 Attendance Login</h2>
+    <div id="clock"></div>
+
+    <input id="user" placeholder="Username">
+    <input id="pass" type="password" placeholder="Password">
+
+    <button class="loginBtn" onclick="login()">Login</button>
+    <button class="loginBtn" onclick="secret()">🔒 Secret</button>
   </div>
 </div>
 
 <!-- APP -->
 <div id="app">
+
 <header>
   📊 ATTENDANCE MASTER DATA
-  <div id="live"></div>
-  <button class="logout" onclick="logout()">Logout</button>
+  <button class="logoutBtn" onclick="logout()">Logout</button>
 </header>
 
-<div class="entry">
-  <div><b>🕒</b> <span id="runClock"></span></div>
+<div id="entryForm">
+  🕒 <span id="runClock"></span><br><br>
+
   <input type="date" id="date">
   <input type="time" id="inTime">
   <input type="time" id="outTime">
   <input id="post" placeholder="Post">
+
   BG <input type="color" id="bg" value="#ffffff">
   Font <input type="color" id="font" value="#000000">
+
   <button onclick="save()">Save</button>
 
-  <select id="month"></select>
-  <button onclick="downloadCSV()">Excel</button>
+  <select id="monthFilter" onchange="render()"></select>
+  <button onclick="download()">Excel</button>
   <button onclick="window.print()">Print</button>
 </div>
 
@@ -94,7 +155,13 @@ footer{
 <table>
 <thead>
 <tr>
-<th>Date</th><th>In</th><th>Out</th><th>Hours</th><th>Post</th><th>Edit</th><th>Delete</th>
+<th>Date</th>
+<th>In</th>
+<th>Out</th>
+<th>Hours</th>
+<th>Post</th>
+<th>Edit</th>
+<th>Delete</th>
 </tr>
 </thead>
 <tbody id="tbody"></tbody>
@@ -105,152 +172,143 @@ footer{
 Total Duty: <span id="duty">0</span> |
 Total Hours: <span id="hours">0</span>
 </footer>
+
 </div>
 
 <script>
-/* ===== CLOCKS ===== */
+/* ================= CLOCK ================= */
 setInterval(()=>{
-  const t=new Date().toLocaleString("en-IN",{hour12:true});
-  loginClock.innerText=t;
-  live.innerText=t;
-  runClock.innerText=t;
+let t=new Date().toLocaleString();
+clock.innerText=t;
+runClock.innerText=t;
 },1000);
 
-/* ===== AUTH (Local, persistent) ===== */
-let creds=JSON.parse(localStorage.getItem("creds"))||{u:"9823087",p:"7284"};
-localStorage.setItem("creds",JSON.stringify(creds));
-
-if(localStorage.getItem("logged")==="yes") showApp();
+/* ================= LOGIN ================= */
+const USERNAME="9823087";
+const PASSWORD="7284";
 
 function login(){
-  if(u.value===creds.u && p.value===creds.p){
-    localStorage.setItem("logged","yes");
-    showApp();
-  } else alert("Wrong Username / Password");
+if(user.value===USERNAME && pass.value===PASSWORD){
+sessionStorage.setItem("logged","1");
+showApp();
+}else alert("Wrong Username / Password");
 }
 function logout(){
-  localStorage.removeItem("logged");
-  location.reload();
+sessionStorage.removeItem("logged");
+location.reload();
 }
 function showApp(){
-  loginPage.style.display="none";
-  app.style.display="flex";
+loginPage.style.display="none";
+app.style.display="flex";
 }
+if(sessionStorage.getItem("logged")==="1") showApp();
 
-/* ===== SECRET ===== */
+/* ================= SECRET ================= */
 function secret(){
-  if(prompt("Enter Secret")!=="1995") return alert("Wrong Secret");
-  alert("Current\nUsername: "+creds.u+"\nPassword: "+creds.p);
-  const nu=prompt("New Username",creds.u);
-  const op=prompt("Old Password");
-  if(op!==creds.p) return alert("Wrong Old Password");
-  const np=prompt("New Password");
-  const cp=prompt("Confirm Password");
-  if(np!==cp) return alert("Password not match");
-  creds={u:nu,p:np};
-  localStorage.setItem("creds",JSON.stringify(creds));
-  alert("Updated");
+let y=prompt("Enter secret year");
+if(y==="1995"){
+alert("Username: "+USERNAME+"\nPassword: "+PASSWORD);
+}
 }
 
-/* ===== FIREBASE ===== */
+/* ================= FIREBASE ================= */
 firebase.initializeApp({
-  apiKey:"AIzaSyD71mpolAsmejtU2icecQQcX07iCW_is0Y",
-  authDomain:"ravicardmaker.firebaseapp.com",
-  projectId:"ravicardmaker"
+apiKey:"AIzaSyD71mpolAsmejtU2icecQQcX07iCW_is0Y",
+authDomain:"ravicardmaker.firebaseapp.com",
+projectId:"ravicardmaker"
 });
 const db=firebase.firestore();
 
-let data=[], editId=null;
+let data=[];
 
-/* realtime */
+/* REALTIME SYNC */
 db.collection("attendance").onSnapshot(s=>{
-  data=[];
-  s.forEach(d=>data.push({id:d.id,...d.data()}));
-  render();
+data=[];
+s.forEach(d=>data.push({id:d.id,...d.data()}));
+render();
 });
 
-/* ===== MONTH DROPDOWN (FIXED) ===== */
-const months=["January","February","March","April","May","June","July","August","September","October","November","December"];
-months.forEach((m,i)=>{
-  const o=document.createElement("option");
-  o.value=i;        // numeric month
-  o.text=m;         // English name
-  month.appendChild(o);
-});
-month.value=new Date().getMonth();
+/* MONTH DROPDOWN */
+for(let i=1;i<=12;i++){
+let o=document.createElement("option");
+o.value=String(i).padStart(2,"0");
+o.text=new Date(2025,i-1).toLocaleString('en',{month:'long'});
+monthFilter.appendChild(o);
+}
+monthFilter.value=String(new Date().getMonth()+1).padStart(2,"0");
 
-/* ===== HOURS ===== */
+/* HOURS */
 function calc(i,o){
-  let a=new Date("2000-01-01 "+i), b=new Date("2000-01-01 "+o);
-  if(b<a) b.setDate(b.getDate()+1);
-  return ((b-a)/3600000).toFixed(2);
+let a=new Date("2000 "+i),b=new Date("2000 "+o);
+if(b<a)b.setDate(b.getDate()+1);
+return ((b-a)/3600000).toFixed(2);
 }
 
-/* ===== SAVE ===== */
+/* SAVE */
 function save(){
-  const obj={
-    d:date.value, i:inTime.value, o:outTime.value,
-    p:post.value, bg:bg.value, f:font.value,
-    h:calc(inTime.value,outTime.value)
-  };
-  if(editId) db.collection("attendance").doc(editId).update(obj);
-  else db.collection("attendance").add(obj);
-  editId=null;
+db.collection("attendance").add({
+d:date.value,
+i:inTime.value,
+o:outTime.value,
+p:post.value,
+bg:bg.value,
+font:font.value,
+h:calc(inTime.value,outTime.value)
+});
 }
 
-/* ===== EDIT / DELETE (FIXED) ===== */
-function editRow(id){
-  const r=data.find(x=>x.id===id); if(!r) return;
-  editId=id;
-  date.value=r.d; inTime.value=r.i; outTime.value=r.o;
-  post.value=r.p; bg.value=r.bg||r.f? r.bg:"#ffffff"; font.value=r.f||"#000000";
-}
-function deleteRow(id){
-  if(confirm("Delete this entry?")) db.collection("attendance").doc(id).delete();
+/* DELETE */
+function del(id){
+if(confirm("Delete?")) db.collection("attendance").doc(id).delete();
 }
 
-/* ===== RENDER ===== */
+/* EDIT */
+function edit(id){
+let r=data.find(x=>x.id===id);
+date.value=r.d;
+inTime.value=r.i;
+outTime.value=r.o;
+post.value=r.p;
+bg.value=r.bg;
+font.value=r.font;
+del(id);
+}
+
+/* RENDER */
 function render(){
-  tbody.innerHTML="";
-  let td=0, th=0;
-  const m=Number(month.value);
+tbody.innerHTML="";
+let m=monthFilter.value;
+let td=0,th=0;
 
-  data
-   .sort((a,b)=>new Date(a.d+" "+a.i)-new Date(b.d+" "+b.i))
-   .forEach(r=>{
-     if(new Date(r.d).getMonth()!==m) return;
-     td++; th+=Number(r.h);
-     const night = r.i>r.o ? "night":"";
-     tbody.innerHTML+=`
-      <tr class="${night}" style="background:${r.bg||'#fff'};color:${r.f||'#000'}">
-        <td>${r.d}</td>
-        <td>${ampm(r.i)}</td>
-        <td>${ampm(r.o)}</td>
-        <td>${r.h}</td>
-        <td>${r.p}</td>
-        <td><button onclick="editRow('${r.id}');event.stopPropagation()">✏️</button></td>
-        <td><button onclick="deleteRow('${r.id}');event.stopPropagation()">❌</button></td>
-      </tr>`;
-   });
+data.sort((a,b)=>new Date(a.d+" "+a.i)-new Date(b.d+" "+b.i))
+.forEach(r=>{
+if(r.d.split("-")[1]!==m)return;
+td++; th+=+r.h;
 
-  duty.innerText=td;
-  hours.innerText=th.toFixed(2);
+tbody.innerHTML+=`
+<tr class="${r.i>r.o?'night':''}" style="background:${r.bg};color:${r.font}">
+<td>${r.d}</td>
+<td>${r.i}</td>
+<td>${r.o}</td>
+<td>${r.h}</td>
+<td>${r.p}</td>
+<td><button onclick="edit('${r.id}')">✏️</button></td>
+<td><button onclick="del('${r.id}')">❌</button></td>
+</tr>`;
+});
+
+duty.innerText=td;
+hours.innerText=th.toFixed(2);
 }
 
-function ampm(t){
-  if(!t) return "";
-  let [h,m]=t.split(":"); h=+h;
-  return ((h%12)||12)+":"+m+" "+(h>=12?"PM":"AM");
-}
-
-/* ===== CSV ===== */
-function downloadCSV(){
-  let csv="Date,In,Out,Hours,Post\n";
-  data.forEach(r=>csv+=`${r.d},${r.i},${r.o},${r.h},${r.p}\n`);
-  const a=document.createElement("a");
-  a.href="data:text/csv;charset=utf-8,"+encodeURIComponent(csv);
-  a.download="attendance.csv";
-  a.click();
+/* CSV */
+function download(){
+let csv="Date,In,Out,Hours,Post\n";
+data.forEach(r=>csv+=`${r.d},${r.i},${r.o},${r.h},${r.p}\n`);
+let a=document.createElement("a");
+a.href="data:text/csv;charset=utf-8,"+encodeURIComponent(csv);
+a.download="attendance.csv";
+a.click();
 }
 </script>
 
