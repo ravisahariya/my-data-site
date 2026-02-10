@@ -2,106 +2,75 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
+<title>Attendance Master</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Attendance Master Data</title>
-
-<!-- Firebase -->
-<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
 
 <style>
-*{box-sizing:border-box}
 body{
   margin:0;
   font-family:Arial,Helvetica,sans-serif;
-  background:linear-gradient(135deg,#6a11cb,#2575fc);
+  background:linear-gradient(135deg,#6a6ff5,#9b59b6);
 }
 
-/* ---------------- LOGIN ---------------- */
-#loginPage{
-  height:100vh;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-}
-.loginCard{
-  width:95%;
-  max-width:420px;
+/* ---------- LOGIN ---------- */
+#loginBox{
+  width:360px;
   background:#fff;
-  border-radius:16px;
-  padding:30px;
+  padding:25px;
+  border-radius:12px;
+  position:fixed;
+  top:50%;
+  left:50%;
+  transform:translate(-50%,-50%);
+  box-shadow:0 10px 30px rgba(0,0,0,.3);
   text-align:center;
-  box-shadow:0 15px 30px rgba(0,0,0,.35);
 }
-.loginCard h2{
-  font-size:26px;
-  margin-bottom:10px;
-}
-#loginTime{
-  font-size:16px;
-  color:#1e40af;
-  margin-bottom:15px;
-}
-.loginCard input{
+#loginBox h2{margin:5px 0}
+#loginBox input{
   width:100%;
   padding:12px;
-  font-size:18px;
   margin:8px 0;
+  font-size:18px;
 }
-.loginCard button{
+#loginBox button{
   width:100%;
   padding:12px;
   font-size:18px;
-  margin-top:10px;
   cursor:pointer;
 }
-.secretBtn{
-  margin-top:10px;
-  background:#f1f5f9;
-}
+#secretBtn{background:none;border:none;color:#555;margin-top:10px}
 
-/* ---------------- APP LAYOUT ---------------- */
-#app{display:none;height:100vh;flex-direction:column}
-
-/* HEADER */
-.header{
-  background:#0b5ed7;
+/* ---------- HEADER ---------- */
+header{
+  background:#1976d2;
   color:#fff;
   padding:10px;
-  font-size:20px;
-  font-weight:bold;
   display:flex;
   justify-content:space-between;
   align-items:center;
 }
-.logout{
+header b{font-size:18px}
+#logout{
   background:red;
   color:#fff;
   border:none;
-  padding:6px 12px;
-  font-size:16px;
-  cursor:pointer;
+  padding:8px 12px;
 }
 
-/* ENTRY FORM */
-.formBox{
-  background:#dbeafe;
-  padding:8px;
+/* ---------- ENTRY FORM ---------- */
+#formBox{
+  background:#dceeff;
+  padding:10px;
 }
-.formBox input,.formBox select,.formBox button{
+#formBox input,#formBox select{
   padding:6px;
   margin:3px;
 }
-#runningTime{
-  font-weight:bold;
-  margin-bottom:5px;
-}
 
-/* TABLE */
-.tableWrap{
-  flex:1;
+/* ---------- TABLE ---------- */
+#tableWrap{
+  height:55vh;
   overflow:auto;
-  background:#fff;
 }
 table{
   width:100%;
@@ -112,13 +81,15 @@ th,td{
   padding:6px;
   text-align:center;
 }
-th{background:#ffd6d6}
+th{background:#ffd6d6;position:sticky;top:0}
 
-/* FOOTER */
-.footer{
-  background:#facc15;
+/* ---------- FOOTER ---------- */
+footer{
+  background:#ffeb99;
   padding:8px;
-  font-size:18px;
+  position:fixed;
+  bottom:0;
+  width:100%;
   font-weight:bold;
 }
 </style>
@@ -126,207 +97,144 @@ th{background:#ffd6d6}
 
 <body>
 
-<!-- LOGIN PAGE -->
-<div id="loginPage">
-  <div class="loginCard">
-    <h2>🔐 Admin Attendance Login</h2>
-    <div id="loginTime"></div>
-    <input id="u" placeholder="Username">
-    <input id="p" type="password" placeholder="Password">
-    <button onclick="login()">Admin</button>
-    <button class="secretBtn" onclick="openSecret()">🔒 Secret</button>
-  </div>
+<!-- LOGIN -->
+<div id="loginBox">
+  <h2>🔐 Attendance Login</h2>
+  <div id="clock"></div>
+  <input id="u" placeholder="Username">
+  <input id="p" type="password" placeholder="Password">
+  <button onclick="login()">ADMIN</button>
+  <button id="secretBtn" onclick="secret()">🔑 Secret</button>
 </div>
 
-<!-- APP -->
-<div id="app">
+<!-- MAIN APP -->
+<div id="app" style="display:none">
 
-  <div class="header">
-    📊 ATTENDANCE MASTER DATA
-    <button class="logout" onclick="logout()">Logout</button>
-  </div>
+<header>
+  <b>📊 ATTENDANCE MASTER DATA</b>
+  <button id="logout" onclick="logout()">Logout</button>
+</header>
 
-  <div class="formBox">
-    <div id="runningTime"></div>
+<div id="formBox">
+  Date <input type="date" id="date">
+  In <input type="time" id="in">
+  Out <input type="time" id="out">
+  Post <input id="post">
+  <button onclick="save()">Save</button>
 
-    <input type="date" id="date">
-    <input type="time" id="inTime">
-    <input type="time" id="outTime">
-    <input id="post" placeholder="Post">
+  <select id="month"></select>
+  <button onclick="exportExcel()">Excel</button>
+  <button onclick="window.print()">Print</button>
+</div>
 
-    BG <input type="color" id="bg" value="#e0f2fe">
-    Font <input type="color" id="font" value="#000000">
+<div id="tableWrap">
+<table>
+<thead>
+<tr>
+<th>Date</th><th>In</th><th>Out</th><th>Hours</th>
+<th>Post</th><th>Edit</th><th>Delete</th>
+</tr>
+</thead>
+<tbody id="tbody"></tbody>
+</table>
+</div>
 
-    <button onclick="save()">Save</button>
-
-    <select id="month"></select>
-    <button onclick="downloadCSV()">Excel</button>
-    <button onclick="window.print()">Print</button>
-  </div>
-
-  <div class="tableWrap">
-    <table>
-      <thead>
-        <tr>
-          <th>Date</th><th>In</th><th>Out</th><th>Hours</th>
-          <th>Post</th><th>Edit</th><th>Delete</th>
-        </tr>
-      </thead>
-      <tbody id="tbody"></tbody>
-    </table>
-  </div>
-
-  <div class="footer">
-    Total Duty: <span id="duty">0</span> |
-    Total Hours: <span id="hours">0</span>
-  </div>
+<footer>
+Total Duty: <span id="duty">0</span> |
+Total Hours: <span id="hours">0</span>
+</footer>
 
 </div>
 
 <script>
-/* -------- LOGIN SYSTEM -------- */
-let creds = JSON.parse(localStorage.getItem("creds")) || {u:"9823087",p:"7284"};
-if(localStorage.getItem("login")) showApp();
+/* -------- CLOCK -------- */
+setInterval(()=>{
+  clock.innerText=new Date().toLocaleString();
+},1000);
+
+/* -------- AUTH -------- */
+let auth=JSON.parse(localStorage.getItem("auth"))||
+{u:"9823087",p:"7284"};
 
 function login(){
-  if(u.value===creds.u && p.value===creds.p){
-    localStorage.setItem("login","1");
-    showApp();
+  if(u.value==auth.u && p.value==auth.p){
+    loginBox.style.display="none";
+    app.style.display="block";
+    render();
   }else alert("Wrong Login");
 }
 function logout(){
-  localStorage.removeItem("login");
-  location.reload();
+  app.style.display="none";
+  loginBox.style.display="block";
 }
-function showApp(){
-  loginPage.style.display="none";
-  app.style.display="flex";
-}
-
-/* LOGIN CLOCK */
-setInterval(()=>{
-  loginTime.innerText = new Date().toLocaleString();
-},1000);
-
-/* -------- SECRET -------- */
-function openSecret(){
-  let s=prompt("Enter Secret Code");
-  if(s==="1995"){
-    let nu=prompt("New Username",creds.u);
-    let np=prompt("New Password");
-    let cp=prompt("Confirm Password");
-    if(np && np===cp){
-      creds={u:nu,p:np};
-      localStorage.setItem("creds",JSON.stringify(creds));
-      alert("Updated Successfully");
-    }
-  }
+function secret(){
+  let s=prompt("Enter Secret");
+  if(s!=="1995")return;
+  let nu=prompt("New Username",auth.u);
+  let np=prompt("New Password");
+  let cp=prompt("Confirm Password");
+  if(np!==cp)return alert("Not Match");
+  auth={u:nu,p:np};
+  localStorage.setItem("auth",JSON.stringify(auth));
+  alert("Updated");
 }
 
-/* -------- FIREBASE -------- */
-firebase.initializeApp({
-  apiKey:"AIzaSyD71mpolAsmejtU2icecQQcX07iCW_is0Y",
-  authDomain:"ravicardmaker.firebaseapp.com",
-  projectId:"ravicardmaker"
-});
-const db=firebase.firestore();
-let data=[],editId=null;
+/* -------- DATA -------- */
+let data=JSON.parse(localStorage.getItem("data"))||[];
 
-db.collection("attendance").onSnapshot(s=>{
-  data=[];
-  s.forEach(d=>data.push({id:d.id,...d.data()}));
-  render();
-});
-
-/* -------- MONTH DROPDOWN -------- */
-const months=["January","February","March","April","May","June","July","August","September","October","November","December"];
-months.forEach((m,i)=>{
+const monthNames=["January","February","March","April","May","June","July","August","September","October","November","December"];
+monthNames.forEach((m,i)=>{
   let o=document.createElement("option");
-  o.value=i;
-  o.text=m;
-  month.appendChild(o);
+  o.value=i;o.text=m;month.appendChild(o);
 });
 month.value=new Date().getMonth();
+month.onchange=render;
 
-/* -------- RUNNING TIME -------- */
-setInterval(()=>{
-  runningTime.innerText="🕒 "+new Date().toLocaleString();
-},1000);
-
-/* -------- HOURS CALC -------- */
-function calc(i,o){
-  let a=new Date("2000-01-01 "+i);
-  let b=new Date("2000-01-01 "+o);
-  if(b<a) b.setDate(b.getDate()+1);
-  return ((b-a)/3600000).toFixed(2);
-}
-
-/* -------- SAVE -------- */
 function save(){
-  let obj={
-    date:date.value,
-    in:inTime.value,
-    out:outTime.value,
-    post:post.value,
-    bg:bg.value,
-    font:font.value,
-    h:calc(inTime.value,outTime.value)
-  };
-  if(editId) db.collection("attendance").doc(editId).update(obj);
-  else db.collection("attendance").add(obj);
-  editId=null;
+  let d=date.value;
+  let i=in.value;
+  let o=out.value;
+  if(!d||!i||!o)return;
+  let h=((new Date(d+" "+o)-new Date(d+" "+i))/36e5);
+  if(h<0)h+=24;
+  data.push({d,i,o,h:h.toFixed(2),p:post.value});
+  localStorage.setItem("data",JSON.stringify(data));
+  render();
 }
 
-/* -------- EDIT / DELETE -------- */
-function edit(id){
-  let r=data.find(x=>x.id===id);
-  editId=id;
-  date.value=r.date;
-  inTime.value=r.in;
-  outTime.value=r.out;
-  post.value=r.post;
-  bg.value=r.bg;
-  font.value=r.font;
-}
-function del(id){
-  if(confirm("Delete?"))
-    db.collection("attendance").doc(id).delete();
-}
-
-/* -------- RENDER -------- */
 function render(){
   tbody.innerHTML="";
   let td=0,th=0;
-  let m=Number(month.value);
-
-  data.forEach(r=>{
-    if(new Date(r.date).getMonth()!==m) return;
-    td++; th+=Number(r.h);
+  data.forEach((r,idx)=>{
+    if(new Date(r.d).getMonth()!=month.value)return;
+    td++;th+=Number(r.h);
     tbody.innerHTML+=`
-      <tr style="background:${r.bg};color:${r.font}">
-        <td>${r.date}</td>
-        <td>${r.in}</td>
-        <td>${r.out}</td>
-        <td>${r.h}</td>
-        <td>${r.post}</td>
-        <td><button onclick="edit('${r.id}')">✏️</button></td>
-        <td><button onclick="del('${r.id}')">❌</button></td>
-      </tr>`;
+    <tr>
+      <td>${r.d}</td>
+      <td>${r.i}</td>
+      <td>${r.o}</td>
+      <td>${r.h}</td>
+      <td>${r.p}</td>
+      <td><button onclick="edit(${idx})">✏️</button></td>
+      <td><button onclick="del(${idx})">❌</button></td>
+    </tr>`;
   });
   duty.innerText=td;
   hours.innerText=th.toFixed(2);
 }
 
-/* -------- CSV -------- */
-function downloadCSV(){
-  let csv="Date,In,Out,Hours,Post\n";
-  data.forEach(r=>csv+=`${r.date},${r.in},${r.out},${r.h},${r.post}\n`);
-  let a=document.createElement("a");
-  a.href=URL.createObjectURL(new Blob([csv]));
-  a.download="attendance.csv";
-  a.click();
+function del(i){
+  if(confirm("Delete?")){
+    data.splice(i,1);
+    localStorage.setItem("data",JSON.stringify(data));
+    render();
+  }
+}
+function edit(i){
+  let r=data[i];
+  date.value=r.d;in.value=r.i;out.value=r.o;post.value=r.p;
+  del(i);
 }
 </script>
-
 </body>
 </html>
