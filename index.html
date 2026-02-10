@@ -2,95 +2,53 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Attendance Master</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Attendance MASTER DATA</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
 
 <style>
-body{
-  margin:0;
-  font-family:Arial,Helvetica,sans-serif;
-  background:linear-gradient(135deg,#6a6ff5,#9b59b6);
-}
+*{box-sizing:border-box;font-family:Arial}
+body{margin:0;background:linear-gradient(135deg,#6a7cff,#9b59b6)}
 
-/* ---------- LOGIN ---------- */
-#loginBox{
-  width:360px;
-  background:#fff;
-  padding:25px;
-  border-radius:12px;
-  position:fixed;
-  top:50%;
-  left:50%;
-  transform:translate(-50%,-50%);
-  box-shadow:0 10px 30px rgba(0,0,0,.3);
-  text-align:center;
+/* ===== LOGIN ===== */
+#loginPage{position:fixed;inset:0;display:flex;align-items:center;justify-content:center}
+.loginCard{
+  width:92%;max-width:440px;background:#fff;padding:28px;border-radius:18px;
+  box-shadow:0 15px 40px rgba(0,0,0,.35);text-align:center
 }
-#loginBox h2{margin:5px 0}
-#loginBox input{
-  width:100%;
-  padding:12px;
-  margin:8px 0;
-  font-size:18px;
-}
-#loginBox button{
-  width:100%;
-  padding:12px;
-  font-size:18px;
-  cursor:pointer;
-}
-#secretBtn{background:none;border:none;color:#555;margin-top:10px}
+.loginCard h2{margin:5px 0 10px}
+.loginCard input{width:100%;padding:14px;margin:8px 0;font-size:18px}
+.loginCard button{width:100%;padding:12px;font-size:18px;margin-top:8px}
+.secretBtn{background:none;border:none;color:#555;margin-top:8px}
 
-/* ---------- HEADER ---------- */
+/* ===== APP ===== */
+#app{display:none;height:100vh;display:flex;flex-direction:column}
+
+/* HEADER */
 header{
-  background:#1976d2;
-  color:#fff;
-  padding:10px;
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
+  background:#1976d2;color:#fff;padding:10px;font-size:20px;
+  display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:5
 }
-header b{font-size:18px}
-#logout{
-  background:red;
-  color:#fff;
-  border:none;
-  padding:8px 12px;
-}
+.logout{background:red;color:#fff;border:none;padding:8px 14px;font-size:16px}
 
-/* ---------- ENTRY FORM ---------- */
-#formBox{
-  background:#dceeff;
-  padding:10px;
-}
-#formBox input,#formBox select{
-  padding:6px;
-  margin:3px;
-}
+/* ENTRY (BLUE) */
+.entry{background:#d9ecff;padding:10px}
+.entry input,.entry select{padding:6px;margin:3px}
 
-/* ---------- TABLE ---------- */
-#tableWrap{
-  height:55vh;
-  overflow:auto;
-}
-table{
-  width:100%;
-  border-collapse:collapse;
-}
-th,td{
-  border:1px solid #ccc;
-  padding:6px;
-  text-align:center;
-}
-th{background:#ffd6d6;position:sticky;top:0}
+/* TABLE */
+.tableWrap{flex:1;overflow:auto;background:#fff}
+table{width:100%;border-collapse:collapse}
+th,td{border:1px solid #ccc;padding:6px;text-align:center}
+th{background:#ffdada;position:sticky;top:0;z-index:2}
+.night{background:#e3f2fd;font-weight:bold}
 
-/* ---------- FOOTER ---------- */
+/* FOOTER */
 footer{
-  background:#ffeb99;
-  padding:8px;
-  position:fixed;
-  bottom:0;
-  width:100%;
-  font-weight:bold;
+  background:#ffeb99;padding:10px;font-size:18px;font-weight:bold;
+  position:sticky;bottom:0
 }
 </style>
 </head>
@@ -98,41 +56,45 @@ footer{
 <body>
 
 <!-- LOGIN -->
-<div id="loginBox">
-  <h2>🔐 Attendance Login</h2>
-  <div id="clock"></div>
-  <input id="u" placeholder="Username">
-  <input id="p" type="password" placeholder="Password">
-  <button onclick="login()">ADMIN</button>
-  <button id="secretBtn" onclick="secret()">🔑 Secret</button>
+<div id="loginPage">
+  <div class="loginCard">
+    <h2>🔐 Admin Attendance Login</h2>
+    <div id="loginClock"></div>
+    <input id="u" placeholder="Username">
+    <input id="p" type="password" placeholder="Password">
+    <button onclick="login()">ADMIN</button>
+    <button class="secretBtn" onclick="secret()">🔑 Secret</button>
+  </div>
 </div>
 
-<!-- MAIN APP -->
-<div id="app" style="display:none">
-
+<!-- APP -->
+<div id="app">
 <header>
-  <b>📊 ATTENDANCE MASTER DATA</b>
-  <button id="logout" onclick="logout()">Logout</button>
+  📊 ATTENDANCE MASTER DATA
+  <div id="live"></div>
+  <button class="logout" onclick="logout()">Logout</button>
 </header>
 
-<div id="formBox">
-  Date <input type="date" id="date">
-  In <input type="time" id="in">
-  Out <input type="time" id="out">
-  Post <input id="post">
+<div class="entry">
+  <div><b>🕒</b> <span id="runClock"></span></div>
+  <input type="date" id="date">
+  <input type="time" id="inTime">
+  <input type="time" id="outTime">
+  <input id="post" placeholder="Post">
+  BG <input type="color" id="bg" value="#ffffff">
+  Font <input type="color" id="font" value="#000000">
   <button onclick="save()">Save</button>
 
   <select id="month"></select>
-  <button onclick="exportExcel()">Excel</button>
+  <button onclick="downloadCSV()">Excel</button>
   <button onclick="window.print()">Print</button>
 </div>
 
-<div id="tableWrap">
+<div class="tableWrap">
 <table>
 <thead>
 <tr>
-<th>Date</th><th>In</th><th>Out</th><th>Hours</th>
-<th>Post</th><th>Edit</th><th>Delete</th>
+<th>Date</th><th>In</th><th>Out</th><th>Hours</th><th>Post</th><th>Edit</th><th>Delete</th>
 </tr>
 </thead>
 <tbody id="tbody"></tbody>
@@ -143,98 +105,154 @@ footer{
 Total Duty: <span id="duty">0</span> |
 Total Hours: <span id="hours">0</span>
 </footer>
-
 </div>
 
 <script>
-/* -------- CLOCK -------- */
+/* ===== CLOCKS ===== */
 setInterval(()=>{
-  clock.innerText=new Date().toLocaleString();
+  const t=new Date().toLocaleString("en-IN",{hour12:true});
+  loginClock.innerText=t;
+  live.innerText=t;
+  runClock.innerText=t;
 },1000);
 
-/* -------- AUTH -------- */
-let auth=JSON.parse(localStorage.getItem("auth"))||
-{u:"9823087",p:"7284"};
+/* ===== AUTH (Local, persistent) ===== */
+let creds=JSON.parse(localStorage.getItem("creds"))||{u:"9823087",p:"7284"};
+localStorage.setItem("creds",JSON.stringify(creds));
+
+if(localStorage.getItem("logged")==="yes") showApp();
 
 function login(){
-  if(u.value==auth.u && p.value==auth.p){
-    loginBox.style.display="none";
-    app.style.display="block";
-    render();
-  }else alert("Wrong Login");
+  if(u.value===creds.u && p.value===creds.p){
+    localStorage.setItem("logged","yes");
+    showApp();
+  } else alert("Wrong Username / Password");
 }
 function logout(){
-  app.style.display="none";
-  loginBox.style.display="block";
+  localStorage.removeItem("logged");
+  location.reload();
 }
+function showApp(){
+  loginPage.style.display="none";
+  app.style.display="flex";
+}
+
+/* ===== SECRET ===== */
 function secret(){
-  let s=prompt("Enter Secret");
-  if(s!=="1995")return;
-  let nu=prompt("New Username",auth.u);
-  let np=prompt("New Password");
-  let cp=prompt("Confirm Password");
-  if(np!==cp)return alert("Not Match");
-  auth={u:nu,p:np};
-  localStorage.setItem("auth",JSON.stringify(auth));
+  if(prompt("Enter Secret")!=="1995") return alert("Wrong Secret");
+  alert("Current\nUsername: "+creds.u+"\nPassword: "+creds.p);
+  const nu=prompt("New Username",creds.u);
+  const op=prompt("Old Password");
+  if(op!==creds.p) return alert("Wrong Old Password");
+  const np=prompt("New Password");
+  const cp=prompt("Confirm Password");
+  if(np!==cp) return alert("Password not match");
+  creds={u:nu,p:np};
+  localStorage.setItem("creds",JSON.stringify(creds));
   alert("Updated");
 }
 
-/* -------- DATA -------- */
-let data=JSON.parse(localStorage.getItem("data"))||[];
+/* ===== FIREBASE ===== */
+firebase.initializeApp({
+  apiKey:"AIzaSyD71mpolAsmejtU2icecQQcX07iCW_is0Y",
+  authDomain:"ravicardmaker.firebaseapp.com",
+  projectId:"ravicardmaker"
+});
+const db=firebase.firestore();
 
-const monthNames=["January","February","March","April","May","June","July","August","September","October","November","December"];
-monthNames.forEach((m,i)=>{
-  let o=document.createElement("option");
-  o.value=i;o.text=m;month.appendChild(o);
+let data=[], editId=null;
+
+/* realtime */
+db.collection("attendance").onSnapshot(s=>{
+  data=[];
+  s.forEach(d=>data.push({id:d.id,...d.data()}));
+  render();
+});
+
+/* ===== MONTH DROPDOWN (FIXED) ===== */
+const months=["January","February","March","April","May","June","July","August","September","October","November","December"];
+months.forEach((m,i)=>{
+  const o=document.createElement("option");
+  o.value=i;        // numeric month
+  o.text=m;         // English name
+  month.appendChild(o);
 });
 month.value=new Date().getMonth();
-month.onchange=render;
 
-function save(){
-  let d=date.value;
-  let i=in.value;
-  let o=out.value;
-  if(!d||!i||!o)return;
-  let h=((new Date(d+" "+o)-new Date(d+" "+i))/36e5);
-  if(h<0)h+=24;
-  data.push({d,i,o,h:h.toFixed(2),p:post.value});
-  localStorage.setItem("data",JSON.stringify(data));
-  render();
+/* ===== HOURS ===== */
+function calc(i,o){
+  let a=new Date("2000-01-01 "+i), b=new Date("2000-01-01 "+o);
+  if(b<a) b.setDate(b.getDate()+1);
+  return ((b-a)/3600000).toFixed(2);
 }
 
+/* ===== SAVE ===== */
+function save(){
+  const obj={
+    d:date.value, i:inTime.value, o:outTime.value,
+    p:post.value, bg:bg.value, f:font.value,
+    h:calc(inTime.value,outTime.value)
+  };
+  if(editId) db.collection("attendance").doc(editId).update(obj);
+  else db.collection("attendance").add(obj);
+  editId=null;
+}
+
+/* ===== EDIT / DELETE (FIXED) ===== */
+function editRow(id){
+  const r=data.find(x=>x.id===id); if(!r) return;
+  editId=id;
+  date.value=r.d; inTime.value=r.i; outTime.value=r.o;
+  post.value=r.p; bg.value=r.bg||r.f? r.bg:"#ffffff"; font.value=r.f||"#000000";
+}
+function deleteRow(id){
+  if(confirm("Delete this entry?")) db.collection("attendance").doc(id).delete();
+}
+
+/* ===== RENDER ===== */
 function render(){
   tbody.innerHTML="";
-  let td=0,th=0;
-  data.forEach((r,idx)=>{
-    if(new Date(r.d).getMonth()!=month.value)return;
-    td++;th+=Number(r.h);
-    tbody.innerHTML+=`
-    <tr>
-      <td>${r.d}</td>
-      <td>${r.i}</td>
-      <td>${r.o}</td>
-      <td>${r.h}</td>
-      <td>${r.p}</td>
-      <td><button onclick="edit(${idx})">✏️</button></td>
-      <td><button onclick="del(${idx})">❌</button></td>
-    </tr>`;
-  });
+  let td=0, th=0;
+  const m=Number(month.value);
+
+  data
+   .sort((a,b)=>new Date(a.d+" "+a.i)-new Date(b.d+" "+b.i))
+   .forEach(r=>{
+     if(new Date(r.d).getMonth()!==m) return;
+     td++; th+=Number(r.h);
+     const night = r.i>r.o ? "night":"";
+     tbody.innerHTML+=`
+      <tr class="${night}" style="background:${r.bg||'#fff'};color:${r.f||'#000'}">
+        <td>${r.d}</td>
+        <td>${ampm(r.i)}</td>
+        <td>${ampm(r.o)}</td>
+        <td>${r.h}</td>
+        <td>${r.p}</td>
+        <td><button onclick="editRow('${r.id}');event.stopPropagation()">✏️</button></td>
+        <td><button onclick="deleteRow('${r.id}');event.stopPropagation()">❌</button></td>
+      </tr>`;
+   });
+
   duty.innerText=td;
   hours.innerText=th.toFixed(2);
 }
 
-function del(i){
-  if(confirm("Delete?")){
-    data.splice(i,1);
-    localStorage.setItem("data",JSON.stringify(data));
-    render();
-  }
+function ampm(t){
+  if(!t) return "";
+  let [h,m]=t.split(":"); h=+h;
+  return ((h%12)||12)+":"+m+" "+(h>=12?"PM":"AM");
 }
-function edit(i){
-  let r=data[i];
-  date.value=r.d;in.value=r.i;out.value=r.o;post.value=r.p;
-  del(i);
+
+/* ===== CSV ===== */
+function downloadCSV(){
+  let csv="Date,In,Out,Hours,Post\n";
+  data.forEach(r=>csv+=`${r.d},${r.i},${r.o},${r.h},${r.p}\n`);
+  const a=document.createElement("a");
+  a.href="data:text/csv;charset=utf-8,"+encodeURIComponent(csv);
+  a.download="attendance.csv";
+  a.click();
 }
 </script>
+
 </body>
 </html>
