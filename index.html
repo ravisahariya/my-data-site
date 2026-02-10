@@ -12,15 +12,15 @@
 <style>
 body{margin:0;font-family:Arial;background:#f2f2f2}
 
-/* ================= LOGIN ================= */
-#loginPage{
+/* ===== LOGIN ===== */
+#loginPage,#pinPage{
 height:100vh;
 display:flex;
 justify-content:center;
 align-items:center;
 background:linear-gradient(135deg,#5f72ff,#9b59b6);
 }
-.loginCard{
+.card{
 background:#fff;
 width:95%;
 max-width:520px;
@@ -29,21 +29,21 @@ border-radius:25px;
 text-align:center;
 box-shadow:0 20px 50px rgba(0,0,0,.35);
 }
-.loginCard h2{font-size:32px;margin-bottom:10px}
-.loginCard input{
+.card h2{font-size:32px;margin-bottom:10px}
+.card input{
 width:100%;
 padding:16px;
 margin:10px 0;
 font-size:18px;
 }
-.loginBtn{
+.bigBtn{
 width:100%;
 padding:14px;
 font-size:18px;
 margin-top:8px;
 }
 
-/* ================= APP ================= */
+/* ===== APP ===== */
 #app{
 display:none;
 height:100vh;
@@ -51,7 +51,7 @@ flex-direction:column;
 background:#fff;
 }
 
-/* HEADER FIXED */
+/* HEADER */
 header{
 background:#1565c0;
 color:#fff;
@@ -78,7 +78,7 @@ background:#d9ecff;
 padding:10px;
 }
 
-/* TABLE SCROLL ONLY */
+/* TABLE */
 .tableWrap{
 flex:1;
 overflow:auto;
@@ -97,7 +97,7 @@ z-index:5;
 }
 .night{background:#e3f2fd}
 
-/* FOOTER FIXED */
+/* FOOTER */
 footer{
 background:#ffcc00;
 padding:14px;
@@ -113,15 +113,23 @@ bottom:0;
 
 <!-- LOGIN -->
 <div id="loginPage">
-  <div class="loginCard">
+  <div class="card">
     <h2>🔐 Attendance Login</h2>
     <div id="clock"></div>
-
     <input id="user" placeholder="Username">
     <input id="pass" type="password" placeholder="Password">
+    <button class="bigBtn" onclick="login()">Login</button>
+    <button class="bigBtn" onclick="secret()">🔒 Secret</button>
+  </div>
+</div>
 
-    <button class="loginBtn" onclick="login()">Login</button>
-    <button class="loginBtn" onclick="secret()">🔒 Secret</button>
+<!-- PIN LOCK -->
+<div id="pinPage" style="display:none">
+  <div class="card">
+    <h2>🔐 Enter PIN</h2>
+    <input id="pinInput" type="password" placeholder="4 Digit PIN">
+    <button class="bigBtn" onclick="checkPin()">Unlock</button>
+    <div style="margin-top:10px;color:#555;cursor:pointer" onclick="changePin()">Change PIN</div>
   </div>
 </div>
 
@@ -129,39 +137,33 @@ bottom:0;
 <div id="app">
 
 <header>
-  📊 ATTENDANCE MASTER DATA
-  <button class="logoutBtn" onclick="logout()">Logout</button>
+📊 ATTENDANCE MASTER DATA
+<button class="logoutBtn" onclick="logout()">Logout</button>
 </header>
 
 <div id="entryForm">
-  🕒 <span id="runClock"></span><br><br>
+🕒 <span id="runClock"></span><br><br>
 
-  <input type="date" id="date">
-  <input type="time" id="inTime">
-  <input type="time" id="outTime">
-  <input id="post" placeholder="Post">
+<input type="date" id="date">
+<input type="time" id="inTime">
+<input type="time" id="outTime">
+<input id="post" placeholder="Post">
 
-  BG <input type="color" id="bg" value="#ffffff">
-  Font <input type="color" id="font" value="#000000">
+BG <input type="color" id="bg" value="#ffffff">
+Font <input type="color" id="font" value="#000000">
 
-  <button onclick="save()">Save</button>
+<button onclick="save()">Save</button>
 
-  <select id="monthFilter" onchange="render()"></select>
-  <button onclick="download()">Excel</button>
-  <button onclick="window.print()">Print</button>
+<select id="monthFilter" onchange="render()"></select>
+<button onclick="download()">Excel</button>
+<button onclick="window.print()">Print</button>
 </div>
 
 <div class="tableWrap">
 <table>
 <thead>
 <tr>
-<th>Date</th>
-<th>In</th>
-<th>Out</th>
-<th>Hours</th>
-<th>Post</th>
-<th>Edit</th>
-<th>Delete</th>
+<th>Date</th><th>In</th><th>Out</th><th>Hours</th><th>Post</th><th>Edit</th><th>Delete</th>
 </tr>
 </thead>
 <tbody id="tbody"></tbody>
@@ -176,49 +178,74 @@ Total Hours: <span id="hours">0</span>
 </div>
 
 <script>
-/* ================= CLOCK ================= */
+/* ===== CLOCK ===== */
 setInterval(()=>{
 let t=new Date().toLocaleString();
 clock.innerText=t;
 runClock.innerText=t;
 },1000);
 
-/* ================= LOGIN ================= */
+/* ===== LOGIN CONFIG ===== */
 const USERNAME="9823087";
 const PASSWORD="7284";
 
+/* ===== LOGIN ===== */
 function login(){
 if(user.value===USERNAME && pass.value===PASSWORD){
 sessionStorage.setItem("logged","1");
-showApp();
+showPin();
 }else alert("Wrong Username / Password");
 }
-function logout(){
-sessionStorage.removeItem("logged");
-location.reload();
-}
-function showApp(){
-loginPage.style.display="none";
-app.style.display="flex";
-}
-if(sessionStorage.getItem("logged")==="1") showApp();
-
-/* ================= SECRET ================= */
 function secret(){
 let y=prompt("Enter secret year");
 if(y==="1995"){
 alert("Username: "+USERNAME+"\nPassword: "+PASSWORD);
 }
 }
+function logout(){
+sessionStorage.clear();
+location.reload();
+}
 
-/* ================= FIREBASE ================= */
+/* ===== PIN SYSTEM ===== */
+if(!localStorage.pin) localStorage.pin="1234";
+
+function showPin(){
+loginPage.style.display="none";
+pinPage.style.display="flex";
+}
+function checkPin(){
+if(pinInput.value===localStorage.pin){
+sessionStorage.setItem("pinOK","1");
+pinPage.style.display="none";
+app.style.display="flex";
+}else alert("Wrong PIN");
+}
+function changePin(){
+let o=prompt("Old PIN");
+if(o!==localStorage.pin) return alert("Wrong PIN");
+let n=prompt("New PIN");
+let c=prompt("Confirm PIN");
+if(n!==c) return alert("PIN not match");
+localStorage.pin=n;
+alert("PIN Changed");
+}
+
+/* AUTO STATE */
+if(sessionStorage.getItem("logged")==="1"){
+if(sessionStorage.getItem("pinOK")==="1"){
+loginPage.style.display="none";
+app.style.display="flex";
+}else showPin();
+}
+
+/* ===== FIREBASE ===== */
 firebase.initializeApp({
 apiKey:"AIzaSyD71mpolAsmejtU2icecQQcX07iCW_is0Y",
 authDomain:"ravicardmaker.firebaseapp.com",
 projectId:"ravicardmaker"
 });
 const db=firebase.firestore();
-
 let data=[];
 
 /* REALTIME SYNC */
