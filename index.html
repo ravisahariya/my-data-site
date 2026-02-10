@@ -2,98 +2,77 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Attendance Master</title>
+<title>Attendance Master Cloud</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
 
 <style>
-body{
-margin:0;
-font-family:Arial;
-background:linear-gradient(135deg,#5f72ff,#9b59b6);
-}
+body{margin:0;font-family:Arial}
 
-/* ================= LOGIN ================= */
-
+/* LOGIN */
 #loginPage{
 height:100vh;
 display:flex;
 justify-content:center;
 align-items:center;
+background:linear-gradient(135deg,#5f72ff,#9b59b6);
 }
 
-.loginCard{
+.card{
 background:#fff;
 width:95%;
-max-width:650px;     /* BIGGER */
-padding:60px;        /* BIGGER */
-border-radius:30px;
+max-width:560px;
+padding:55px;
+border-radius:25px;
 text-align:center;
-box-shadow:0 20px 60px rgba(0,0,0,.4);
+box-shadow:0 20px 50px rgba(0,0,0,.35);
 }
 
-.loginCard h1{
-font-size:40px;
-margin-bottom:10px;
-}
+.card h2{font-size:32px}
 
-.loginInput{
+.card input{
 width:100%;
-padding:20px;
-margin:15px 0;
-font-size:20px;
-border-radius:10px;
+padding:16px;
+margin:10px 0;
+font-size:18px;
 }
 
-.loginBtn{
+.bigBtn{
 width:100%;
-padding:18px;
-font-size:22px;
-margin-top:10px;
+padding:14px;
+font-size:18px;
 }
 
-#clock{
-font-size:20px;
-color:#1976d2;
-font-weight:bold;
-margin-bottom:15px;
-}
-
-/* ================= APP ================= */
-
-#app{
-display:none;
-height:100vh;
-flex-direction:column;
-}
+/* APP */
+#app{display:none;height:100vh;flex-direction:column;background:white}
 
 header{
 background:#1565c0;
-color:white;
-padding:12px;
-font-size:20px;
+color:#fff;
+padding:10px;
 display:flex;
 justify-content:space-between;
-position:sticky;
-top:0;
+font-weight:bold;
 }
 
-.logoutBtn{
-background:red;
-color:white;
-border:none;
-padding:8px 15px;
-}
+.logout{background:red;color:white;border:none;padding:6px 12px}
 
-/* blue entry */
+/* ENTRY ONLY BLUE */
 #entry{
 background:#d9ecff;
-padding:10px;
+padding:8px;
 }
 
-/* table */
-table{
-width:100%;
-border-collapse:collapse;
+/* TABLE */
+.tableWrap{
+flex:1;
+overflow:auto;
 }
+
+table{width:100%;border-collapse:collapse}
 
 th,td{
 border:1px solid #ccc;
@@ -102,33 +81,20 @@ text-align:center;
 }
 
 th{
-background:#ffd6d6;
-}
-
-/* ONLY ROW SCROLL */
-tbody{
-display:block;
-height:60vh;
-overflow:auto;
-}
-
-thead, tbody tr{
-display:table;
-width:100%;
-table-layout:fixed;
-}
-
-footer{
-background:#ffeaa7;
-padding:10px;
-font-weight:bold;
+background:#ffdcdc;
 position:sticky;
-bottom:0;
+top:0;
 }
 
-.night{
-background:#e3f2fd;
+/* FOOTER */
+footer{
+background:#ffcc00;
+font-size:18px;
+font-weight:bold;
+padding:10px;
 }
+
+.night{background:#e3f2fd}
 </style>
 </head>
 
@@ -136,17 +102,15 @@ background:#e3f2fd;
 
 <!-- LOGIN -->
 <div id="loginPage">
-<div class="loginCard">
-
-<h1>🔐 Attendance Login</h1>
+<div class="card">
+<h2>🔐 Attendance Login</h2>
 <div id="clock"></div>
 
-<input id="username" class="loginInput" placeholder="Username">
-<input id="password" type="password" class="loginInput" placeholder="Password">
+<input id="user" placeholder="Username">
+<input id="pass" type="password" placeholder="Password">
 
-<button class="loginBtn" onclick="doLogin()">Login</button>
-<button class="loginBtn" onclick="secret()">🔒 Secret</button>
-
+<button class="bigBtn" onclick="login()">Login</button>
+<button class="bigBtn" onclick="secret()">🔒 Secret</button>
 </div>
 </div>
 
@@ -156,48 +120,38 @@ background:#e3f2fd;
 
 <header>
 📊 ATTENDANCE MASTER DATA
-<button class="logoutBtn" onclick="logout()">Logout</button>
+<button class="logout" onclick="logout()">Logout</button>
 </header>
 
 <div id="entry">
 🕒 <span id="runClock"></span><br>
 
 <input type="date" id="date">
-<input type="time" id="inTime">
-<input type="time" id="outTime">
+<input type="time" id="in">
+<input type="time" id="out">
 <input id="post" placeholder="Post">
+
+BG <input type="color" id="bg" value="#ffffff">
+Font <input type="color" id="font" value="#000000">
+
 <button onclick="save()">Save</button>
 
-<select id="monthFilter" onchange="render()">
-<option value="all">All</option>
-<option value="0">January</option>
-<option value="1">February</option>
-<option value="2">March</option>
-<option value="3">April</option>
-<option value="4">May</option>
-<option value="5">June</option>
-<option value="6">July</option>
-<option value="7">August</option>
-<option value="8">September</option>
-<option value="9">October</option>
-<option value="10">November</option>
-<option value="11">December</option>
-</select>
+<select id="monthFilter" onchange="render()"></select>
+
+<button onclick="download()">Excel</button>
+<button onclick="window.print()">Print</button>
 </div>
 
+<div class="tableWrap">
 <table>
 <thead>
 <tr>
-<th>Date</th>
-<th>In</th>
-<th>Out</th>
-<th>Hours</th>
-<th>Post</th>
-<th>Delete</th>
+<th>Date</th><th>In</th><th>Out</th><th>Hours</th><th>Post</th><th>Edit</th><th>Delete</th>
 </tr>
 </thead>
 <tbody id="tbody"></tbody>
 </table>
+</div>
 
 <footer>
 Total Duty: <span id="duty">0</span> |
@@ -206,122 +160,137 @@ Total Hours: <span id="hours">0</span>
 
 </div>
 
+
 <script>
+/* CLOCK */
+setInterval(()=>{
+let t=new Date().toLocaleString();
+clock.innerText=t;
+runClock.innerText=t;
+},1000);
 
-/* DEFAULT LOGIN */
-if(!localStorage.user){
-localStorage.user="9823087";
-localStorage.pass="7284";
-}
+/* LOGIN */
+let USER="9823087";
+let PASS="7284";
 
-/* LOGIN FUNCTION (FIXED) */
-function doLogin(){
-let u=document.getElementById("username").value;
-let p=document.getElementById("password").value;
-
-if(u===localStorage.user && p===localStorage.pass){
-localStorage.logged="yes";
-showApp();
-}else{
-alert("Wrong Username/Password");
-}
-}
-
-function logout(){
-localStorage.logged="";
-location.reload();
-}
-
-function showApp(){
+function login(){
+if(user.value===USER && pass.value===PASS){
 loginPage.style.display="none";
 app.style.display="flex";
-render();
+}else alert("Wrong");
 }
 
-if(localStorage.logged==="yes") showApp();
+function logout(){location.reload();}
 
 /* SECRET */
 function secret(){
-let s=prompt("Enter secret year");
-if(s==="1995"){
-alert("Username: "+localStorage.user+"\nPassword: "+localStorage.pass);
-
-let old=prompt("Old password");
-if(old!==localStorage.pass) return;
-
-let nu=prompt("New username");
-let np=prompt("New password");
-let cp=prompt("Confirm password");
-
-if(np!==cp) return alert("Not match");
-
-localStorage.user=nu;
-localStorage.pass=np;
-
-alert("Changed!");
+let y=prompt("Enter year");
+if(y==="1995"){
+alert("Username: "+USER+"\nPassword: "+PASS);
 }
 }
 
-/* CLOCK */
-function tick(){
-let d=new Date();
-let t=d.toLocaleString();
-clock.innerText=t;
-runClock.innerText=t;
+/* FIREBASE */
+firebase.initializeApp({
+apiKey:"AIzaSyD71mpolAsmejtU2icecQQcX07iCW_is0Y",
+authDomain:"ravicardmaker.firebaseapp.com",
+projectId:"ravicardmaker"
+});
+
+const db=firebase.firestore();
+let data=[];
+
+/* REALTIME CLOUD SYNC */
+db.collection("attendance").onSnapshot(s=>{
+data=[];
+s.forEach(d=>data.push({id:d.id,...d.data()}));
+render();
+});
+
+/* MONTH DROPDOWN */
+for(let i=1;i<=12;i++){
+let o=document.createElement("option");
+o.value=String(i).padStart(2,"0");
+o.text=new Date(2025,i-1).toLocaleString('en',{month:'long'});
+monthFilter.appendChild(o);
 }
-setInterval(tick,1000);
+monthFilter.value=String(new Date().getMonth()+1).padStart(2,"0");
 
-/* DATA */
-let data=JSON.parse(localStorage.data||"[]");
+/* HOURS */
+function calc(i,o){
+let a=new Date("2000 "+i),b=new Date("2000 "+o);
+if(b<a)b.setDate(b.getDate()+1);
+return ((b-a)/3600000).toFixed(2);
+}
 
+/* SAVE */
 function save(){
-let d=date.value,i=inTime.value,o=outTime.value,p=post.value;
-
-let h=(new Date("1970 "+o)-new Date("1970 "+i))/3600000;
-if(h<0)h+=24;
-
-data.push({d,i,o,h:h.toFixed(2),p});
-localStorage.data=JSON.stringify(data);
-render();
+db.collection("attendance").add({
+d:date.value,
+i:in.value,
+o:out.value,
+p:post.value,
+bg:bg.value,
+font:font.value,
+h:calc(in.value,out.value)
+});
 }
 
-function del(i){
-data.splice(i,1);
-localStorage.data=JSON.stringify(data);
-render();
+/* DELETE */
+function del(id){
+if(confirm("Delete?")) db.collection("attendance").doc(id).delete();
 }
 
+/* EDIT */
+function edit(id){
+let r=data.find(x=>x.id===id);
+date.value=r.d;
+in.value=r.i;
+out.value=r.o;
+post.value=r.p;
+bg.value=r.bg;
+font.value=r.font;
+del(id);
+}
+
+/* RENDER */
 function render(){
 tbody.innerHTML="";
 let m=monthFilter.value;
-
 let td=0,th=0;
 
-data.forEach((r,i)=>{
-let month=new Date(r.d).getMonth();
-if(m!=="all" && month!=m) return;
+data.sort((a,b)=>new Date(a.d+" "+a.i)-new Date(b.d+" "+b.i))
+.forEach(r=>{
+if(r.d.split("-")[1]!==m)return;
 
-let tr=document.createElement("tr");
-if(r.i>r.o) tr.className="night";
+td++; th+=+r.h;
 
-tr.innerHTML=`
+tbody.innerHTML+=`
+<tr class="${r.i>r.o?'night':''}" style="background:${r.bg};color:${r.font}">
 <td>${r.d}</td>
 <td>${r.i}</td>
 <td>${r.o}</td>
 <td>${r.h}</td>
 <td>${r.p}</td>
-<td><button onclick="del(${i})">❌</button></td>
-`;
-
-tbody.appendChild(tr);
-
-td++;
-th+=parseFloat(r.h);
+<td><button onclick="edit('${r.id}')">✏️</button></td>
+<td><button onclick="del('${r.id}')">❌</button></td>
+</tr>`;
 });
 
 duty.innerText=td;
 hours.innerText=th.toFixed(2);
 }
+
+/* CSV */
+function download(){
+let csv="Date,In,Out,Hours,Post\n";
+data.forEach(r=>csv+=`${r.d},${r.i},${r.o},${r.h},${r.p}\n`);
+let a=document.createElement("a");
+a.href="data:text/csv;charset=utf-8,"+encodeURIComponent(csv);
+a.download="attendance.csv";
+a.click();
+}
 </script>
+
 </body>
 </html>
