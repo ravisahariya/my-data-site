@@ -2,17 +2,17 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Attendance Master Cloud</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Attendance Master Cloud</title>
 
 <!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
 
 <style>
-body{margin:0;font-family:Arial}
+body{margin:0;font-family:Arial;background:#f2f2f2}
 
-/* LOGIN */
+/* ================= LOGIN ================= */
 #loginPage{
 height:100vh;
 display:flex;
@@ -20,81 +20,92 @@ justify-content:center;
 align-items:center;
 background:linear-gradient(135deg,#5f72ff,#9b59b6);
 }
-
-.card{
+.loginCard{
 background:#fff;
 width:95%;
-max-width:560px;
+max-width:520px;
 padding:55px;
 border-radius:25px;
 text-align:center;
 box-shadow:0 20px 50px rgba(0,0,0,.35);
 }
-
-.card h2{font-size:32px}
-
-.card input{
+.loginCard h2{font-size:32px;margin-bottom:10px}
+.loginCard input{
 width:100%;
 padding:16px;
 margin:10px 0;
 font-size:18px;
 }
-
-.bigBtn{
+.loginBtn{
 width:100%;
 padding:14px;
 font-size:18px;
+margin-top:8px;
 }
 
-/* APP */
-#app{display:none;height:100vh;flex-direction:column;background:white}
+/* ================= APP ================= */
+#app{
+display:none;
+height:100vh;
+flex-direction:column;
+background:#fff;
+}
 
+/* HEADER FIXED */
 header{
 background:#1565c0;
 color:#fff;
-padding:10px;
+padding:12px;
+font-size:20px;
 display:flex;
 justify-content:space-between;
-font-weight:bold;
+align-items:center;
+position:sticky;
+top:0;
+z-index:10;
+}
+.logoutBtn{
+background:red;
+color:#fff;
+border:none;
+padding:8px 16px;
+font-size:16px;
 }
 
-.logout{background:red;color:white;border:none;padding:6px 12px}
-
-/* ENTRY ONLY BLUE */
-#entry{
+/* ENTRY FORM ONLY BLUE */
+#entryForm{
 background:#d9ecff;
-padding:8px;
+padding:10px;
 }
 
-/* TABLE */
+/* TABLE SCROLL ONLY */
 .tableWrap{
 flex:1;
 overflow:auto;
 }
-
 table{width:100%;border-collapse:collapse}
-
 th,td{
 border:1px solid #ccc;
 padding:6px;
 text-align:center;
 }
-
 th{
-background:#ffdcdc;
+background:#ffdede;
 position:sticky;
 top:0;
+z-index:5;
 }
+.night{background:#e3f2fd}
 
-/* FOOTER */
+/* FOOTER FIXED */
 footer{
 background:#ffcc00;
+padding:14px;
 font-size:18px;
 font-weight:bold;
-padding:10px;
+position:sticky;
+bottom:0;
 }
-
-.night{background:#e3f2fd}
 </style>
 </head>
 
@@ -102,51 +113,55 @@ padding:10px;
 
 <!-- LOGIN -->
 <div id="loginPage">
-<div class="card">
-<h2>🔐 Attendance Login</h2>
-<div id="clock"></div>
+  <div class="loginCard">
+    <h2>🔐 Attendance Login</h2>
+    <div id="clock"></div>
 
-<input id="user" placeholder="Username">
-<input id="pass" type="password" placeholder="Password">
+    <input id="user" placeholder="Username">
+    <input id="pass" type="password" placeholder="Password">
 
-<button class="bigBtn" onclick="login()">Login</button>
-<button class="bigBtn" onclick="secret()">🔒 Secret</button>
+    <button class="loginBtn" onclick="login()">Login</button>
+    <button class="loginBtn" onclick="secret()">🔒 Secret</button>
+  </div>
 </div>
-</div>
-
 
 <!-- APP -->
 <div id="app">
 
 <header>
-📊 ATTENDANCE MASTER DATA
-<button class="logout" onclick="logout()">Logout</button>
+  📊 ATTENDANCE MASTER DATA
+  <button class="logoutBtn" onclick="logout()">Logout</button>
 </header>
 
-<div id="entry">
-🕒 <span id="runClock"></span><br>
+<div id="entryForm">
+  🕒 <span id="runClock"></span><br><br>
 
-<input type="date" id="date">
-<input type="time" id="in">
-<input type="time" id="out">
-<input id="post" placeholder="Post">
+  <input type="date" id="date">
+  <input type="time" id="inTime">
+  <input type="time" id="outTime">
+  <input id="post" placeholder="Post">
 
-BG <input type="color" id="bg" value="#ffffff">
-Font <input type="color" id="font" value="#000000">
+  BG <input type="color" id="bg" value="#ffffff">
+  Font <input type="color" id="font" value="#000000">
 
-<button onclick="save()">Save</button>
+  <button onclick="save()">Save</button>
 
-<select id="monthFilter" onchange="render()"></select>
-
-<button onclick="download()">Excel</button>
-<button onclick="window.print()">Print</button>
+  <select id="monthFilter" onchange="render()"></select>
+  <button onclick="download()">Excel</button>
+  <button onclick="window.print()">Print</button>
 </div>
 
 <div class="tableWrap">
 <table>
 <thead>
 <tr>
-<th>Date</th><th>In</th><th>Out</th><th>Hours</th><th>Post</th><th>Edit</th><th>Delete</th>
+<th>Date</th>
+<th>In</th>
+<th>Out</th>
+<th>Hours</th>
+<th>Post</th>
+<th>Edit</th>
+<th>Delete</th>
 </tr>
 </thead>
 <tbody id="tbody"></tbody>
@@ -160,47 +175,53 @@ Total Hours: <span id="hours">0</span>
 
 </div>
 
-
 <script>
-/* CLOCK */
+/* ================= CLOCK ================= */
 setInterval(()=>{
 let t=new Date().toLocaleString();
 clock.innerText=t;
 runClock.innerText=t;
 },1000);
 
-/* LOGIN */
-let USER="9823087";
-let PASS="7284";
+/* ================= LOGIN ================= */
+const USERNAME="9823087";
+const PASSWORD="7284";
 
 function login(){
-if(user.value===USER && pass.value===PASS){
+if(user.value===USERNAME && pass.value===PASSWORD){
+sessionStorage.setItem("logged","1");
+showApp();
+}else alert("Wrong Username / Password");
+}
+function logout(){
+sessionStorage.removeItem("logged");
+location.reload();
+}
+function showApp(){
 loginPage.style.display="none";
 app.style.display="flex";
-}else alert("Wrong");
 }
+if(sessionStorage.getItem("logged")==="1") showApp();
 
-function logout(){location.reload();}
-
-/* SECRET */
+/* ================= SECRET ================= */
 function secret(){
-let y=prompt("Enter year");
+let y=prompt("Enter secret year");
 if(y==="1995"){
-alert("Username: "+USER+"\nPassword: "+PASS);
+alert("Username: "+USERNAME+"\nPassword: "+PASSWORD);
 }
 }
 
-/* FIREBASE */
+/* ================= FIREBASE ================= */
 firebase.initializeApp({
 apiKey:"AIzaSyD71mpolAsmejtU2icecQQcX07iCW_is0Y",
 authDomain:"ravicardmaker.firebaseapp.com",
 projectId:"ravicardmaker"
 });
-
 const db=firebase.firestore();
+
 let data=[];
 
-/* REALTIME CLOUD SYNC */
+/* REALTIME SYNC */
 db.collection("attendance").onSnapshot(s=>{
 data=[];
 s.forEach(d=>data.push({id:d.id,...d.data()}));
@@ -227,12 +248,12 @@ return ((b-a)/3600000).toFixed(2);
 function save(){
 db.collection("attendance").add({
 d:date.value,
-i:in.value,
-o:out.value,
+i:inTime.value,
+o:outTime.value,
 p:post.value,
 bg:bg.value,
 font:font.value,
-h:calc(in.value,out.value)
+h:calc(inTime.value,outTime.value)
 });
 }
 
@@ -245,8 +266,8 @@ if(confirm("Delete?")) db.collection("attendance").doc(id).delete();
 function edit(id){
 let r=data.find(x=>x.id===id);
 date.value=r.d;
-in.value=r.i;
-out.value=r.o;
+inTime.value=r.i;
+outTime.value=r.o;
 post.value=r.p;
 bg.value=r.bg;
 font.value=r.font;
@@ -262,7 +283,6 @@ let td=0,th=0;
 data.sort((a,b)=>new Date(a.d+" "+a.i)-new Date(b.d+" "+b.i))
 .forEach(r=>{
 if(r.d.split("-")[1]!==m)return;
-
 td++; th+=+r.h;
 
 tbody.innerHTML+=`
