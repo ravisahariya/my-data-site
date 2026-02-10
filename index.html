@@ -1,165 +1,134 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
 <meta charset="UTF-8">
+<title>Attendance Master Data</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Attendance Master Cloud</title>
 
 <!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
 
 <style>
-body{margin:0;font-family:Arial;background:#f2f2f2}
-
-/* ===== LOGIN ===== */
-#loginPage,#pinPage{
-height:100vh;
-display:flex;
-justify-content:center;
-align-items:center;
-background:linear-gradient(135deg,#5f72ff,#9b59b6);
-}
-.card{
-background:#fff;
-width:95%;
-max-width:520px;
-padding:55px;
-border-radius:25px;
-text-align:center;
-box-shadow:0 20px 50px rgba(0,0,0,.35);
-}
-.card h2{font-size:32px;margin-bottom:10px}
-.card input{
-width:100%;
-padding:16px;
-margin:10px 0;
-font-size:18px;
-}
-.bigBtn{
-width:100%;
-padding:14px;
-font-size:18px;
-margin-top:8px;
+body{
+  margin:0;
+  font-family:Arial;
+  background:linear-gradient(135deg,#6a82fb,#a18cd1);
 }
 
-/* ===== APP ===== */
-#app{
-display:none;
-height:100vh;
-flex-direction:column;
-background:#fff;
+/* LOGIN */
+#loginPage{
+  height:100vh;
+  display:flex;
+  justify-content:center;
+  align-items:center;
 }
+.loginCard{
+  background:#fff;
+  width:90%;
+  max-width:420px;
+  padding:30px;
+  border-radius:16px;
+  text-align:center;
+  box-shadow:0 10px 30px rgba(0,0,0,.3);
+}
+.loginCard h2{font-size:26px}
+.loginCard input{
+  width:100%;
+  padding:12px;
+  margin:8px 0;
+  font-size:16px;
+}
+.loginCard button{
+  width:100%;
+  padding:12px;
+  font-size:18px;
+  margin-top:10px;
+}
+.secret{margin-top:10px;cursor:pointer}
+
+/* APP */
+#app{display:none;height:100vh;flex-direction:column}
 
 /* HEADER */
-header{
-background:#1565c0;
-color:#fff;
-padding:12px;
-font-size:20px;
-display:flex;
-justify-content:space-between;
-align-items:center;
-position:sticky;
-top:0;
-z-index:10;
-}
-.logoutBtn{
-background:red;
-color:#fff;
-border:none;
-padding:8px 16px;
-font-size:16px;
+.header{
+  background:#1976d2;
+  color:#fff;
+  padding:10px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  font-size:18px;
 }
 
-/* ENTRY FORM ONLY BLUE */
-#entryForm{
-background:#d9ecff;
-padding:10px;
+/* ENTRY FORM */
+.formBox{
+  background:#dbeeff;
+  padding:8px;
+}
+.formBox input,.formBox select{
+  padding:6px;
+  margin:3px;
 }
 
 /* TABLE */
-.tableWrap{
-flex:1;
-overflow:auto;
-}
+.tableBox{flex:1;overflow:auto;background:#fff}
 table{width:100%;border-collapse:collapse}
-th,td{
-border:1px solid #ccc;
-padding:6px;
-text-align:center;
-}
-th{
-background:#ffdede;
-position:sticky;
-top:0;
-z-index:5;
-}
-.night{background:#e3f2fd}
+th,td{border:1px solid #ccc;padding:6px;text-align:center}
+th{background:#ffdede}
 
 /* FOOTER */
-footer{
-background:#ffcc00;
-padding:14px;
-font-size:18px;
-font-weight:bold;
-position:sticky;
-bottom:0;
+.footer{
+  background:#ffeb99;
+  font-size:18px;
+  font-weight:bold;
+  padding:8px;
 }
+
+/* BUTTONS */
+.logout{background:red;color:#fff;border:none;padding:6px 12px}
+.editBtn{font-size:16px}
+.delBtn{font-size:16px}
 </style>
 </head>
 
 <body>
 
-<!-- LOGIN -->
+<!-- LOGIN PAGE -->
 <div id="loginPage">
-  <div class="card">
-    <h2>🔐 Attendance Login</h2>
-    <div id="clock"></div>
-    <input id="user" placeholder="Username">
-    <input id="pass" type="password" placeholder="Password">
-    <button class="bigBtn" onclick="login()">Login</button>
-    <button class="bigBtn" onclick="secret()">🔒 Secret</button>
-  </div>
-</div>
-
-<!-- PIN LOCK -->
-<div id="pinPage" style="display:none">
-  <div class="card">
-    <h2>🔐 Enter PIN</h2>
-    <input id="pinInput" type="password" placeholder="4 Digit PIN">
-    <button class="bigBtn" onclick="checkPin()">Unlock</button>
-    <div style="margin-top:10px;color:#555;cursor:pointer" onclick="changePin()">Change PIN</div>
+  <div class="loginCard">
+    <h2>🔐 Admin Attendance Login</h2>
+    <div id="loginClock"></div>
+    <input id="loginUser" placeholder="Username">
+    <input id="loginPass" type="password" placeholder="Password">
+    <button onclick="doLogin()">Admin Login</button>
+    <div class="secret" onclick="openSecret()">🔒 Secret</div>
   </div>
 </div>
 
 <!-- APP -->
 <div id="app">
 
-<header>
-📊 ATTENDANCE MASTER DATA
-<button class="logoutBtn" onclick="logout()">Logout</button>
-</header>
-
-<div id="entryForm">
-🕒 <span id="runClock"></span><br><br>
-
-<input type="date" id="date">
-<input type="time" id="inTime">
-<input type="time" id="outTime">
-<input id="post" placeholder="Post">
-
-BG <input type="color" id="bg" value="#ffffff">
-Font <input type="color" id="font" value="#000000">
-
-<button onclick="save()">Save</button>
-
-<select id="monthFilter" onchange="render()"></select>
-<button onclick="download()">Excel</button>
-<button onclick="window.print()">Print</button>
+<div class="header">
+  📊 ATTENDANCE MASTER DATA
+  <button class="logout" onclick="logout()">Logout</button>
 </div>
 
-<div class="tableWrap">
+<div class="formBox">
+  <div id="runTime"></div>
+  <input type="date" id="date">
+  <input type="time" id="inTime">
+  <input type="time" id="outTime">
+  <input id="post" placeholder="Post">
+  BG <input type="color" id="bg">
+  Font <input type="color" id="font">
+  <button onclick="save()">Save</button>
+  <select id="month" onchange="render()"></select>
+  <button onclick="download()">Excel</button>
+  <button onclick="window.print()">Print</button>
+</div>
+
+<div class="tableBox">
 <table>
 <thead>
 <tr>
@@ -170,172 +139,140 @@ Font <input type="color" id="font" value="#000000">
 </table>
 </div>
 
-<footer>
+<div class="footer">
 Total Duty: <span id="duty">0</span> |
 Total Hours: <span id="hours">0</span>
-</footer>
+</div>
 
 </div>
 
 <script>
-/* ===== CLOCK ===== */
+/* CLOCK */
 setInterval(()=>{
-let t=new Date().toLocaleString();
-clock.innerText=t;
-runClock.innerText=t;
+  const d=new Date();
+  loginClock.innerText=d.toLocaleString();
+  runTime.innerText=d.toLocaleString();
 },1000);
 
-/* ===== LOGIN CONFIG ===== */
-const USERNAME="9823087";
-const PASSWORD="7284";
+/* LOGIN DATA */
+let cred=JSON.parse(localStorage.getItem("cred")) || {u:"9823087",p:"7284"};
 
-/* ===== LOGIN ===== */
-function login(){
-if(user.value===USERNAME && pass.value===PASSWORD){
-sessionStorage.setItem("logged","1");
-showPin();
-}else alert("Wrong Username / Password");
-}
-function secret(){
-let y=prompt("Enter secret year");
-if(y==="1995"){
-alert("Username: "+USERNAME+"\nPassword: "+PASSWORD);
-}
+if(localStorage.getItem("login")) showApp();
+
+function doLogin(){
+  if(loginUser.value===cred.u && loginPass.value===cred.p){
+    localStorage.setItem("login","1");
+    showApp();
+  }else alert("Wrong Login");
 }
 function logout(){
-sessionStorage.clear();
-location.reload();
+  localStorage.removeItem("login");
+  location.reload();
+}
+function showApp(){
+  loginPage.style.display="none";
+  app.style.display="flex";
 }
 
-/* ===== PIN SYSTEM ===== */
-if(!localStorage.pin) localStorage.pin="1234";
-
-function showPin(){
-loginPage.style.display="none";
-pinPage.style.display="flex";
-}
-function checkPin(){
-if(pinInput.value===localStorage.pin){
-sessionStorage.setItem("pinOK","1");
-pinPage.style.display="none";
-app.style.display="flex";
-}else alert("Wrong PIN");
-}
-function changePin(){
-let o=prompt("Old PIN");
-if(o!==localStorage.pin) return alert("Wrong PIN");
-let n=prompt("New PIN");
-let c=prompt("Confirm PIN");
-if(n!==c) return alert("PIN not match");
-localStorage.pin=n;
-alert("PIN Changed");
+/* SECRET */
+function openSecret(){
+  if(prompt("Enter Secret")!=="1995")return;
+  const nu=prompt("New Username",cred.u);
+  const op=prompt("Old Password");
+  if(op!==cred.p)return alert("Wrong Old Password");
+  const np=prompt("New Password");
+  const cp=prompt("Confirm Password");
+  if(np!==cp)return alert("Mismatch");
+  cred={u:nu,p:np};
+  localStorage.setItem("cred",JSON.stringify(cred));
+  alert("Updated");
 }
 
-/* AUTO STATE */
-if(sessionStorage.getItem("logged")==="1"){
-if(sessionStorage.getItem("pinOK")==="1"){
-loginPage.style.display="none";
-app.style.display="flex";
-}else showPin();
-}
-
-/* ===== FIREBASE ===== */
+/* FIREBASE */
 firebase.initializeApp({
-apiKey:"AIzaSyD71mpolAsmejtU2icecQQcX07iCW_is0Y",
-authDomain:"ravicardmaker.firebaseapp.com",
-projectId:"ravicardmaker"
+ apiKey:"AIzaSyD71mpolAsmejtU2icecQQcX07iCW_is0Y",
+ authDomain:"ravicardmaker.firebaseapp.com",
+ projectId:"ravicardmaker"
 });
 const db=firebase.firestore();
-let data=[];
+let data=[],editId=null;
 
-/* REALTIME SYNC */
 db.collection("attendance").onSnapshot(s=>{
-data=[];
-s.forEach(d=>data.push({id:d.id,...d.data()}));
-render();
+ data=[];
+ s.forEach(d=>data.push({id:d.id,...d.data()}));
+ render();
 });
 
-/* MONTH DROPDOWN */
-for(let i=1;i<=12;i++){
-let o=document.createElement("option");
-o.value=String(i).padStart(2,"0");
-o.text=new Date(2025,i-1).toLocaleString('en',{month:'long'});
-monthFilter.appendChild(o);
-}
-monthFilter.value=String(new Date().getMonth()+1).padStart(2,"0");
+/* MONTH */
+["January","February","March","April","May","June","July","August","September","October","November","December"]
+.forEach((m,i)=>{
+ let o=document.createElement("option");
+ o.value=i+1;o.text=m;month.appendChild(o);
+});
+month.value=new Date().getMonth()+1;
 
-/* HOURS */
-function calc(i,o){
-let a=new Date("2000 "+i),b=new Date("2000 "+o);
-if(b<a)b.setDate(b.getDate()+1);
-return ((b-a)/3600000).toFixed(2);
+/* CALC */
+function hours(i,o){
+ let a=new Date("2000 "+i),b=new Date("2000 "+o);
+ if(b<a)b.setDate(b.getDate()+1);
+ return ((b-a)/36e5).toFixed(2);
 }
 
 /* SAVE */
 function save(){
-db.collection("attendance").add({
-d:date.value,
-i:inTime.value,
-o:outTime.value,
-p:post.value,
-bg:bg.value,
-font:font.value,
-h:calc(inTime.value,outTime.value)
-});
-}
-
-/* DELETE */
-function del(id){
-if(confirm("Delete?")) db.collection("attendance").doc(id).delete();
-}
-
-/* EDIT */
-function edit(id){
-let r=data.find(x=>x.id===id);
-date.value=r.d;
-inTime.value=r.i;
-outTime.value=r.o;
-post.value=r.p;
-bg.value=r.bg;
-font.value=r.font;
-del(id);
+ let obj={
+  date:date.value,
+  in:inTime.value,
+  out:outTime.value,
+  h:hours(inTime.value,outTime.value),
+  post:post.value,
+  bg:bg.value,
+  font:font.value
+ };
+ if(editId) db.collection("attendance").doc(editId).update(obj);
+ else db.collection("attendance").add(obj);
+ editId=null;
 }
 
 /* RENDER */
 function render(){
-tbody.innerHTML="";
-let m=monthFilter.value;
-let td=0,th=0;
-
-data.sort((a,b)=>new Date(a.d+" "+a.i)-new Date(b.d+" "+b.i))
-.forEach(r=>{
-if(r.d.split("-")[1]!==m)return;
-td++; th+=+r.h;
-
-tbody.innerHTML+=`
-<tr class="${r.i>r.o?'night':''}" style="background:${r.bg};color:${r.font}">
-<td>${r.d}</td>
-<td>${r.i}</td>
-<td>${r.o}</td>
-<td>${r.h}</td>
-<td>${r.p}</td>
-<td><button onclick="edit('${r.id}')">✏️</button></td>
-<td><button onclick="del('${r.id}')">❌</button></td>
-</tr>`;
-});
-
-duty.innerText=td;
-hours.innerText=th.toFixed(2);
+ tbody.innerHTML="";
+ let td=0,th=0;
+ data.filter(r=>new Date(r.date).getMonth()+1==month.value)
+ .forEach(r=>{
+  td++;th+=+r.h;
+  tbody.innerHTML+=`
+  <tr style="background:${r.bg};color:${r.font}">
+  <td>${r.date}</td>
+  <td>${r.in}</td>
+  <td>${r.out}</td>
+  <td>${r.h}</td>
+  <td>${r.post}</td>
+  <td><button class="editBtn" onclick="edit('${r.id}');event.stopPropagation()">✏️</button></td>
+  <td><button class="delBtn" onclick="del('${r.id}');event.stopPropagation()">❌</button></td>
+  </tr>`;
+ });
+ duty.innerText=td;
+ hours.innerText=th.toFixed(2);
+}
+function edit(id){
+ let r=data.find(x=>x.id===id);
+ editId=id;
+ date.value=r.date;inTime.value=r.in;outTime.value=r.out;
+ post.value=r.post;bg.value=r.bg;font.value=r.font;
+}
+function del(id){
+ if(confirm("Delete?")) db.collection("attendance").doc(id).delete();
 }
 
-/* CSV */
+/* EXCEL */
 function download(){
-let csv="Date,In,Out,Hours,Post\n";
-data.forEach(r=>csv+=`${r.d},${r.i},${r.o},${r.h},${r.p}\n`);
-let a=document.createElement("a");
-a.href="data:text/csv;charset=utf-8,"+encodeURIComponent(csv);
-a.download="attendance.csv";
-a.click();
+ let csv="Date,In,Out,Hours,Post\n";
+ data.forEach(r=>csv+=`${r.date},${r.in},${r.out},${r.h},${r.post}\n`);
+ let a=document.createElement("a");
+ a.href=URL.createObjectURL(new Blob([csv]));
+ a.download="attendance.csv";
+ a.click();
 }
 </script>
 
