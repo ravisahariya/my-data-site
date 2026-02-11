@@ -118,7 +118,7 @@ bottom:0;
     <div id="clock"></div>
 
     <input id="user" placeholder="Username">
-    <input id="pass" type="password" placeholder="Password">
+    <input type="password" id="pass" placeholder="Password">
 
     <button class="loginBtn" onclick="login()">Login</button>
     <button class="loginBtn" onclick="secret()">🔒 Secret</button>
@@ -178,9 +178,9 @@ Total Hours: <span id="hours">0</span>
 <script>
 /* ================= CLOCK ================= */
 setInterval(()=>{
-let t=new Date().toLocaleString();
-clock.innerText=t;
-runClock.innerText=t;
+ let t=new Date().toLocaleString();
+ clock.innerText=t;
+ runClock.innerText=t;
 },1000);
 
 /* ================= LOGIN ================= */
@@ -188,129 +188,140 @@ const USERNAME="9823087";
 const PASSWORD="7284";
 
 function login(){
-if(user.value===USERNAME && pass.value===PASSWORD){
-sessionStorage.setItem("logged","1");
-showApp();
-}else alert("Wrong Username / Password");
+ if(user.value===USERNAME && pass.value===PASSWORD){
+  sessionStorage.setItem("logged","1");
+  showApp();
+ }else alert("Wrong Username / Password");
 }
 function logout(){
-sessionStorage.removeItem("logged");
-location.reload();
+ sessionStorage.removeItem("logged");
+ location.reload();
 }
 function showApp(){
-loginPage.style.display="none";
-app.style.display="flex";
+ loginPage.style.display="none";
+ app.style.display="flex";
 }
 if(sessionStorage.getItem("logged")==="1") showApp();
 
 /* ================= SECRET ================= */
 function secret(){
-let y=prompt("Enter secret year");
-if(y==="1995"){
-alert("Username: "+USERNAME+"\nPassword: "+PASSWORD);
-}
+ let y=prompt("Enter secret year");
+ if(y==="1995"){
+  alert("Username: "+USERNAME+"\nPassword: "+PASSWORD);
+ }
 }
 
 /* ================= FIREBASE ================= */
 firebase.initializeApp({
-apiKey:"AIzaSyD71mpolAsmejtU2icecQQcX07iCW_is0Y",
-authDomain:"ravicardmaker.firebaseapp.com",
-projectId:"ravicardmaker"
+ apiKey:"AIzaSyD71mpolAsmejtU2icecQQcX07iCW_is0Y",
+ authDomain:"ravicardmaker.firebaseapp.com",
+ projectId:"ravicardmaker"
 });
 const db=firebase.firestore();
 
 let data=[];
+let editId=null;
 
 /* REALTIME SYNC */
 db.collection("attendance").onSnapshot(s=>{
-data=[];
-s.forEach(d=>data.push({id:d.id,...d.data()}));
-render();
+ data=[];
+ s.forEach(d=>data.push({id:d.id,...d.data()}));
+ render();
 });
 
 /* MONTH DROPDOWN */
 for(let i=1;i<=12;i++){
-let o=document.createElement("option");
-o.value=String(i).padStart(2,"0");
-o.text=new Date(2025,i-1).toLocaleString('en',{month:'long'});
-monthFilter.appendChild(o);
+ let o=document.createElement("option");
+ o.value=String(i).padStart(2,"0");
+ o.text=new Date(2025,i-1).toLocaleString('en',{month:'long'});
+ monthFilter.appendChild(o);
 }
 monthFilter.value=String(new Date().getMonth()+1).padStart(2,"0");
 
 /* HOURS */
 function calc(i,o){
-let a=new Date("2000 "+i),b=new Date("2000 "+o);
-if(b<a)b.setDate(b.getDate()+1);
-return ((b-a)/3600000).toFixed(2);
+ let a=new Date("2000 "+i),b=new Date("2000 "+o);
+ if(b<a)b.setDate(b.getDate()+1);
+ return ((b-a)/3600000).toFixed(2);
 }
 
 /* SAVE */
 function save(){
-db.collection("attendance").add({
-d:date.value,
-i:inTime.value,
-o:outTime.value,
-p:post.value,
-bg:bg.value,
-font:font.value,
-h:calc(inTime.value,outTime.value)
-});
+ let obj={
+  d:date.value,
+  i:inTime.value,
+  o:outTime.value,
+  p:post.value,
+  bg:bg.value,
+  font:font.value,
+  h:calc(inTime.value,outTime.value)
+ };
+
+ if(editId){
+  db.collection("attendance").doc(editId).update(obj);
+  editId=null;
+ }else{
+  db.collection("attendance").add(obj);
+ }
 }
 
 /* DELETE */
 function del(id){
-if(confirm("Delete?")) db.collection("attendance").doc(id).delete();
+ if(confirm("Delete this entry?")){
+  db.collection("attendance").doc(id).delete();
+ }
 }
 
-/* EDIT */
+/* EDIT (NO DELETE HERE) */
 function edit(id){
-let r=data.find(x=>x.id===id);
-date.value=r.d;
-inTime.value=r.i;
-outTime.value=r.o;
-post.value=r.p;
-bg.value=r.bg;
-font.value=r.font;
-del(id);
+ let r=data.find(x=>x.id===id);
+ editId=id;
+ date.value=r.d;
+ inTime.value=r.i;
+ outTime.value=r.o;
+ post.value=r.p;
+ bg.value=r.bg;
+ font.value=r.font;
 }
 
 /* RENDER */
 function render(){
-tbody.innerHTML="";
-let m=monthFilter.value;
-let td=0,th=0;
+ tbody.innerHTML="";
+ let m=monthFilter.value;
+ let td=0,th=0;
 
-data.sort((a,b)=>new Date(a.d+" "+a.i)-new Date(b.d+" "+b.i))
-.forEach(r=>{
-if(r.d.split("-")[1]!==m)return;
-td++; th+=+r.h;
+ data
+ .sort((a,b)=>new Date(a.d+" "+a.i)-new Date(b.d+" "+b.i))
+ .forEach(r=>{
+  if(r.d.split("-")[1]!==m)return;
+  td++; th+=+r.h;
 
-tbody.innerHTML+=`
-<tr class="${r.i>r.o?'night':''}" style="background:${r.bg};color:${r.font}">
-<td>${r.d}</td>
-<td>${r.i}</td>
-<td>${r.o}</td>
-<td>${r.h}</td>
-<td>${r.p}</td>
-<td><button onclick="edit('${r.id}')">✏️</button></td>
-<td><button onclick="del('${r.id}')">❌</button></td>
-</tr>`;
-});
+  tbody.innerHTML+=`
+  <tr class="${r.i>r.o?'night':''}" style="background:${r.bg};color:${r.font}">
+   <td>${r.d}</td>
+   <td>${r.i}</td>
+   <td>${r.o}</td>
+   <td>${r.h}</td>
+   <td>${r.p}</td>
+   <td><button onclick="edit('${r.id}')">✏️</button></td>
+   <td><button onclick="del('${r.id}')">❌</button></td>
+  </tr>`;
+ });
 
-duty.innerText=td;
-hours.innerText=th.toFixed(2);
+ duty.innerText=td;
+ hours.innerText=th.toFixed(2);
 }
 
 /* CSV */
 function download(){
-let csv="Date,In,Out,Hours,Post\n";
-data.forEach(r=>csv+=`${r.d},${r.i},${r.o},${r.h},${r.p}\n`);
-let a=document.createElement("a");
-a.href="data:text/csv;charset=utf-8,"+encodeURIComponent(csv);
-a.download="attendance.csv";
-a.click();
+ let csv="Date,In,Out,Hours,Post\n";
+ data.forEach(r=>csv+=`${r.d},${r.i},${r.o},${r.h},${r.p}\n`);
+ let a=document.createElement("a");
+ a.href="data:text/csv;charset=utf-8,"+encodeURIComponent(csv);
+ a.download="attendance.csv";
+ a.click();
 }
 </script>
 
 </body>
-</html>
+    </html>
