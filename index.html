@@ -12,7 +12,7 @@
 <style>
 body{margin:0;font-family:Arial;background:#f2f2f2}
 
-/* ================= LOGIN ================= */
+/* LOGIN */
 #loginPage{
 height:100vh;
 display:flex;
@@ -43,15 +43,10 @@ font-size:18px;
 margin-top:8px;
 }
 
-/* ================= APP ================= */
-#app{
-display:none;
-height:100vh;
-flex-direction:column;
-background:#fff;
-}
+/* APP */
+#app{display:none;height:100vh;flex-direction:column}
 
-/* HEADER FIXED */
+/* HEADER */
 header{
 background:#1565c0;
 color:#fff;
@@ -72,32 +67,20 @@ padding:8px 16px;
 font-size:16px;
 }
 
-/* ENTRY FORM ONLY BLUE */
+/* ENTRY FORM */
 #entryForm{
 background:#d9ecff;
 padding:10px;
 }
 
-/* TABLE SCROLL ONLY */
-.tableWrap{
-flex:1;
-overflow:auto;
-}
+/* TABLE */
+.tableWrap{flex:1;overflow:auto}
 table{width:100%;border-collapse:collapse}
-th,td{
-border:1px solid #ccc;
-padding:6px;
-text-align:center;
-}
-th{
-background:#ffdede;
-position:sticky;
-top:0;
-z-index:5;
-}
+th,td{border:1px solid #ccc;padding:6px;text-align:center}
+th{background:#ffdede;position:sticky;top:0}
 .night{background:#e3f2fd}
 
-/* FOOTER FIXED */
+/* FOOTER */
 footer{
 background:#ffcc00;
 padding:14px;
@@ -118,7 +101,7 @@ bottom:0;
     <div id="clock"></div>
 
     <input id="user" placeholder="Username">
-    <input type="password" id="pass" placeholder="Password">
+    <input id="pass" type="password" placeholder="Password">
 
     <button class="loginBtn" onclick="login()">Login</button>
     <button class="loginBtn" onclick="secret()">🔒 Secret</button>
@@ -176,14 +159,14 @@ Total Hours: <span id="hours">0</span>
 </div>
 
 <script>
-/* ================= CLOCK ================= */
+/* CLOCK */
 setInterval(()=>{
  let t=new Date().toLocaleString();
  clock.innerText=t;
  runClock.innerText=t;
 },1000);
 
-/* ================= LOGIN ================= */
+/* LOGIN */
 const USERNAME="9823087";
 const PASSWORD="7284";
 
@@ -191,7 +174,7 @@ function login(){
  if(user.value===USERNAME && pass.value===PASSWORD){
   sessionStorage.setItem("logged","1");
   showApp();
- }else alert("Wrong Username / Password");
+ } else alert("Wrong Username / Password");
 }
 function logout(){
  sessionStorage.removeItem("logged");
@@ -203,7 +186,7 @@ function showApp(){
 }
 if(sessionStorage.getItem("logged")==="1") showApp();
 
-/* ================= SECRET ================= */
+/* SECRET */
 function secret(){
  let y=prompt("Enter secret year");
  if(y==="1995"){
@@ -211,18 +194,16 @@ function secret(){
  }
 }
 
-/* ================= FIREBASE ================= */
+/* FIREBASE */
 firebase.initializeApp({
  apiKey:"AIzaSyD71mpolAsmejtU2icecQQcX07iCW_is0Y",
  authDomain:"ravicardmaker.firebaseapp.com",
  projectId:"ravicardmaker"
 });
 const db=firebase.firestore();
-
 let data=[];
-let editId=null;
 
-/* REALTIME SYNC */
+/* REALTIME */
 db.collection("attendance").onSnapshot(s=>{
  data=[];
  s.forEach(d=>data.push({id:d.id,...d.data()}));
@@ -247,7 +228,7 @@ function calc(i,o){
 
 /* SAVE */
 function save(){
- let obj={
+ db.collection("attendance").add({
   d:date.value,
   i:inTime.value,
   o:outTime.value,
@@ -255,33 +236,24 @@ function save(){
   bg:bg.value,
   font:font.value,
   h:calc(inTime.value,outTime.value)
- };
-
- if(editId){
-  db.collection("attendance").doc(editId).update(obj);
-  editId=null;
- }else{
-  db.collection("attendance").add(obj);
- }
+ });
 }
 
 /* DELETE */
 function del(id){
- if(confirm("Delete this entry?")){
-  db.collection("attendance").doc(id).delete();
- }
+ if(confirm("Delete?")) db.collection("attendance").doc(id).delete();
 }
 
-/* EDIT (NO DELETE HERE) */
+/* EDIT */
 function edit(id){
  let r=data.find(x=>x.id===id);
- editId=id;
  date.value=r.d;
  inTime.value=r.i;
  outTime.value=r.o;
  post.value=r.p;
  bg.value=r.bg;
  font.value=r.font;
+ del(id);
 }
 
 /* RENDER */
@@ -290,11 +262,12 @@ function render(){
  let m=monthFilter.value;
  let td=0,th=0;
 
- data
- .sort((a,b)=>new Date(a.d+" "+a.i)-new Date(b.d+" "+b.i))
+ data.sort((a,b)=>new Date(a.d+" "+a.i)-new Date(b.d+" "+b.i))
  .forEach(r=>{
-  if(r.d.split("-")[1]!==m)return;
-  td++; th+=+r.h;
+  let month=r.d.split("-")[1].padStart(2,"0");
+  if(month!==m)return;
+
+  td++; th+=Number(r.h);
 
   tbody.innerHTML+=`
   <tr class="${r.i>r.o?'night':''}" style="background:${r.bg};color:${r.font}">
@@ -324,4 +297,4 @@ function download(){
 </script>
 
 </body>
-    </html>
+</html>
