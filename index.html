@@ -1,98 +1,158 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Attendance Firebase</title>
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Master Attendance Sheet (Cloud)</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<!-- Firebase COMPAT SDK (GitHub Pages safe) -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+
 <style>
-body{font-family:Arial;background:#eee;margin:0}
+*{box-sizing:border-box}
+body{margin:0;font-family:Arial;background:#eaeaea}
 .hidden{display:none}
-.box{padding:10px;border-radius:10px;color:#fff;text-align:center}
-.green{background:#198754}.orange{background:#fd7e14}.purple{background:#6f42c1}
-button{padding:8px 12px;border:none;border-radius:6px}
+
+/* LOGIN */
+#loginBox{
+  width:90%;max-width:380px;margin:80px auto;
+  background:#fff;padding:25px;border-radius:15px;
+  box-shadow:0 0 15px rgba(0,0,0,.3);text-align:center
+}
+#loginBox input{width:100%;padding:12px;margin:8px 0}
+#loginBox button{width:100%;padding:12px;background:#0d6efd;color:#fff;border:none;border-radius:10px}
+
+/* MAIN */
+#main{
+  max-width:1100px;margin:auto;background:#fff;
+  min-height:100vh;border-radius:15px;
+  box-shadow:0 0 15px rgba(0,0,0,.3)
+}
+.header{
+  background:#0d6efd;color:#fff;padding:12px;
+  font-size:22px;display:flex;
+  justify-content:space-between;align-items:center;
+  border-radius:15px 15px 0 0
+}
+.logout{background:red;color:#fff;border:none;padding:8px 12px;border-radius:8px}
+
+/* SUMMARY */
+.summary{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;padding:10px}
+.box{padding:12px;color:#fff;border-radius:10px;text-align:center;font-weight:bold}
+.box span{display:block;font-size:26px}
+.g{background:#198754}.o{background:#fd7e14}.p{background:#6f42c1}
+
+/* FORM */
+.form{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px;padding:10px}
+.form input,.form select{padding:8px}
+.add{background:#0d6efd;color:#fff;border:none;border-radius:8px}
+
+/* TABLE */
+.tableWrap{margin:10px;overflow:auto;border:1px solid #ccc;border-radius:10px}
+table{width:100%;border-collapse:collapse}
+th,td{padding:8px;border-bottom:1px solid #ddd;text-align:center}
+th{background:#f1f1f1}
+.edit{background:orange;color:#fff;border:none;padding:5px;border-radius:6px}
+.del{background:red;color:#fff;border:none;padding:5px;border-radius:6px}
 </style>
 </head>
+
 <body>
 
 <!-- LOGIN -->
-<div id="login">
+<div id="loginBox">
   <h2>Login</h2>
-  <input id="u" placeholder="Username"><br>
-  <input id="p" type="password" placeholder="Password"><br>
+  <input id="user" placeholder="Username">
+  <input id="pass" type="password" placeholder="Password">
   <button onclick="login()">LOGIN</button>
 </div>
 
 <!-- MAIN -->
 <div id="main" class="hidden">
-  <button onclick="logout()" style="background:red;color:#fff">Logout</button>
-
-  <div style="display:flex;gap:10px">
-    <div class="box green">Days<br><span id="days">0</span></div>
-    <div class="box orange">Hours<br><span id="hours">0</span></div>
-    <div class="box purple">Posts<br><span id="posts">0</span></div>
+  <div class="header">
+    Master Attendance Sheet
+    <button class="logout" onclick="logout()">Logout</button>
   </div>
 
-  <br>
-  <input type="date" id="date">
-  <input type="time" id="in">
-  <input type="time" id="out">
-  <input id="post" placeholder="Post">
-  <button onclick="add()">ADD</button>
+  <div class="summary">
+    <div class="box g">Total Days<span id="tDays">0</span></div>
+    <div class="box o">Total Hours<span id="tHours">0</span></div>
+    <div class="box p">Total Posts<span id="tPosts">0</span></div>
+  </div>
 
-  <table border="1" width="100%">
-    <thead>
-      <tr><th>Date</th><th>In</th><th>Out</th><th>Hours</th><th>Post</th><th>Action</th></tr>
-    </thead>
-    <tbody id="list"></tbody>
-  </table>
+  <div class="form">
+    <input type="date" id="date">
+    <input type="time" id="inTime">
+    <input type="time" id="outTime">
+    <input id="post" placeholder="Post">
+    <button class="add" onclick="addEntry()">ADD</button>
+  </div>
+
+  <div class="tableWrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Date</th><th>In</th><th>Out</th>
+          <th>Hours</th><th>Post</th><th>Action</th>
+        </tr>
+      </thead>
+      <tbody id="tbody"></tbody>
+    </table>
+  </div>
 </div>
 
 <script>
-// 🔥 FIREBASE CONFIG (अपना वाला यहाँ डालें)
+/* 🔥 YOUR FIREBASE CONFIG (ALREADY ADDED) */
 const firebaseConfig = {
-  apiKey: "YOUR_API_KEY",
-  authDomain: "YOUR_PROJECT.firebaseapp.com",
-  projectId: "YOUR_PROJECT_ID",
+  apiKey: "AIzaSyD71mpolAsmejtU2icecQQcX07iCW_is0Y",
+  authDomain: "ravicardmaker.firebaseapp.com",
+  projectId: "ravicardmaker",
+  storageBucket: "ravicardmaker.firebasestorage.app",
+  messagingSenderId: "125321734592",
+  appId: "1:125321734592:web:eaba2d7477376694134025"
 };
+
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 
-// LOGIN
-const USER="9823087", PASS="7284";
+/* LOGIN */
+const USERNAME="9823087", PASSWORD="7284";
+
 function login(){
-  if(u.value===USER && p.value===PASS){
+  if(user.value===USERNAME && pass.value===PASSWORD){
     localStorage.setItem("login","yes");
     showMain();
-  } else alert("Wrong login");
+  } else alert("Wrong Login");
 }
 function logout(){
   localStorage.removeItem("login");
   location.reload();
 }
 function showMain(){
-  login.classList.add("hidden");
+  loginBox.classList.add("hidden");
   main.classList.remove("hidden");
-  load();
+  loadData();
 }
 
-// ADD ENTRY
-function add(){
-  let d=date.value,i=in.value,o=out.value,pt=post.value;
-  if(!d||!pt) return alert("Date & Post required");
+/* ADD ENTRY */
+function addEntry(){
+  let d=date.value,i=inTime.value,o=outTime.value,p=post.value;
+  if(!d||!p) return alert("Date & Post required");
+
   let h=0;
   if(i&&o){
     h=(new Date(d+"T"+o)-new Date(d+"T"+i))/3600000;
     if(h<0)h=0;
   }
+
   db.collection("attendance").add({
-    date:d,in:i,out:o,hours:h.toFixed(2),post:pt
-  }).then(load);
+    date:d,in:i,out:o,hours:h.toFixed(2),post:p
+  });
 }
 
-// LOAD DATA
-function load(){
+/* LOAD DATA (REALTIME) */
+function loadData(){
   db.collection("attendance").orderBy("date")
   .onSnapshot(snap=>{
     let html="",hrs=0,posts=new Set(),dates=new Set();
@@ -104,27 +164,30 @@ function load(){
       html+=`
       <tr>
         <td>${r.date}</td>
-        <td>${r.in}</td>
-        <td>${r.out}</td>
+        <td>${r.in||"-"}</td>
+        <td>${r.out||"-"}</td>
         <td>${r.hours}</td>
         <td>${r.post}</td>
-        <td><button onclick="del('${doc.id}')">Delete</button></td>
+        <td><button class="del" onclick="delEntry('${doc.id}')">Delete</button></td>
       </tr>`;
     });
-    list.innerHTML=html;
-    days.innerHTML=dates.size;
-    hours.innerHTML=hrs.toFixed(2);
-    posts.innerHTML=posts.size;
+    tbody.innerHTML=html;
+    tDays.innerText=dates.size;
+    tHours.innerText=hrs.toFixed(2);
+    tPosts.innerText=posts.size;
   });
 }
-function del(id){
-  if(confirm("Delete?")){
+
+function delEntry(id){
+  if(confirm("Delete entry?")){
     db.collection("attendance").doc(id).delete();
   }
 }
 
-// AUTO LOGIN
-if(localStorage.getItem("login")==="yes") showMain();
+/* AUTO LOGIN */
+if(localStorage.getItem("login")==="yes"){
+  showMain();
+}
 </script>
 
 </body>
