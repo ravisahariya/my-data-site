@@ -2,273 +2,370 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Attendance Master Cloud</title>
-
-<!-- Firebase -->
-<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+<title>Master Attendance Sheet</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <style>
-body{margin:0;font-family:Arial;background:#f2f2f2}
+*{box-sizing:border-box}
+body{
+  margin:0;
+  font-family:Arial;
+  background:#eaeaea;
+  min-height:100vh;
+}
+.screen{
+  min-height:100vh;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
 
 /* LOGIN */
 #loginPage{
-height:100vh;display:flex;justify-content:center;align-items:center;
-background:linear-gradient(135deg,#5f72ff,#9b59b6)
+  width:90%;
+  max-width:380px;
+  background:#fff;
+  padding:25px;
+  border-radius:15px;
+  box-shadow:0 0 15px rgba(0,0,0,.3);
+  text-align:center;
 }
-.loginCard{
-background:#fff;width:95%;max-width:520px;padding:50px;border-radius:25px;
-text-align:center;box-shadow:0 20px 50px rgba(0,0,0,.35)
+#loginPage input{
+  width:100%;
+  padding:12px;
+  margin:8px 0;
+  font-size:16px;
 }
-.loginCard h2{font-size:30px;margin-bottom:10px}
-.loginCard input{
-width:100%;padding:15px;margin:10px 0;font-size:18px
+#loginPage button{
+  width:100%;
+  padding:12px;
+  background:#0d6efd;
+  color:#fff;
+  border:none;
+  border-radius:10px;
+  font-size:18px;
 }
-.loginCard button{
-width:100%;padding:14px;font-size:18px;margin-top:8px
+.secret{margin-top:10px;cursor:pointer}
+#secretBox{display:none;font-size:14px}
+
+/* MAIN */
+#mainPage{
+  width:100%;
+  max-width:1100px;
+  height:95vh;
+  background:#fff;
+  border-radius:15px;
+  box-shadow:0 0 15px rgba(0,0,0,.3);
+  display:flex;
+  flex-direction:column;
+}
+.header{
+  background:#0d6efd;
+  color:#fff;
+  padding:12px;
+  font-size:22px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  border-radius:15px 15px 0 0;
+}
+.logout{
+  background:red;
+  color:#fff;
+  border:none;
+  padding:8px 12px;
+  border-radius:8px;
 }
 
-/* APP */
-#app{display:none;height:100vh;flex-direction:column;background:#fff}
-
-/* HEADER */
-header{
-background:#1565c0;color:#fff;padding:12px;font-size:20px;
-display:flex;justify-content:space-between;align-items:center;
-position:sticky;top:0;z-index:10
+/* SUMMARY */
+.summary{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:10px;
+  padding:10px;
 }
-.logoutBtn{background:red;color:#fff;border:none;padding:8px 16px;font-size:16px}
+.box{
+  padding:12px;
+  color:#fff;
+  border-radius:10px;
+  text-align:center;
+  font-weight:bold;
+}
+.box span{display:block;font-size:26px}
+.b1{background:#198754}
+.b2{background:#fd7e14}
+.b3{background:#6f42c1}
 
-/* ENTRY FORM */
-#entryForm{background:#d9ecff;padding:10px}
+/* FORM */
+.form{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(120px,1fr));
+  gap:8px;
+  padding:10px;
+}
+.form input,.form select{padding:8px}
+.add{
+  background:#0d6efd;
+  color:#fff;
+  border:none;
+  border-radius:8px;
+}
 
 /* TABLE */
-.tableWrap{flex:1;overflow:auto}
-table{width:100%;border-collapse:collapse}
-th,td{border:1px solid #ccc;padding:6px;text-align:center}
-th{background:#ffdede;position:sticky;top:0}
-.night{background:#e3f2fd;color:#0d47a1}
-
-/* FOOTER */
-footer{
-background:#ffcc00;padding:14px;font-size:18px;font-weight:bold;
-position:sticky;bottom:0
+.tableWrap{
+  flex:1;
+  margin:10px;
+  overflow:auto;
+  border:1px solid #ccc;
+  border-radius:10px;
 }
+table{width:100%;border-collapse:collapse}
+th,td{
+  padding:8px;
+  border-bottom:1px solid #ddd;
+  text-align:center
+}
+th{
+  background:#f1f1f1;
+  position:sticky;
+  top:0
+}
+.edit{background:orange;color:#fff;border:none;padding:5px;border-radius:6px}
+.del{background:red;color:#fff;border:none;padding:5px;border-radius:6px}
+
+.hidden{display:none!important}
+.note{font-size:12px;color:#666;padding:0 10px}
 </style>
 </head>
 
 <body>
 
-<!-- LOGIN -->
-<div id="loginPage">
-  <div class="loginCard">
-    <h2>🔐 Attendance Login</h2>
-    <div id="clock"></div>
+<!-- LOGIN SCREEN -->
+<div id="loginScreen" class="screen">
+  <div id="loginPage">
+    <h2>Login</h2>
     <input id="user" placeholder="Username">
     <input id="pass" type="password" placeholder="Password">
-    <button onclick="login()">Login</button>
-    <button onclick="secret()">🔒 Secret</button>
+    <button onclick="login()">LOGIN</button>
+    <div class="secret" onclick="openSecret()">🔒</div>
+    <div id="secretBox"></div>
   </div>
 </div>
 
-<!-- APP -->
-<div id="app">
+<!-- MAIN SCREEN -->
+<div id="mainScreen" class="screen hidden">
+  <div id="mainPage">
 
-<header>
-  📊 ATTENDANCE MASTER DATA
-  <button class="logoutBtn" onclick="logout()">Logout</button>
-</header>
+    <div class="header">
+      Master Attendance Sheet
+      <button class="logout" onclick="logout()">Logout</button>
+    </div>
 
-<div id="entryForm">
-  🕒 <span id="runClock"></span><br><br>
-  <input type="date" id="date">
-  <input type="time" id="inTime">
-  <input type="time" id="outTime">
-  <input id="post" placeholder="Post">
-  BG <input type="color" id="bg" value="#ffffff">
-  Font <input type="color" id="font" value="#000000">
-  <button onclick="save()">Save</button>
-  <select id="monthFilter" onchange="render()"></select>
-  <button onclick="download()">Excel</button>
-  <button onclick="window.print()">Print</button>
-</div>
+    <div class="summary">
+      <div class="box b1">Total Days<span id="tDays">0</span></div>
+      <div class="box b2">Total Hours<span id="tHours">0</span></div>
+      <div class="box b3">Total Posts<span id="tPosts">0</span></div>
+    </div>
 
-<div class="tableWrap">
-<table>
-<thead>
-<tr>
-<th>Date</th><th>In</th><th>Out</th><th>Hours</th>
-<th>Post</th><th>Edit</th><th>Delete</th>
-</tr>
-</thead>
-<tbody id="tbody"></tbody>
-</table>
-</div>
+    <div class="form">
+      <input type="date" id="date">
+      <input type="time" id="inTime">
+      <input type="time" id="outTime">
+      <input id="post" placeholder="Post">
+      <select id="monthFilter"></select>
+      <button class="add" onclick="addEntry()">ADD</button>
+      <button class="add" onclick="downloadCSV()">Download</button>
+    </div>
 
-<footer>
-Total Duty: <span id="duty">0</span> |
-Total Hours: <span id="hours">0</span>
-</footer>
+    <div class="note">
+      Default: sirf current month ka data dikhai deta hai.  
+      “All Months” select karne par pura data dikhega.
+    </div>
 
+    <div class="tableWrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>In</th>
+            <th>Out</th>
+            <th>Hours</th>
+            <th>Post</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody id="tbody"></tbody>
+      </table>
+    </div>
+
+  </div>
 </div>
 
 <script>
-/* CLOCK */
-setInterval(()=>{
-let t=new Date().toLocaleString();
-clock.innerText=t;
-runClock.innerText=t;
-},1000);
-
-/* LOGIN */
 const USERNAME="9823087";
 const PASSWORD="7284";
+let editIndex=null;
 
+/* SCREEN */
+function showLogin(){
+  loginScreen.classList.remove("hidden");
+  mainScreen.classList.add("hidden");
+}
+function showMain(){
+  loginScreen.classList.add("hidden");
+  mainScreen.classList.remove("hidden");
+}
+
+/* LOGIN */
 function login(){
   if(user.value===USERNAME && pass.value===PASSWORD){
-    sessionStorage.setItem("logged","1");
-    showApp();
-  }else alert("Wrong Username / Password");
+    localStorage.setItem("login","yes");
+    initMonths();
+    autoDate();
+    render();
+    showMain();
+  }else{
+    alert("Wrong Login");
+  }
 }
 function logout(){
-  sessionStorage.removeItem("logged");
-  location.reload();
+  localStorage.removeItem("login");
+  showLogin();
 }
-function showApp(){
-  loginPage.style.display="none";
-  app.style.display="flex";
-}
-if(sessionStorage.getItem("logged")==="1") showApp();
-
-/* SECRET */
-function secret(){
-  if(prompt("Enter secret year")==="1995"){
-    alert("Username: "+USERNAME+"\nPassword: "+PASSWORD);
+function openSecret(){
+  let x=prompt("Enter Secret Code");
+  if(x==="1996"){
+    secretBox.style.display="block";
+    secretBox.innerHTML="Username: "+USERNAME+"<br>Password: "+PASSWORD;
   }
 }
 
-/* FIREBASE */
-firebase.initializeApp({
-  apiKey:"AIzaSyD71mpolAsmejtU2icecQQcX07iCW_is0Y",
-  authDomain:"ravicardmaker.firebaseapp.com",
-  projectId:"ravicardmaker"
-});
-const db=firebase.firestore();
-let data=[];
-let editId=null;
-
-db.collection("attendance").onSnapshot(s=>{
-  data=[];
-  s.forEach(d=>data.push({id:d.id,...d.data()}));
-  render();
-});
-
-/* MONTH DROPDOWN */
-monthFilter.innerHTML="";
-let all=document.createElement("option");
-all.value="ALL"; all.text="All";
-monthFilter.appendChild(all);
-
-for(let i=1;i<=12;i++){
-  let o=document.createElement("option");
-  o.value=String(i).padStart(2,"0");
-  o.text=new Date(2026,i-1).toLocaleString('en',{month:'long'});
-  monthFilter.appendChild(o);
+/* DATA */
+function getData(){
+  return JSON.parse(localStorage.getItem("att")||"[]");
 }
-monthFilter.value=String(new Date().getMonth()+1).padStart(2,"0");
-
-/* HOURS CALC */
-function calc(i,o){
-  let a=new Date("2000 "+i), b=new Date("2000 "+o);
-  if(b<a) b.setDate(b.getDate()+1);
-  return ((b-a)/3600000).toFixed(2);
+function setData(d){
+  localStorage.setItem("att",JSON.stringify(d));
 }
 
-/* SAVE / UPDATE */
-function save(){
-  let rec={
-    d:date.value,
-    i:inTime.value,
-    o:outTime.value,
-    p:post.value,
-    bg:bg.value,
-    font:font.value,
-    h:calc(inTime.value,outTime.value)
-  };
-  if(editId){
-    db.collection("attendance").doc(editId).update(rec);
-    editId=null;
+/* DATE */
+function autoDate(){
+  date.value=new Date().toISOString().slice(0,10);
+}
+
+/* MONTHS */
+function initMonths(){
+  let months=[
+    "All Months","January","February","March","April","May","June",
+    "July","August","September","October","November","December"
+  ];
+  monthFilter.innerHTML="";
+  months.forEach((m,i)=>{
+    let o=document.createElement("option");
+    o.value=i;
+    o.text=m;
+    monthFilter.appendChild(o);
+  });
+  monthFilter.value=new Date().getMonth()+1; // current month only
+}
+
+/* ADD / EDIT */
+function addEntry(){
+  let d=date.value,i=inTime.value,o=outTime.value,p=post.value;
+  if(!d||!p){alert("Date & Post required");return;}
+
+  let h=0;
+  if(i&&o){
+    h=(new Date(d+"T"+o)-new Date(d+"T"+i))/3600000;
+    if(h<0)h=0;
+  }
+
+  let arr=getData();
+  if(editIndex!==null){
+    arr[editIndex]={date:d,in:i,out:o,hours:h.toFixed(2),post:p};
+    editIndex=null;
   }else{
-    db.collection("attendance").add(rec);
+    arr.push({date:d,in:i,out:o,hours:h.toFixed(2),post:p});
   }
-  date.value=inTime.value=outTime.value=post.value="";
+  setData(arr);
+  autoDate();
+  inTime.value=outTime.value=post.value="";
+  render();
 }
 
-/* EDIT */
-function edit(id){
-  let r=data.find(x=>x.id===id);
-  editId=id;
-  date.value=r.d;
-  inTime.value=r.i;
-  outTime.value=r.o;
-  post.value=r.p;
-  bg.value=r.bg;
-  font.value=r.font;
+function edit(i){
+  let arr=getData().sort((a,b)=>new Date(a.date)-new Date(b.date));
+  let r=arr[i];
+  date.value=r.date;
+  inTime.value=r.in;
+  outTime.value=r.out;
+  post.value=r.post;
+  editIndex=i;
 }
 
-/* DELETE */
-function del(id){
-  if(confirm("Delete?")){
-    db.collection("attendance").doc(id).delete();
+function del(i){
+  if(confirm("Delete this entry?")){
+    let arr=getData();
+    arr.splice(i,1);
+    setData(arr);
+    render();
   }
 }
 
 /* RENDER */
 function render(){
-  tbody.innerHTML="";
-  let m=monthFilter.value;
-  let td=0, th=0;
+  let arr=getData().sort((a,b)=>new Date(a.date)-new Date(b.date));
+  let mSel=monthFilter.value;
+  let body="",hrs=0,posts=[],dates=new Set();
 
-  data
-    .sort((a,b)=>new Date(a.d+" "+a.i)-new Date(b.d+" "+b.i))
-    .forEach(r=>{
-      let rm=r.d.split("-")[1];
-      if(m!=="ALL" && rm!==m) return;
+  arr.forEach((r,i)=>{
+    let mm=new Date(r.date).getMonth()+1;
+    if(mSel==0 || mm==mSel){
+      hrs+=+r.hours;
+      posts.push(r.post);
+      dates.add(r.date);
+      body+=`
+      <tr>
+        <td>${r.date}</td>
+        <td>${r.in||"-"}</td>
+        <td>${r.out||"-"}</td>
+        <td>${r.hours}</td>
+        <td>${r.post}</td>
+        <td>
+          <button class="edit" onclick="edit(${i})">Edit</button>
+          ${editIndex===null?`<button class="del" onclick="del(${i})">Delete</button>`:""}
+        </td>
+      </tr>`;
+    }
+  });
 
-      td++;
-      th+=Number(r.h||0);
-
-      let isNight=r.i>r.o;
-      let tr=document.createElement("tr");
-      if(isNight) tr.className="night";
-      tr.style.background=r.bg;
-      tr.style.color=r.font;
-
-      tr.innerHTML=`
-        <td>${r.d}</td>
-        <td>${r.i}</td>
-        <td>${r.o}</td>
-        <td>${r.h}</td>
-        <td>${r.p}</td>
-        <td><button onclick="edit('${r.id}')">✏️</button></td>
-        <td><button onclick="del('${r.id}')">❌</button></td>
-      `;
-      tbody.appendChild(tr);
-    });
-
-  duty.innerText=td;
-  hours.innerText=th.toFixed(2);
+  tbody.innerHTML=body;
+  tDays.innerHTML=dates.size;                  // UNIQUE DATE COUNT
+  tHours.innerHTML=hrs.toFixed(2);
+  tPosts.innerHTML=[...new Set(posts)].length;
 }
 
-/* EXCEL */
-function download(){
+/* DOWNLOAD */
+function downloadCSV(){
+  let arr=getData();
   let csv="Date,In,Out,Hours,Post\n";
-  data.forEach(r=>csv+=`${r.d},${r.i},${r.o},${r.h},${r.p}\n`);
+  arr.forEach(r=>{
+    csv+=`${r.date},${r.in},${r.out},${r.hours},${r.post}\n`;
+  });
   let a=document.createElement("a");
   a.href="data:text/csv;charset=utf-8,"+encodeURIComponent(csv);
   a.download="attendance.csv";
   a.click();
+}
+
+/* AUTO LOGIN */
+if(localStorage.getItem("login")==="yes"){
+  initMonths();
+  autoDate();
+  render();
+  showMain();
+}else{
+  showLogin();
 }
 </script>
 
