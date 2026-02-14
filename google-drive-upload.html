@@ -1,0 +1,86 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Google Drive Photo Upload</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+body{
+  font-family: Arial, sans-serif;
+  background:#f2f2f2;
+  padding:15px;
+}
+.box{
+  background:#ffffff;
+  padding:20px;
+  border-radius:10px;
+  text-align:center;
+}
+button{
+  padding:10px 20px;
+  font-size:16px;
+  background:#4CAF50;
+  color:white;
+  border:none;
+  border-radius:8px;
+}
+#msg{
+  margin-top:10px;
+  font-size:14px;
+}
+</style>
+</head>
+
+<body>
+
+<div class="box">
+  <h2>📸 Upload Photo to Google Drive</h2>
+
+  <input type="file" id="file" accept="image/*"><br><br>
+
+  <button onclick="upload()">Upload to Drive</button>
+
+  <div id="msg"></div>
+</div>
+
+<script>
+function upload(){
+  var file = document.getElementById("file").files[0];
+  if(!file){
+    alert("Photo select karein");
+    return;
+  }
+
+  var reader = new FileReader();
+  reader.onload = function(){
+    var base64 = reader.result.split(",")[1];
+
+    fetch("https://script.google.com/macros/s/AKfycbxxwzDxqsQ9PSjzlJvf7AFuQn8bbxhchq153MVjWet8RCBqauQvw7sjjWNGyhC-0T2Y/exec",{
+      method:"POST",
+      headers:{
+        "Content-Type":"application/x-www-form-urlencoded"
+      },
+      body:
+        "image="+base64+
+        "&type="+file.type+
+        "&name="+encodeURIComponent(file.name)
+    })
+    .then(res=>res.json())
+    .then(res=>{
+      document.getElementById("msg").innerHTML =
+        "✅ Upload Successful<br>" +
+        "<a href='"+res.fileUrl+"' target='_blank'>Open Photo</a>";
+    })
+    .catch(()=>{
+      document.getElementById("msg").innerHTML =
+        "❌ Upload Failed";
+    });
+  };
+
+  reader.readAsDataURL(file);
+}
+</script>
+
+</body>
+</html>
