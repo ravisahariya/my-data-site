@@ -34,7 +34,9 @@ body{margin:0;font-family:Arial;background:#eaeaea}
 .summary{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;padding:10px}
 .box{padding:12px;color:#fff;border-radius:10px;text-align:center;font-weight:bold}
 .box span{display:block;font-size:26px}
-.g{background:#198754}.o{background:#fd7e14}.p{background:#6f42c1}
+.g{background:#198754}
+.o{background:#fd7e14}
+.p{background:#6f42c1}
 
 /* FORM */
 .form{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px;padding:10px}
@@ -48,11 +50,11 @@ th,td{padding:8px;border-bottom:1px solid #ddd;text-align:center}
 th{background:#f1f1f1;position:sticky;top:0}
 td.dateCol{white-space:nowrap;font-weight:bold}
 
-/* OT highlight */
+/* OT */
 .otRow{background:#fff3cd}
 
-/* ICONS */
-.action i{cursor:pointer;font-size:18px;opacity:.3}
+/* ACTION ICONS */
+.action i{cursor:pointer;font-size:18px;opacity:.3;margin:0 6px}
 tr:hover .action i{opacity:1}
 .edit{color:#ff9800}
 .del{color:#f44336}
@@ -89,6 +91,7 @@ tr:hover .action i{opacity:1}
     <input id="post" placeholder="Post">
     <select id="monthFilter" onchange="render()"></select>
     <button class="add" onclick="addEntry()">ADD</button>
+    <button class="add" onclick="downloadCSV()">Download</button>
   </div>
 
   <div class="tableWrap">
@@ -122,7 +125,7 @@ function login(){
   if(user.value===USERNAME && pass.value===PASSWORD){
     localStorage.setItem("login","yes");
     showMain();
-  }else alert("Wrong login");
+  } else alert("Wrong login");
 }
 function logout(){
   localStorage.removeItem("login");
@@ -162,7 +165,7 @@ function ampm(t){
   return `${h}:${m} ${ap}`;
 }
 
-/* ADD */
+/* ADD ENTRY */
 function addEntry(){
   let d=date.value,i=inTime.value,o=outTime.value,p=post.value;
   if(!d||!p)return alert("Date & Post required");
@@ -183,7 +186,7 @@ function addEntry(){
   inTime.value=outTime.value=post.value="";
 }
 
-/* LOAD */
+/* LOAD DATA */
 let allData=[];
 function loadData(){
   db.collection("attendance").orderBy("date")
@@ -194,12 +197,11 @@ function loadData(){
   });
 }
 
-/* RENDER WITH DOUBLE-DUTY OT LOGIC */
+/* RENDER */
 function render(){
   let sel=parseInt(monthFilter.value);
   let html="",hrs=0,dates=new Set(),otDates=new Set();
 
-  // group by date
   let byDate={};
   allData.forEach(r=>{
     if(!byDate[r.date])byDate[r.date]=[];
@@ -208,12 +210,11 @@ function render(){
 
   allData.forEach(r=>{
     let m=new Date(r.date).getMonth()+1;
-    if(sel!==0 && m!==sel) return;
+    if(sel!==0 && m!==sel)return;
 
     hrs+=+r.hours;
     dates.add(r.date);
 
-    // OT only if SAME DATE has 2 rows and this one is night
     let isOT = byDate[r.date].length>1 && r.night;
     if(isOT) otDates.add(r.date);
 
@@ -245,6 +246,18 @@ function editEntry(id){
 function delEntry(id){
   if(confirm("Delete entry?"))
     db.collection("attendance").doc(id).delete();
+}
+
+/* DOWNLOAD */
+function downloadCSV(){
+  let csv="Date,In,Out,Hours,Post\n";
+  allData.forEach(r=>{
+    csv+=`${r.date},${r.in},${r.out},${r.hours},${r.post}\n`;
+  });
+  let a=document.createElement("a");
+  a.href="data:text/csv;charset=utf-8,"+encodeURIComponent(csv);
+  a.download="attendance.csv";
+  a.click();
 }
 </script>
 
