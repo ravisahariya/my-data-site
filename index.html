@@ -2,10 +2,9 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Master Attendance Sheet (FINAL)</title>
+<title>Master Attendance Sheet</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
-<!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 
@@ -14,32 +13,17 @@
 body{margin:0;font-family:Arial;background:#eaeaea}
 .hidden{display:none}
 
-/* LOGIN */
-#loginBox{
-  max-width:380px;margin:80px auto;background:#fff;
-  padding:25px;border-radius:15px;
-  box-shadow:0 0 15px rgba(0,0,0,.3);text-align:center
-}
-#loginBox input{width:100%;padding:12px;margin:8px 0}
-#loginBox button{width:100%;padding:12px;background:#0d6efd;color:#fff;border:none;border-radius:10px}
-
-/* MAIN */
-#main{
-  max-width:1100px;margin:auto;background:#fff;
-  min-height:100vh;border-radius:15px;
-  box-shadow:0 0 15px rgba(0,0,0,.3)
-}
+/* HEADER */
 .header{
   background:#0d6efd;color:#fff;padding:12px;
-  font-size:22px;display:flex;
-  justify-content:space-between;align-items:center;
-  border-radius:15px 15px 0 0
+  display:flex;justify-content:space-between;align-items:center;
+  font-size:22px
 }
 .logout{background:red;color:#fff;border:none;padding:8px 12px;border-radius:8px}
 
 /* SUMMARY */
 .summary{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;padding:10px}
-.box{padding:12px;color:#fff;border-radius:10px;text-align:center;font-weight:bold}
+.box{color:#fff;padding:12px;border-radius:10px;text-align:center;font-weight:bold}
 .box span{display:block;font-size:26px}
 .g{background:#198754}.o{background:#fd7e14}.p{background:#6f42c1}
 
@@ -49,204 +33,170 @@ body{margin:0;font-family:Arial;background:#eaeaea}
 .add{background:#0d6efd;color:#fff;border:none;border-radius:8px}
 
 /* TABLE */
-.tableWrap{margin:10px;max-height:55vh;overflow:auto;border:1px solid #ccc;border-radius:10px}
-table{width:100%;border-collapse:collapse}
+.tableWrap{margin:10px;max-height:60vh;overflow:auto;border-radius:10px}
+table{width:100%;border-collapse:collapse;background:#fff}
 th,td{padding:8px;border-bottom:1px solid #ddd;text-align:center}
 th{background:#f1f1f1;position:sticky;top:0}
-.edit{background:orange;color:#fff;border:none;padding:5px;border-radius:6px}
-.del{background:red;color:#fff;border:none;padding:5px;border-radius:6px}
+
+/* Night highlight */
+.night{background:#f1e8ff}
+
+/* Icons */
+.action i{
+  font-size:18px;cursor:pointer;margin:0 6px;
+  opacity:.3;transition:.2s
+}
+tr:hover .action i{opacity:1}
+.edit{color:#ff9800}
+.del{color:#f44336}
 </style>
 </head>
 
 <body>
 
-<!-- LOGIN -->
-<div id="loginBox">
-  <h2>Login</h2>
-  <input id="user" placeholder="Username">
-  <input id="pass" type="password" placeholder="Password">
-  <button onclick="login()">LOGIN</button>
+<div class="header">
+  Master Attendance Sheet
+  <button class="logout" onclick="logout()">Logout</button>
 </div>
 
-<!-- MAIN -->
-<div id="main" class="hidden">
-  <div class="header">
-    Master Attendance Sheet
-    <button class="logout" onclick="logout()">Logout</button>
-  </div>
+<div class="summary">
+  <div class="box g">Total Days<span id="tDays">0</span></div>
+  <div class="box o">Total Hours<span id="tHours">0</span></div>
+  <div class="box p">Total Posts<span id="tPosts">0</span></div>
+</div>
 
-  <div class="summary">
-    <div class="box g">Total Days<span id="tDays">0</span></div>
-    <div class="box o">Total Hours<span id="tHours">0</span></div>
-    <div class="box p">Total Posts<span id="tPosts">0</span></div>
-  </div>
+<div class="form">
+  <input type="date" id="date">
+  <input type="time" id="inTime">
+  <input type="time" id="outTime">
+  <input id="post" placeholder="Post">
+  <select id="monthFilter" onchange="render()"></select>
+  <button class="add" onclick="addEntry()">ADD</button>
+</div>
 
-  <div class="form">
-    <input type="date" id="date">
-    <input type="time" id="inTime">
-    <input type="time" id="outTime">
-    <input id="post" placeholder="Post">
-    <select id="monthFilter" onchange="render()"></select>
-    <button class="add" onclick="addEntry()">ADD</button>
-    <button class="add" onclick="downloadCSV()">Download</button>
-  </div>
-
-  <div class="tableWrap">
-    <table>
-      <thead>
-        <tr>
-          <th>Date</th><th>In</th><th>Out</th>
-          <th>Hours</th><th>Post</th><th>Action</th>
-        </tr>
-      </thead>
-      <tbody id="tbody"></tbody>
-    </table>
-  </div>
+<div class="tableWrap">
+<table>
+<thead>
+<tr>
+  <th>Date</th><th>In</th><th>Out</th>
+  <th>Hours</th><th>Post</th><th>Action</th>
+</tr>
+</thead>
+<tbody id="tbody"></tbody>
+</table>
 </div>
 
 <script>
-/* FIREBASE CONFIG (YOUR PROJECT) */
-const firebaseConfig = {
+// 🔥 FIREBASE
+firebase.initializeApp({
   apiKey: "AIzaSyD71mpolAsmejtU2icecQQcX07iCW_is0Y",
   authDomain: "ravicardmaker.firebaseapp.com",
   projectId: "ravicardmaker",
   storageBucket: "ravicardmaker.firebasestorage.app",
   messagingSenderId: "125321734592",
   appId: "1:125321734592:web:eaba2d7477376694134025"
-};
-firebase.initializeApp(firebaseConfig);
-const db = firebase.firestore();
+});
+const db=firebase.firestore();
 
-/* LOGIN */
-const USERNAME="9823087", PASSWORD="7284";
-let editId=null;
+let allData=[],editId=null;
 
-function login(){
-  if(user.value===USERNAME && pass.value===PASSWORD){
-    localStorage.setItem("login","yes");
-    showMain();
-  } else alert("Wrong Login");
-}
-function logout(){
-  localStorage.removeItem("login");
-  location.reload();
-}
-function showMain(){
-  loginBox.classList.add("hidden");
-  main.classList.remove("hidden");
-  initMonths();
-  autoDate();
-  loadData();
+// MONTHS
+const months=["All Months","January","February","March","April","May","June","July","August","September","October","November","December"];
+months.forEach((m,i)=>{
+  let o=document.createElement("option");
+  o.value=i;o.text=m;monthFilter.appendChild(o);
+});
+monthFilter.value=new Date().getMonth()+1;
+date.value=new Date().toISOString().slice(0,10);
+
+// TIME FORMAT
+function ampm(t){
+  if(!t)return"-";
+  let [h,m]=t.split(":");
+  h=parseInt(h);
+  let ap=h>=12?"PM":"AM";
+  h=h%12||12;
+  return `${h}:${m} ${ap}`;
 }
 
-/* DATE */
-function autoDate(){
-  date.value=new Date().toISOString().slice(0,10);
-}
-
-/* MONTHS */
-function initMonths(){
-  let m=["All Months","January","February","March","April","May","June","July","August","September","October","November","December"];
-  monthFilter.innerHTML="";
-  m.forEach((x,i)=>{
-    let o=document.createElement("option");
-    o.value=i; o.text=x;
-    monthFilter.appendChild(o);
-  });
-  monthFilter.value=new Date().getMonth()+1;
-}
-
-/* ADD / EDIT */
+// ADD
 function addEntry(){
   let d=date.value,i=inTime.value,o=outTime.value,p=post.value;
-  if(!d||!p) return alert("Date & Post required");
+  if(!d||!p)return alert("Date & Post required");
 
-  let h=0;
-  if(i&&o){
-    h=(new Date(d+"T"+o)-new Date(d+"T"+i))/3600000;
-    if(h<0)h=0;
+  let start=new Date(d+"T"+i);
+  let end=new Date(d+"T"+o);
+  let night=false;
+
+  if(o && i && end<start){
+    end.setDate(end.getDate()+1);
+    night=true;
   }
 
-  let data={date:d,in:i,out:o,hours:h.toFixed(2),post:p};
+  let hrs=i&&o?((end-start)/3600000).toFixed(2):"0.00";
+
+  let data={date:d,in:i,out:o,hours:hrs,post:p,night};
 
   if(editId){
     db.collection("attendance").doc(editId).set(data);
     editId=null;
-  } else {
-    db.collection("attendance").add(data);
-  }
+  }else db.collection("attendance").add(data);
 
-  autoDate(); inTime.value=outTime.value=post.value="";
+  inTime.value=outTime.value=post.value="";
 }
 
-/* LOAD + RENDER */
-let allData=[];
-function loadData(){
-  db.collection("attendance").orderBy("date")
-  .onSnapshot(snap=>{
-    allData=[];
-    snap.forEach(doc=>allData.push({id:doc.id,...doc.data()}));
-    render();
-  });
-}
+// LOAD
+db.collection("attendance").orderBy("date").onSnapshot(s=>{
+  allData=[];
+  s.forEach(d=>allData.push({id:d.id,...d.data()}));
+  render();
+});
 
+// RENDER
 function render(){
   let sel=parseInt(monthFilter.value);
-  let body="",hrs=0,posts=new Set(),dates=new Set();
+  let html="",hrs=0,dates=new Set(),posts=new Set();
 
   allData.forEach(r=>{
     let m=new Date(r.date).getMonth()+1;
     if(sel===0||m===sel){
       hrs+=+r.hours;
-      posts.add(r.post);
       dates.add(r.date);
-      body+=`
-      <tr>
+      posts.add(r.post);
+
+      html+=`
+      <tr class="${r.night?'night':''}">
         <td>${r.date}</td>
-        <td>${r.in||"-"}</td>
-        <td>${r.out||"-"}</td>
+        <td>${ampm(r.in)}</td>
+        <td>${ampm(r.out)}</td>
         <td>${r.hours}</td>
         <td>${r.post}</td>
-        <td>
-          <button class="edit" onclick="editEntry('${r.id}')">Edit</button>
-          <button class="del" onclick="delEntry('${r.id}')">Delete</button>
+        <td class="action">
+          <i class="edit" onclick="editEntry('${r.id}')">✏️</i>
+          <i class="del" onclick="delEntry('${r.id}')">🗑️</i>
         </td>
       </tr>`;
     }
   });
 
-  tbody.innerHTML=body;
+  tbody.innerHTML=html;
   tDays.innerText=dates.size;
   tHours.innerText=hrs.toFixed(2);
   tPosts.innerText=posts.size;
 }
 
-/* EDIT / DELETE */
+// EDIT / DELETE
 function editEntry(id){
   let r=allData.find(x=>x.id===id);
-  date.value=r.date; inTime.value=r.in; outTime.value=r.out; post.value=r.post;
+  date.value=r.date;inTime.value=r.in;outTime.value=r.out;post.value=r.post;
   editId=id;
 }
 function delEntry(id){
-  if(confirm("Delete entry?")){
+  if(confirm("Delete entry?"))
     db.collection("attendance").doc(id).delete();
-  }
 }
 
-/* DOWNLOAD */
-function downloadCSV(){
-  let csv="Date,In,Out,Hours,Post\n";
-  allData.forEach(r=>{
-    csv+=`${r.date},${r.in},${r.out},${r.hours},${r.post}\n`;
-  });
-  let a=document.createElement("a");
-  a.href="data:text/csv;charset=utf-8,"+encodeURIComponent(csv);
-  a.download="attendance.csv";
-  a.click();
-}
-
-/* AUTO LOGIN */
-if(localStorage.getItem("login")==="yes") showMain();
+function logout(){location.reload();}
 </script>
 
 </body>
