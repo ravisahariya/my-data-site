@@ -5,6 +5,7 @@
 <title>Master Attendance Sheet</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
+<!-- Firebase compat SDKs -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 
@@ -108,7 +109,7 @@ tr:hover .action i{opacity:1}
 </div>
 
 <script>
-/* FIREBASE */
+/* ---------------- FIREBASE ---------------- */
 firebase.initializeApp({
   apiKey: "AIzaSyD71mpolAsmejtU2icecQQcX07iCW_is0Y",
   authDomain: "ravicardmaker.firebaseapp.com",
@@ -117,9 +118,9 @@ firebase.initializeApp({
   messagingSenderId: "125321734592",
   appId: "1:125321734592:web:eaba2d7477376694134025"
 });
-const db=firebase.firestore();
+const db = firebase.firestore();
 
-/* LOGIN */
+/* ---------------- LOGIN ---------------- */
 const USERNAME="9823087", PASSWORD="7284";
 function login(){
   if(user.value===USERNAME && pass.value===PASSWORD){
@@ -136,100 +137,102 @@ function showMain(){
   main.classList.remove("hidden");
   initMonths();
   autoDate();
-  loadData();
+  loadData(); // render ONLY after data arrives
 }
 if(localStorage.getItem("login")==="yes") showMain();
 
-/* MONTHS */
-const months=["All Months","January","February","March","April","May","June","July","August","September","October","November","December"];
+/* ---------------- MONTHS ---------------- */
 function initMonths(){
   monthFilter.innerHTML="";
+  const months=["All Months","January","February","March","April","May","June","July","August","September","October","November","December"];
   months.forEach((m,i)=>{
-    let o=document.createElement("option");
+    const o=document.createElement("option");
     o.value=i;o.text=m;monthFilter.appendChild(o);
   });
-  monthFilter.value=new Date().getMonth()+1;
+  monthFilter.value=new Date().getMonth()+1; // current month
 }
 
-/* DATE */
+/* ---------------- DATE ---------------- */
 function autoDate(){
   date.value=new Date().toISOString().slice(0,10);
 }
 
-/* TIME FORMAT */
+/* ---------------- TIME FORMAT ---------------- */
 function ampm(t){
   if(!t)return"-";
-  let [h,m]=t.split(":");h=parseInt(h);
-  let ap=h>=12?"PM":"AM";
-  h=h%12||12;
+  let [h,m]=t.split(":"); h=parseInt(h);
+  let ap=h>=12?"PM":"AM"; h=h%12||12;
   return `${h}:${m} ${ap}`;
 }
 
-/* ADD ENTRY */
+/* ---------------- ADD ENTRY ---------------- */
 function addEntry(){
-  let d=date.value,i=inTime.value,o=outTime.value,p=post.value;
-  if(!d||!p)return alert("Date & Post required");
+  const d=date.value,i=inTime.value,o=outTime.value,p=post.value;
+  if(!d||!p) return alert("Date & Post required");
 
   let start=new Date(d+"T"+i);
   let end=new Date(d+"T"+o);
   let night=false;
-  if(i&&o&&end<start){
-    end.setDate(end.getDate()+1);
-    night=true;
-  }
+  if(i&&o&&end<start){ end.setDate(end.getDate()+1); night=true; }
   let hrs=i&&o?((end-start)/3600000).toFixed(2):"0.00";
 
-  db.collection("attendance").add({
-    date:d,in:i,out:o,hours:hrs,post:p,night
-  });
-
+  db.collection("attendance").add({ date:d,in:i,out:o,hours:hrs,post:p,night });
   inTime.value=outTime.value=post.value="";
 }
 
-/* LOAD DATA */
+/* ---------------- LOAD DATA (FIXED) ---------------- */
 let allData=[];
 function loadData(){
   db.collection("attendance").orderBy("date")
-  .onSnapshot(s=>{
-    allData=[];
-    s.forEach(d=>allData.push({id:d.id,...d.data()}));
-    render();
-  });
+    .onSnapshot(snap=>{
+      allData=[];
+      snap.forEach(doc=>allData.push({id:doc.id,...doc.data()}));
+      render(); // render AFTER data
+    });
 }
 
-/* RENDER */
+/* ---------------- RENDER ---------------- */
 function render(){
-  let sel=parseInt(monthFilter.value);
-  let html="",hrs=0,dates=new Set(),otDates=new Set();
+  if(allData.length===0){
+    tbody.innerHTML="";
+    tDays.innerText=0; tHours.innerText=0; tOT.innerText=0;
+    return;
+  }
 
-  let byDate={};
+  const sel=parseInt(monthFilter.value);
+  let html="", hrs=0;
+  const dates=new Set(), otDates=new Set();
+
+  // group by date to detect double-duty
+  const byDate={};
   allData.forEach(r=>{
-    if(!byDate[r.date])byDate[r.date]=[];
+    if(!byDate[r.date]) byDate[r.date]=[];
     byDate[r.date].push(r);
   });
 
   allData.forEach(r=>{
-    let m=new Date(r.date).getMonth()+1;
-    if(sel!==0 && m!==sel)return;
+    const m=new Date(r.date).getMonth()+1;
+    if(sel!==0 && m!==sel) return;
 
     hrs+=+r.hours;
     dates.add(r.date);
 
-    let isOT = byDate[r.date].length>1 && r.night;
+    // OT: same date has >1 rows AND this row is night
+    const isOT = (byDate[r.date].length>1 && r.night);
     if(isOT) otDates.add(r.date);
 
     html+=`
-    <tr class="${isOT?'otRow':''}">
-      <td class="dateCol">${r.date}</td>
-      <td>${ampm(r.in)}</td>
-      <td>${ampm(r.out)}</td>
-      <td>${r.hours}</td>
-      <td>${r.post}</td>
-      <td class="action">
-        <i class="edit" onclick="editEntry('${r.id}')">✏️</i>
-        <i class="del" onclick="delEntry('${r.id}')">🗑️</i>
-      </td>
-    </tr>`;
+      <tr class="${isOT?'otRow':''}">
+        <td class="dateCol">${r.date}</td>
+        <td>${ampm(r.in)}</td>
+        <td>${ampm(r.out)}</td>
+        <td>${r.hours}</td>
+        <td>${r.post}</td>
+        <td class="action">
+          <i class="edit" onclick="editEntry('${r.id}')">✏️</i>
+          <i class="del" onclick="delEntry('${r.id}')">🗑️</i>
+        </td>
+      </tr>`;
   });
 
   tbody.innerHTML=html;
@@ -238,28 +241,28 @@ function render(){
   tOT.innerText=otDates.size;
 }
 
-/* EDIT / DELETE */
+/* ---------------- EDIT / DELETE ---------------- */
 function editEntry(id){
-  let r=allData.find(x=>x.id===id);
-  date.value=r.date;inTime.value=r.in;outTime.value=r.out;post.value=r.post;
+  const r=allData.find(x=>x.id===id);
+  date.value=r.date; inTime.value=r.in; outTime.value=r.out; post.value=r.post;
 }
 function delEntry(id){
-  if(confirm("Delete entry?"))
+  if(confirm("Delete entry?")){
     db.collection("attendance").doc(id).delete();
+  }
 }
 
-/* DOWNLOAD */
+/* ---------------- DOWNLOAD CSV ---------------- */
 function downloadCSV(){
   let csv="Date,In,Out,Hours,Post\n";
   allData.forEach(r=>{
     csv+=`${r.date},${r.in},${r.out},${r.hours},${r.post}\n`;
   });
-  let a=document.createElement("a");
+  const a=document.createElement("a");
   a.href="data:text/csv;charset=utf-8,"+encodeURIComponent(csv);
   a.download="attendance.csv";
   a.click();
 }
 </script>
-
 </body>
 </html>
