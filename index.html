@@ -13,6 +13,15 @@
 body{margin:0;font-family:Arial;background:#eaeaea}
 .hidden{display:none}
 
+/* LOGIN */
+#loginBox{
+  max-width:380px;margin:80px auto;background:#fff;
+  padding:25px;border-radius:15px;
+  box-shadow:0 0 15px rgba(0,0,0,.3);text-align:center
+}
+#loginBox input{width:100%;padding:12px;margin:8px 0}
+#loginBox button{width:100%;padding:12px;background:#0d6efd;color:#fff;border:none;border-radius:10px}
+
 /* HEADER */
 .header{
   background:#0d6efd;color:#fff;padding:12px;
@@ -23,7 +32,7 @@ body{margin:0;font-family:Arial;background:#eaeaea}
 
 /* SUMMARY */
 .summary{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;padding:10px}
-.box{color:#fff;padding:12px;border-radius:10px;text-align:center;font-weight:bold}
+.box{padding:12px;color:#fff;border-radius:10px;text-align:center;font-weight:bold}
 .box span{display:block;font-size:26px}
 .g{background:#198754}.o{background:#fd7e14}.p{background:#6f42c1}
 
@@ -37,15 +46,13 @@ body{margin:0;font-family:Arial;background:#eaeaea}
 table{width:100%;border-collapse:collapse;background:#fff}
 th,td{padding:8px;border-bottom:1px solid #ddd;text-align:center}
 th{background:#f1f1f1;position:sticky;top:0}
+td.dateCol{white-space:nowrap;font-weight:bold}
 
-/* Night highlight */
-.night{background:#f1e8ff}
+/* OT highlight */
+.otRow{background:#fff3cd}
 
-/* Icons */
-.action i{
-  font-size:18px;cursor:pointer;margin:0 6px;
-  opacity:.3;transition:.2s
-}
+/* ICONS */
+.action i{cursor:pointer;font-size:18px;opacity:.3}
 tr:hover .action i{opacity:1}
 .edit{color:#ff9800}
 .del{color:#f44336}
@@ -54,40 +61,51 @@ tr:hover .action i{opacity:1}
 
 <body>
 
-<div class="header">
-  Master Attendance Sheet
-  <button class="logout" onclick="logout()">Logout</button>
+<!-- LOGIN -->
+<div id="loginBox">
+  <h2>Login</h2>
+  <input id="user" placeholder="Username">
+  <input id="pass" type="password" placeholder="Password">
+  <button onclick="login()">LOGIN</button>
 </div>
 
-<div class="summary">
-  <div class="box g">Total Days<span id="tDays">0</span></div>
-  <div class="box o">Total Hours<span id="tHours">0</span></div>
-  <div class="box p">Total Posts<span id="tPosts">0</span></div>
-</div>
+<!-- MAIN -->
+<div id="main" class="hidden">
+  <div class="header">
+    Master Attendance Sheet
+    <button class="logout" onclick="logout()">Logout</button>
+  </div>
 
-<div class="form">
-  <input type="date" id="date">
-  <input type="time" id="inTime">
-  <input type="time" id="outTime">
-  <input id="post" placeholder="Post">
-  <select id="monthFilter" onchange="render()"></select>
-  <button class="add" onclick="addEntry()">ADD</button>
-</div>
+  <div class="summary">
+    <div class="box g">Total Days<span id="tDays">0</span></div>
+    <div class="box o">Total Hours<span id="tHours">0</span></div>
+    <div class="box p">OT<span id="tOT">0</span></div>
+  </div>
 
-<div class="tableWrap">
-<table>
-<thead>
-<tr>
-  <th>Date</th><th>In</th><th>Out</th>
-  <th>Hours</th><th>Post</th><th>Action</th>
-</tr>
-</thead>
-<tbody id="tbody"></tbody>
-</table>
+  <div class="form">
+    <input type="date" id="date">
+    <input type="time" id="inTime">
+    <input type="time" id="outTime">
+    <input id="post" placeholder="Post">
+    <select id="monthFilter" onchange="render()"></select>
+    <button class="add" onclick="addEntry()">ADD</button>
+  </div>
+
+  <div class="tableWrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Date</th><th>In</th><th>Out</th>
+          <th>Hours</th><th>Post</th><th>Action</th>
+        </tr>
+      </thead>
+      <tbody id="tbody"></tbody>
+    </table>
+  </div>
 </div>
 
 <script>
-// 🔥 FIREBASE
+/* FIREBASE */
 firebase.initializeApp({
   apiKey: "AIzaSyD71mpolAsmejtU2icecQQcX07iCW_is0Y",
   authDomain: "ravicardmaker.firebaseapp.com",
@@ -98,28 +116,53 @@ firebase.initializeApp({
 });
 const db=firebase.firestore();
 
-let allData=[],editId=null;
+/* LOGIN */
+const USERNAME="9823087", PASSWORD="7284";
+function login(){
+  if(user.value===USERNAME && pass.value===PASSWORD){
+    localStorage.setItem("login","yes");
+    showMain();
+  }else alert("Wrong login");
+}
+function logout(){
+  localStorage.removeItem("login");
+  location.reload();
+}
+function showMain(){
+  loginBox.classList.add("hidden");
+  main.classList.remove("hidden");
+  initMonths();
+  autoDate();
+  loadData();
+}
+if(localStorage.getItem("login")==="yes") showMain();
 
-// MONTHS
+/* MONTHS */
 const months=["All Months","January","February","March","April","May","June","July","August","September","October","November","December"];
-months.forEach((m,i)=>{
-  let o=document.createElement("option");
-  o.value=i;o.text=m;monthFilter.appendChild(o);
-});
-monthFilter.value=new Date().getMonth()+1;
-date.value=new Date().toISOString().slice(0,10);
+function initMonths(){
+  monthFilter.innerHTML="";
+  months.forEach((m,i)=>{
+    let o=document.createElement("option");
+    o.value=i;o.text=m;monthFilter.appendChild(o);
+  });
+  monthFilter.value=new Date().getMonth()+1;
+}
 
-// TIME FORMAT
+/* DATE */
+function autoDate(){
+  date.value=new Date().toISOString().slice(0,10);
+}
+
+/* TIME FORMAT */
 function ampm(t){
   if(!t)return"-";
-  let [h,m]=t.split(":");
-  h=parseInt(h);
+  let [h,m]=t.split(":");h=parseInt(h);
   let ap=h>=12?"PM":"AM";
   h=h%12||12;
   return `${h}:${m} ${ap}`;
 }
 
-// ADD
+/* ADD */
 function addEntry(){
   let d=date.value,i=inTime.value,o=outTime.value,p=post.value;
   if(!d||!p)return alert("Date & Post required");
@@ -127,76 +170,82 @@ function addEntry(){
   let start=new Date(d+"T"+i);
   let end=new Date(d+"T"+o);
   let night=false;
-
-  if(o && i && end<start){
+  if(i&&o&&end<start){
     end.setDate(end.getDate()+1);
     night=true;
   }
-
   let hrs=i&&o?((end-start)/3600000).toFixed(2):"0.00";
 
-  let data={date:d,in:i,out:o,hours:hrs,post:p,night};
-
-  if(editId){
-    db.collection("attendance").doc(editId).set(data);
-    editId=null;
-  }else db.collection("attendance").add(data);
+  db.collection("attendance").add({
+    date:d,in:i,out:o,hours:hrs,post:p,night
+  });
 
   inTime.value=outTime.value=post.value="";
 }
 
-// LOAD
-db.collection("attendance").orderBy("date").onSnapshot(s=>{
-  allData=[];
-  s.forEach(d=>allData.push({id:d.id,...d.data()}));
-  render();
-});
+/* LOAD */
+let allData=[];
+function loadData(){
+  db.collection("attendance").orderBy("date")
+  .onSnapshot(s=>{
+    allData=[];
+    s.forEach(d=>allData.push({id:d.id,...d.data()}));
+    render();
+  });
+}
 
-// RENDER
+/* RENDER WITH DOUBLE-DUTY OT LOGIC */
 function render(){
   let sel=parseInt(monthFilter.value);
-  let html="",hrs=0,dates=new Set(),posts=new Set();
+  let html="",hrs=0,dates=new Set(),otDates=new Set();
+
+  // group by date
+  let byDate={};
+  allData.forEach(r=>{
+    if(!byDate[r.date])byDate[r.date]=[];
+    byDate[r.date].push(r);
+  });
 
   allData.forEach(r=>{
     let m=new Date(r.date).getMonth()+1;
-    if(sel===0||m===sel){
-      hrs+=+r.hours;
-      dates.add(r.date);
-      posts.add(r.post);
+    if(sel!==0 && m!==sel) return;
 
-      html+=`
-      <tr class="${r.night?'night':''}">
-        <td>${r.date}</td>
-        <td>${ampm(r.in)}</td>
-        <td>${ampm(r.out)}</td>
-        <td>${r.hours}</td>
-        <td>${r.post}</td>
-        <td class="action">
-          <i class="edit" onclick="editEntry('${r.id}')">✏️</i>
-          <i class="del" onclick="delEntry('${r.id}')">🗑️</i>
-        </td>
-      </tr>`;
-    }
+    hrs+=+r.hours;
+    dates.add(r.date);
+
+    // OT only if SAME DATE has 2 rows and this one is night
+    let isOT = byDate[r.date].length>1 && r.night;
+    if(isOT) otDates.add(r.date);
+
+    html+=`
+    <tr class="${isOT?'otRow':''}">
+      <td class="dateCol">${r.date}</td>
+      <td>${ampm(r.in)}</td>
+      <td>${ampm(r.out)}</td>
+      <td>${r.hours}</td>
+      <td>${r.post}</td>
+      <td class="action">
+        <i class="edit" onclick="editEntry('${r.id}')">✏️</i>
+        <i class="del" onclick="delEntry('${r.id}')">🗑️</i>
+      </td>
+    </tr>`;
   });
 
   tbody.innerHTML=html;
   tDays.innerText=dates.size;
   tHours.innerText=hrs.toFixed(2);
-  tPosts.innerText=posts.size;
+  tOT.innerText=otDates.size;
 }
 
-// EDIT / DELETE
+/* EDIT / DELETE */
 function editEntry(id){
   let r=allData.find(x=>x.id===id);
   date.value=r.date;inTime.value=r.in;outTime.value=r.out;post.value=r.post;
-  editId=id;
 }
 function delEntry(id){
   if(confirm("Delete entry?"))
     db.collection("attendance").doc(id).delete();
 }
-
-function logout(){location.reload();}
 </script>
 
 </body>
