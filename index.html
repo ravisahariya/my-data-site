@@ -5,7 +5,7 @@
 <title>Master Attendance Sheet</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
-<!-- Firebase compat SDKs -->
+<!-- Firebase SDK -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 
@@ -16,7 +16,7 @@ body{margin:0;font-family:Arial;background:#eaeaea}
 
 /* LOGIN */
 #loginBox{
-  max-width:380px;margin:80px auto;background:#fff;
+  max-width:380px;margin:70px auto;background:#fff;
   padding:25px;border-radius:15px;
   box-shadow:0 0 15px rgba(0,0,0,.3);text-align:center
 }
@@ -30,6 +30,15 @@ body{margin:0;font-family:Arial;background:#eaeaea}
   font-size:22px
 }
 .logout{background:red;color:#fff;border:none;padding:8px 12px;border-radius:8px}
+
+/* LIVE DATE TIME */
+#liveDateTime{
+  text-align:center;
+  padding:8px;
+  background:#fff;
+  font-weight:bold;
+  border-bottom:1px solid #ccc;
+}
 
 /* SUMMARY */
 .summary{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;padding:10px}
@@ -64,7 +73,7 @@ tr:hover .action i{opacity:1}
 
 <body>
 
-<!-- LOGIN -->
+<!-- LOGIN PAGE -->
 <div id="loginBox">
   <h2>Login</h2>
   <input id="user" placeholder="Username">
@@ -72,12 +81,16 @@ tr:hover .action i{opacity:1}
   <button onclick="login()">LOGIN</button>
 </div>
 
-<!-- MAIN -->
+<!-- MAIN PAGE -->
 <div id="main" class="hidden">
+
   <div class="header">
     Master Attendance Sheet
     <button class="logout" onclick="logout()">Logout</button>
   </div>
+
+  <!-- LIVE DATE TIME -->
+  <div id="liveDateTime"></div>
 
   <div class="summary">
     <div class="box g">Total Days<span id="tDays">0</span></div>
@@ -106,6 +119,7 @@ tr:hover .action i{opacity:1}
       <tbody id="tbody"></tbody>
     </table>
   </div>
+
 </div>
 
 <script>
@@ -122,34 +136,55 @@ const db = firebase.firestore();
 
 /* ---------------- LOGIN ---------------- */
 const USERNAME="9823087", PASSWORD="7284";
+
 function login(){
   if(user.value===USERNAME && pass.value===PASSWORD){
     localStorage.setItem("login","yes");
     showMain();
-  } else alert("Wrong login");
+  } else alert("Wrong Login");
 }
+
 function logout(){
   localStorage.removeItem("login");
   location.reload();
 }
+
+if(localStorage.getItem("login")==="yes") showMain();
+
+/* ---------------- SHOW MAIN ---------------- */
 function showMain(){
   loginBox.classList.add("hidden");
   main.classList.remove("hidden");
   initMonths();
   autoDate();
-  loadData(); // render ONLY after data arrives
+  startLiveDateTime();
+  loadData();
 }
-if(localStorage.getItem("login")==="yes") showMain();
+
+/* ---------------- LIVE DATE TIME ---------------- */
+function startLiveDateTime(){
+  function update(){
+    const now=new Date();
+    const d=now.toLocaleDateString("en-GB",{day:"2-digit",month:"short",year:"numeric"});
+    let h=now.getHours(),m=now.getMinutes().toString().padStart(2,"0"),
+        s=now.getSeconds().toString().padStart(2,"0"),
+        ap=h>=12?"PM":"AM";
+    h=h%12||12;
+    liveDateTime.innerHTML=`Date: ${d} | Time: ${h}:${m}:${s} ${ap}`;
+  }
+  update();
+  setInterval(update,1000);
+}
 
 /* ---------------- MONTHS ---------------- */
 function initMonths(){
-  monthFilter.innerHTML="";
   const months=["All Months","January","February","March","April","May","June","July","August","September","October","November","December"];
+  monthFilter.innerHTML="";
   months.forEach((m,i)=>{
     const o=document.createElement("option");
     o.value=i;o.text=m;monthFilter.appendChild(o);
   });
-  monthFilter.value=new Date().getMonth()+1; // current month
+  monthFilter.value=new Date().getMonth()+1;
 }
 
 /* ---------------- DATE ---------------- */
@@ -160,8 +195,8 @@ function autoDate(){
 /* ---------------- TIME FORMAT ---------------- */
 function ampm(t){
   if(!t)return"-";
-  let [h,m]=t.split(":"); h=parseInt(h);
-  let ap=h>=12?"PM":"AM"; h=h%12||12;
+  let [h,m]=t.split(":");h=parseInt(h);
+  let ap=h>=12?"PM":"AM";h=h%12||12;
   return `${h}:${m} ${ap}`;
 }
 
@@ -173,21 +208,21 @@ function addEntry(){
   let start=new Date(d+"T"+i);
   let end=new Date(d+"T"+o);
   let night=false;
-  if(i&&o&&end<start){ end.setDate(end.getDate()+1); night=true; }
+  if(i&&o&&end<start){end.setDate(end.getDate()+1);night=true;}
   let hrs=i&&o?((end-start)/3600000).toFixed(2):"0.00";
 
-  db.collection("attendance").add({ date:d,in:i,out:o,hours:hrs,post:p,night });
+  db.collection("attendance").add({date:d,in:i,out:o,hours:hrs,post:p,night});
   inTime.value=outTime.value=post.value="";
 }
 
-/* ---------------- LOAD DATA (FIXED) ---------------- */
+/* ---------------- LOAD DATA ---------------- */
 let allData=[];
 function loadData(){
   db.collection("attendance").orderBy("date")
-    .onSnapshot(snap=>{
+    .onSnapshot(s=>{
       allData=[];
-      snap.forEach(doc=>allData.push({id:doc.id,...doc.data()}));
-      render(); // render AFTER data
+      s.forEach(d=>allData.push({id:d.id,...d.data()}));
+      render();
     });
 }
 
@@ -195,18 +230,17 @@ function loadData(){
 function render(){
   if(allData.length===0){
     tbody.innerHTML="";
-    tDays.innerText=0; tHours.innerText=0; tOT.innerText=0;
+    tDays.innerText=tHours.innerText=tOT.innerText=0;
     return;
   }
 
   const sel=parseInt(monthFilter.value);
-  let html="", hrs=0;
-  const dates=new Set(), otDates=new Set();
-
-  // group by date to detect double-duty
+  let html="",hrs=0;
+  const dates=new Set(),otDates=new Set();
   const byDate={};
+
   allData.forEach(r=>{
-    if(!byDate[r.date]) byDate[r.date]=[];
+    if(!byDate[r.date])byDate[r.date]=[];
     byDate[r.date].push(r);
   });
 
@@ -216,23 +250,21 @@ function render(){
 
     hrs+=+r.hours;
     dates.add(r.date);
-
-    // OT: same date has >1 rows AND this row is night
-    const isOT = (byDate[r.date].length>1 && r.night);
+    const isOT=(byDate[r.date].length>1 && r.night);
     if(isOT) otDates.add(r.date);
 
     html+=`
-      <tr class="${isOT?'otRow':''}">
-        <td class="dateCol">${r.date}</td>
-        <td>${ampm(r.in)}</td>
-        <td>${ampm(r.out)}</td>
-        <td>${r.hours}</td>
-        <td>${r.post}</td>
-        <td class="action">
-          <i class="edit" onclick="editEntry('${r.id}')">✏️</i>
-          <i class="del" onclick="delEntry('${r.id}')">🗑️</i>
-        </td>
-      </tr>`;
+    <tr class="${isOT?'otRow':''}">
+      <td class="dateCol">${r.date}</td>
+      <td>${ampm(r.in)}</td>
+      <td>${ampm(r.out)}</td>
+      <td>${r.hours}</td>
+      <td>${r.post}</td>
+      <td class="action">
+        <i class="edit" onclick="editEntry('${r.id}')">✏️</i>
+        <i class="del" onclick="delEntry('${r.id}')">🗑️</i>
+      </td>
+    </tr>`;
   });
 
   tbody.innerHTML=html;
@@ -244,20 +276,17 @@ function render(){
 /* ---------------- EDIT / DELETE ---------------- */
 function editEntry(id){
   const r=allData.find(x=>x.id===id);
-  date.value=r.date; inTime.value=r.in; outTime.value=r.out; post.value=r.post;
+  date.value=r.date;inTime.value=r.in;outTime.value=r.out;post.value=r.post;
 }
 function delEntry(id){
-  if(confirm("Delete entry?")){
+  if(confirm("Delete entry?"))
     db.collection("attendance").doc(id).delete();
-  }
 }
 
-/* ---------------- DOWNLOAD CSV ---------------- */
+/* ---------------- DOWNLOAD ---------------- */
 function downloadCSV(){
   let csv="Date,In,Out,Hours,Post\n";
-  allData.forEach(r=>{
-    csv+=`${r.date},${r.in},${r.out},${r.hours},${r.post}\n`;
-  });
+  allData.forEach(r=>csv+=`${r.date},${r.in},${r.out},${r.hours},${r.post}\n`);
   const a=document.createElement("a");
   a.href="data:text/csv;charset=utf-8,"+encodeURIComponent(csv);
   a.download="attendance.csv";
